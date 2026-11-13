@@ -1,0 +1,1699 @@
+{
+ "not": "Basit karar kurallı ajanlar; insan davranışı, eğlence ve elde tutma ölçülmez. 30 oyun günü.",
+ "tohumlar": [
+  1,
+  2,
+  3,
+  4,
+  5
+ ],
+ "senaryolar": {
+  "sabit dagilim n=10 toptanci=A": {
+   "kapsama": 0.3330265800869484,
+   "durus": 0.044305555555555556,
+   "toptanci_payi": 0.07629562509972668,
+   "gunluk_para_artisi_firma": 355.99988486443294,
+   "toptanci_net_basim_firma_gun": 216.68425210598733,
+   "toptanci_alim_firma_gun": 409.9038527914675,
+   "tuketici_girisi_firma_gun": 655.1445864925616,
+   "ekside_firma": 0.14,
+   "gecis": 0,
+   "fiyat_min": 0.7058450150521066,
+   "fiyat_max": 1.162038203816573,
+   "para_defteri_firma_gun": {
+    "tuketici": 655.1445864925616,
+    "toptanci_alim": 409.9038527914675,
+    "toptanci_satis": 193.21960068548017,
+    "uretim": 443.38,
+    "tasima": 24.45926591945892,
+    "kira": 96.94952968106745,
+    "komisyon": 26.218264630118416,
+    "insaat": 0.0,
+    "vergi": 0.0
+   },
+   "rol_getirisi": {
+    "son ürün": {
+     "ort": 58.35014280396417,
+     "p10": -8.91076423268196,
+     "n": 4
+    },
+    "dükkân": {
+     "ort": 908.2734112693252,
+     "p10": 338.6872555949156,
+     "n": 2
+    },
+    "ara mal": {
+     "ort": 124.44092813997437,
+     "p10": 14.005211602477175,
+     "n": 2
+    },
+    "ham madde": {
+     "ort": 666.2529496799566,
+     "p10": 393.70663154279225,
+     "n": 2
+    }
+   }
+  },
+  "sabit dagilim n=10 toptanci=B": {
+   "kapsama": 0.25186871864490207,
+   "durus": 0.32458333333333333,
+   "toptanci_payi": 0.06731402669686215,
+   "gunluk_para_artisi_firma": 237.31101609501872,
+   "toptanci_net_basim_firma_gun": -34.95973797732033,
+   "toptanci_alim_firma_gun": 82.8293278466052,
+   "tuketici_girisi_firma_gun": 568.3982966700905,
+   "ekside_firma": 0.02,
+   "gecis": 0,
+   "fiyat_min": 0.5707676505683644,
+   "fiyat_max": 2.3095319950831197,
+   "para_defteri_firma_gun": {
+    "tuketici": 568.3982966700905,
+    "toptanci_alim": 82.8293278466052,
+    "toptanci_satis": 117.78906582392553,
+    "uretim": 221.69333333333333,
+    "tasima": 15.542402756546217,
+    "kira": 59.097069182318755,
+    "komisyon": 15.921412773890841,
+    "insaat": 0.0,
+    "vergi": 0.0
+   },
+   "rol_getirisi": {
+    "son ürün": {
+     "ort": 106.29880057906905,
+     "p10": 0.0,
+     "n": 4
+    },
+    "dükkân": {
+     "ort": 952.9193976854773,
+     "p10": 341.61591777118394,
+     "n": 2
+    },
+    "ara mal": {
+     "ort": 11.061887010157756,
+     "p10": -57.86292299610405,
+     "n": 2
+    },
+    "ham madde": {
+     "ort": 136.35160237968626,
+     "p10": 51.83661833316155,
+     "n": 2
+    }
+   }
+  },
+  "sabit dagilim n=10 toptanci=C": {
+   "kapsama": 0.2519428349296526,
+   "durus": 0.33541666666666664,
+   "toptanci_payi": 0.06760551419110544,
+   "gunluk_para_artisi_firma": 235.48950135292583,
+   "toptanci_net_basim_firma_gun": -35.85782971561132,
+   "toptanci_alim_firma_gun": 82.03942323429538,
+   "tuketici_girisi_firma_gun": 573.0331900442607,
+   "ekside_firma": 0.2,
+   "gecis": 0,
+   "fiyat_min": 0.5707650395055939,
+   "fiyat_max": 2.3120014976728718,
+   "para_defteri_firma_gun": {
+    "tuketici": 573.0331900442607,
+    "toptanci_alim": 82.03942323429538,
+    "toptanci_satis": 117.8972529499067,
+    "uretim": 221.5,
+    "tasima": 16.61800922464448,
+    "kira": 59.65554575901602,
+    "komisyon": 16.14114905705319,
+    "insaat": 0.0,
+    "vergi": 0.0
+   },
+   "rol_getirisi": {
+    "son ürün": {
+     "ort": 99.69014323526898,
+     "p10": 0.0,
+     "n": 4
+    },
+    "dükkân": {
+     "ort": 952.8248945236734,
+     "p10": 345.4678065090251,
+     "n": 2
+    },
+    "ara mal": {
+     "ort": 17.69247555149459,
+     "p10": -66.18407170686869,
+     "n": 2
+    },
+    "ham madde": {
+     "ort": 136.13528846950118,
+     "p10": 49.504399606227345,
+     "n": 2
+    }
+   }
+  },
+  "sabit dagilim n=50 toptanci=A": {
+   "kapsama": 0.7255679554551709,
+   "durus": 0.0028703703703703703,
+   "toptanci_payi": 0.0,
+   "gunluk_para_artisi_firma": 1013.49849420427,
+   "toptanci_net_basim_firma_gun": 204.30156713198713,
+   "toptanci_alim_firma_gun": 241.93576261095473,
+   "tuketici_girisi_firma_gun": 1621.8136761240573,
+   "ekside_firma": 0,
+   "gecis": 0,
+   "fiyat_min": 0.6681166958469402,
+   "fiyat_max": 0.8683242524374518,
+   "para_defteri_firma_gun": {
+    "tuketici": 1621.8136761240573,
+    "toptanci_alim": 241.93576261095473,
+    "toptanci_satis": 37.634195478967605,
+    "uretim": 621.3333333333334,
+    "tasima": 36.96114236571233,
+    "kira": 175.98046141124115,
+    "komisyon": 49.67579368468963,
+    "insaat": 0.0,
+    "vergi": 0.0
+   },
+   "rol_getirisi": {
+    "ham madde": {
+     "ort": 694.6152717724966,
+     "p10": 410.2910372259512,
+     "n": 14
+    },
+    "ara mal": {
+     "ort": 128.90807982853124,
+     "p10": 83.9256213729207,
+     "n": 9
+    },
+    "dükkân": {
+     "ort": 4088.6093750662126,
+     "p10": 2450.7779077989544,
+     "n": 9
+    },
+    "son ürün": {
+     "ort": 168.40174741557948,
+     "p10": 0.0,
+     "n": 18
+    }
+   }
+  },
+  "sabit dagilim n=50 toptanci=B": {
+   "kapsama": 0.7067682490993105,
+   "durus": 0.008734567901234568,
+   "toptanci_payi": 0.0,
+   "gunluk_para_artisi_firma": 1025.730071087944,
+   "toptanci_net_basim_firma_gun": 118.11323779697494,
+   "toptanci_alim_firma_gun": 135.8919658687415,
+   "tuketici_girisi_firma_gun": 1655.7758715095015,
+   "ekside_firma": 0.42,
+   "gecis": 0,
+   "fiyat_min": 0.5707407878829244,
+   "fiyat_max": 0.8439479193596106,
+   "para_defteri_firma_gun": {
+    "tuketici": 1655.7758715095015,
+    "toptanci_alim": 135.8919658687415,
+    "toptanci_satis": 17.778728071766555,
+    "uretim": 564.072,
+    "tasima": 36.38125508506067,
+    "kira": 167.96751521740066,
+    "komisyon": 47.03047400910158,
+    "insaat": 0.0,
+    "vergi": 0.0
+   },
+   "rol_getirisi": {
+    "ham madde": {
+     "ort": 306.97942631893113,
+     "p10": 89.7536,
+     "n": 14
+    },
+    "ara mal": {
+     "ort": 98.2983797007828,
+     "p10": 19.08979218808663,
+     "n": 9
+    },
+    "dükkân": {
+     "ort": 4842.942798126175,
+     "p10": 2912.4608630064636,
+     "n": 9
+    },
+    "son ürün": {
+     "ort": 139.4134936750573,
+     "p10": 0.0,
+     "n": 18
+    }
+   }
+  },
+  "sabit dagilim n=50 toptanci=C": {
+   "kapsama": 0.7072064246452213,
+   "durus": 0.009660493827160494,
+   "toptanci_payi": 0.0,
+   "gunluk_para_artisi_firma": 1021.8346328973189,
+   "toptanci_net_basim_firma_gun": 111.35640559385845,
+   "toptanci_alim_firma_gun": 129.0877137125059,
+   "tuketici_girisi_firma_gun": 1654.6963117753917,
+   "ekside_firma": 0.2,
+   "gecis": 0,
+   "fiyat_min": 0.5707201903770778,
+   "fiyat_max": 0.8571998589157794,
+   "para_defteri_firma_gun": {
+    "tuketici": 1654.6963117753917,
+    "toptanci_alim": 129.0877137125059,
+    "toptanci_satis": 17.731308118647416,
+    "uretim": 559.5626666666667,
+    "tasima": 36.117612767495295,
+    "kira": 167.77364843123226,
+    "komisyon": 47.15066829410541,
+    "insaat": 0.0,
+    "vergi": 0.0
+   },
+   "rol_getirisi": {
+    "ham madde": {
+     "ort": 304.37646700226196,
+     "p10": 92.90275627167048,
+     "n": 14
+    },
+    "ara mal": {
+     "ort": 100.69162500177484,
+     "p10": 17.590087606681028,
+     "n": 9
+    },
+    "dükkân": {
+     "ort": 4832.790414510403,
+     "p10": 2895.762461879265,
+     "n": 9
+    },
+    "son ürün": {
+     "ort": 140.87753193216506,
+     "p10": 0.0,
+     "n": 18
+    }
+   }
+  },
+  "sabit dagilim n=200 toptanci=A": {
+   "kapsama": 0.8940751744273624,
+   "durus": 0.0014602446483180428,
+   "toptanci_payi": 0.028371236317013507,
+   "gunluk_para_artisi_firma": 1481.940933162778,
+   "toptanci_net_basim_firma_gun": 69.49254260204117,
+   "toptanci_alim_firma_gun": 151.15572659526734,
+   "tuketici_girisi_firma_gun": 2321.4087888914005,
+   "ekside_firma": 0.2,
+   "gecis": 0,
+   "fiyat_min": 0.6570210760603815,
+   "fiyat_max": 1.0406390534993732,
+   "para_defteri_firma_gun": {
+    "tuketici": 2321.4087888914005,
+    "toptanci_alim": 151.15572659526734,
+    "toptanci_satis": 81.66318399322618,
+    "uretim": 659.0496666666667,
+    "tasima": 34.23991922608653,
+    "kira": 227.82316467045612,
+    "komisyon": 62.516963337668685,
+    "insaat": 0.0,
+    "vergi": 0.0
+   },
+   "rol_getirisi": {
+    "ham madde": {
+     "ort": 820.7625857971598,
+     "p10": 455.40898803145046,
+     "n": 56
+    },
+    "son ürün": {
+     "ort": 131.42751788750178,
+     "p10": 70.98594065828084,
+     "n": 73
+    },
+    "ara mal": {
+     "ort": 161.94949680836885,
+     "p10": 73.12945152034426,
+     "n": 36
+    },
+    "dükkân": {
+     "ort": 6733.5405058453025,
+     "p10": 5367.315093337636,
+     "n": 35
+    }
+   }
+  },
+  "sabit dagilim n=200 toptanci=B": {
+   "kapsama": 0.8761954210351676,
+   "durus": 0.003654434250764526,
+   "toptanci_payi": 0.0,
+   "gunluk_para_artisi_firma": 1669.6160784131068,
+   "toptanci_net_basim_firma_gun": 84.8411543002896,
+   "toptanci_alim_firma_gun": 106.64288471803441,
+   "tuketici_girisi_firma_gun": 2503.00115998751,
+   "ekside_firma": 1,
+   "gecis": 0,
+   "fiyat_min": 0.5729179482502142,
+   "fiyat_max": 1.3561255478662166,
+   "para_defteri_firma_gun": {
+    "tuketici": 2503.00115998751,
+    "toptanci_alim": 106.64288471803441,
+    "toptanci_satis": 21.801730417744814,
+    "uretim": 638.276,
+    "tasima": 35.646766393986056,
+    "kira": 252.93419251263543,
+    "komisyon": 73.47119416640511,
+    "insaat": 0.0,
+    "vergi": 0.0
+   },
+   "rol_getirisi": {
+    "ham madde": {
+     "ort": 637.1748402050373,
+     "p10": 155.46358826322322,
+     "n": 56
+    },
+    "son ürün": {
+     "ort": 181.04678675937674,
+     "p10": 0.0,
+     "n": 73
+    },
+    "ara mal": {
+     "ort": 320.9787280681958,
+     "p10": 19.394553264648493,
+     "n": 36
+    },
+    "dükkân": {
+     "ort": 7820.40429206278,
+     "p10": 5560.414915293435,
+     "n": 35
+    }
+   }
+  },
+  "sabit dagilim n=200 toptanci=C": {
+   "kapsama": 0.8753052145070273,
+   "durus": 0.002889908256880734,
+   "toptanci_payi": 0.0,
+   "gunluk_para_artisi_firma": 1675.0284147228447,
+   "toptanci_net_basim_firma_gun": 85.73745539923294,
+   "toptanci_alim_firma_gun": 107.3494775485478,
+   "tuketici_girisi_firma_gun": 2508.6807560375423,
+   "ekside_firma": 0.2,
+   "gecis": 0,
+   "fiyat_min": 0.5727207299838728,
+   "fiyat_max": 1.609914128355218,
+   "para_defteri_firma_gun": {
+    "tuketici": 2508.6807560375423,
+    "toptanci_alim": 107.3494775485478,
+    "toptanci_satis": 21.612022149314857,
+    "uretim": 638.476,
+    "tasima": 35.85569811064117,
+    "kira": 254.030592145363,
+    "komisyon": 73.93744827970903,
+    "insaat": 0.0,
+    "vergi": 0.0
+   },
+   "rol_getirisi": {
+    "ham madde": {
+     "ort": 638.4042454543908,
+     "p10": 159.3760262695676,
+     "n": 56
+    },
+    "son ürün": {
+     "ort": 212.900668515301,
+     "p10": 0.0,
+     "n": 73
+    },
+    "ara mal": {
+     "ort": 346.82964147001024,
+     "p10": 62.69286283509755,
+     "n": 36
+    },
+    "dükkân": {
+     "ort": 7752.69539609759,
+     "p10": 5839.78688172602,
+     "n": 35
+    }
+   }
+  },
+  "takipci %25 pano": {
+   "kapsama": 0.6824813875951087,
+   "durus": 0.08883993845089974,
+   "toptanci_payi": 0.0323107286452219,
+   "gunluk_para_artisi_firma": 1025.027138794452,
+   "toptanci_net_basim_firma_gun": 23.691862151383717,
+   "toptanci_alim_firma_gun": 95.85418371609028,
+   "tuketici_girisi_firma_gun": 1722.6257539625155,
+   "ekside_firma": 0,
+   "gecis": 69,
+   "fiyat_min": 0.5358756098416527,
+   "fiyat_max": 2.3705465338616385,
+   "para_defteri_firma_gun": {
+    "tuketici": 1722.6257539625155,
+    "toptanci_alim": 95.85418371609028,
+    "toptanci_satis": 72.16232156470656,
+    "uretim": 503.3786666666667,
+    "tasima": 33.39620133367159,
+    "kira": 183.27509745992396,
+    "komisyon": 55.41066034560316,
+    "insaat": 72.46666666666667,
+    "vergi": 0.0
+   },
+   "rol_getirisi": {
+    "ham madde": {
+     "ort": 628.7553169315597,
+     "p10": 75.83072206949328,
+     "n": 13
+    },
+    "dükkân": {
+     "ort": 2224.620856768029,
+     "p10": 220.49952279889112,
+     "n": 14
+    },
+    "ara mal": {
+     "ort": 484.4629114516845,
+     "p10": 13.620030385278914,
+     "n": 7
+    },
+    "son ürün": {
+     "ort": 433.93702292928356,
+     "p10": -57.43540747234783,
+     "n": 14
+    }
+   }
+  },
+  "takipci %25 pano+kurulan kapasite": {
+   "kapsama": 0.7040169769210348,
+   "durus": 0.06696635359928976,
+   "toptanci_payi": 0.02714852490339094,
+   "gunluk_para_artisi_firma": 1053.1764908257537,
+   "toptanci_net_basim_firma_gun": 13.209534405041754,
+   "toptanci_alim_firma_gun": 86.86554091915228,
+   "tuketici_girisi_firma_gun": 1753.350083472262,
+   "ekside_firma": 0,
+   "gecis": 60,
+   "fiyat_min": 0.5633932086914138,
+   "fiyat_max": 2.57598284456067,
+   "para_defteri_firma_gun": {
+    "tuketici": 1753.350083472262,
+    "toptanci_alim": 86.86554091915228,
+    "toptanci_satis": 73.65600651411053,
+    "uretim": 502.9853333333333,
+    "tasima": 33.872921953567975,
+    "kira": 188.73420885143835,
+    "komisyon": 58.03405657911933,
+    "insaat": 62.22666666666667,
+    "vergi": 0.0
+   },
+   "rol_getirisi": {
+    "ham madde": {
+     "ort": 652.5605338907249,
+     "p10": 91.61863673166681,
+     "n": 11
+    },
+    "son ürün": {
+     "ort": 767.9344915025116,
+     "p10": 2.602070442148579,
+     "n": 17
+    },
+    "dükkân": {
+     "ort": 2070.6820370572445,
+     "p10": 521.2181675603326,
+     "n": 12
+    },
+    "ara mal": {
+     "ort": 621.9548466541803,
+     "p10": 40.039967354962485,
+     "n": 7
+    }
+   }
+  },
+  "takipci %25 pano+kapasite+12sa gecikme": {
+   "kapsama": 0.6527503137940043,
+   "durus": 0.060647449812010146,
+   "toptanci_payi": 0.020676814270314987,
+   "gunluk_para_artisi_firma": 1014.9138292101214,
+   "toptanci_net_basim_firma_gun": 21.99292880130722,
+   "toptanci_alim_firma_gun": 89.91776587453106,
+   "tuketici_girisi_firma_gun": 1731.6606287851662,
+   "ekside_firma": 0,
+   "gecis": 59.4,
+   "fiyat_min": 0.5501553913148962,
+   "fiyat_max": 2.401907348726454,
+   "para_defteri_firma_gun": {
+    "tuketici": 1731.6606287851662,
+    "toptanci_alim": 89.91776587453106,
+    "toptanci_satis": 67.92483707322383,
+    "uretim": 495.43733333333336,
+    "tasima": 33.36536503868492,
+    "kira": 186.3803538248354,
+    "komisyon": 57.18086045511065,
+    "insaat": 61.56,
+    "vergi": 0.0
+   },
+   "rol_getirisi": {
+    "ham madde": {
+     "ort": 581.5421534759695,
+     "p10": 89.42519495999841,
+     "n": 13
+    },
+    "dükkân": {
+     "ort": 2022.724192436186,
+     "p10": 274.8025400709583,
+     "n": 13
+    },
+    "ara mal": {
+     "ort": 569.1609084445488,
+     "p10": 4.789003318222877,
+     "n": 7
+    },
+    "son ürün": {
+     "ort": 725.1024220605138,
+     "p10": -4.275242455967236,
+     "n": 16
+    }
+   }
+  },
+  "takipci %50 pano": {
+   "kapsama": 0.5050902964785031,
+   "durus": 0.25646339991124145,
+   "toptanci_payi": 0.07117225431461446,
+   "gunluk_para_artisi_firma": 728.7896846340449,
+   "toptanci_net_basim_firma_gun": -41.49960562087374,
+   "toptanci_alim_firma_gun": 82.38270296141184,
+   "tuketici_girisi_firma_gun": 1432.5175599672448,
+   "ekside_firma": 0.02,
+   "gecis": 153.8,
+   "fiyat_min": 0.4886697397894813,
+   "fiyat_max": 2.5735520252249873,
+   "para_defteri_firma_gun": {
+    "tuketici": 1432.5175599672448,
+    "toptanci_alim": 82.38270296141184,
+    "toptanci_satis": 123.88230858228557,
+    "uretim": 387.632,
+    "tasima": 26.861590389033584,
+    "kira": 152.3726253921247,
+    "komisyon": 45.976567347421216,
+    "insaat": 147.73333333333332,
+    "vergi": 0.0
+   },
+   "rol_getirisi": {
+    "ham madde": {
+     "ort": 526.9007429265782,
+     "p10": 0.0,
+     "n": 10
+    },
+    "son ürün": {
+     "ort": 401.05162383749655,
+     "p10": -267.7605955293264,
+     "n": 18
+    },
+    "dükkân": {
+     "ort": 1434.1781865399141,
+     "p10": -78.76264196918919,
+     "n": 14
+    },
+    "ara mal": {
+     "ort": 591.7979357318858,
+     "p10": -88.53250501772945,
+     "n": 6
+    }
+   }
+  },
+  "takipci %50 pano+kurulan kapasite": {
+   "kapsama": 0.5814271615888237,
+   "durus": 0.19306531623104822,
+   "toptanci_payi": 0.06651017148969705,
+   "gunluk_para_artisi_firma": 902.261874813456,
+   "toptanci_net_basim_firma_gun": -72.41927878860226,
+   "toptanci_alim_firma_gun": 74.92637472251334,
+   "tuketici_girisi_firma_gun": 1626.4166579583793,
+   "ekside_firma": 0.02,
+   "gecis": 121.6,
+   "fiyat_min": 0.539776325944952,
+   "fiyat_max": 2.6172156366124595,
+   "para_defteri_firma_gun": {
+    "tuketici": 1626.4166579583793,
+    "toptanci_alim": 74.92637472251334,
+    "toptanci_satis": 147.3456535111156,
+    "uretim": 414.76,
+    "tasima": 29.202174231008502,
+    "kira": 172.9711561912833,
+    "komisyon": 52.74240273433908,
+    "insaat": 126.62666666666667,
+    "vergi": 0.0
+   },
+   "rol_getirisi": {
+    "ham madde": {
+     "ort": 684.3183804949075,
+     "p10": 85.74202163420469,
+     "n": 11
+    },
+    "dükkân": {
+     "ort": 1153.508090675814,
+     "p10": 93.99552108550851,
+     "n": 18
+    },
+    "ara mal": {
+     "ort": 682.8707691098401,
+     "p10": 0.0,
+     "n": 5
+    },
+    "son ürün": {
+     "ort": 849.5516845528389,
+     "p10": 0.0,
+     "n": 15
+    }
+   }
+  },
+  "takipci %50 pano+kapasite+12sa gecikme": {
+   "kapsama": 0.5651145356261473,
+   "durus": 0.20968545054713505,
+   "toptanci_payi": 0.07403292156280528,
+   "gunluk_para_artisi_firma": 873.6787221939193,
+   "toptanci_net_basim_firma_gun": -53.35543948154844,
+   "toptanci_alim_firma_gun": 73.91644147356492,
+   "tuketici_girisi_firma_gun": 1596.9609827287538,
+   "ekside_firma": 0.060000000000000005,
+   "gecis": 129.2,
+   "fiyat_min": 0.5692583791524206,
+   "fiyat_max": 2.5693022275862405,
+   "para_defteri_firma_gun": {
+    "tuketici": 1596.9609827287538,
+    "toptanci_alim": 73.91644147356492,
+    "toptanci_satis": 127.27188095511335,
+    "uretim": 405.9986666666667,
+    "tasima": 28.552311971979865,
+    "kira": 172.481682473852,
+    "komisyon": 53.36268675824265,
+    "insaat": 136.26666666666668,
+    "vergi": 0.0
+   },
+   "rol_getirisi": {
+    "ham madde": {
+     "ort": 666.0892415204299,
+     "p10": 103.41415343667559,
+     "n": 11
+    },
+    "dükkân": {
+     "ort": 1394.9896027683033,
+     "p10": 226.0517634791291,
+     "n": 13
+    },
+    "ara mal": {
+     "ort": 859.4661338940791,
+     "p10": 0.0,
+     "n": 8
+    },
+    "son ürün": {
+     "ort": 630.9119741158518,
+     "p10": -181.310687182151,
+     "n": 16
+    }
+   }
+  },
+  "takipci %100 pano": {
+   "kapsama": 0.13724662241137753,
+   "durus": 0.33972828686715273,
+   "toptanci_payi": 0.2630116304923946,
+   "gunluk_para_artisi_firma": 66.58241577706951,
+   "toptanci_net_basim_firma_gun": -177.98240085956613,
+   "toptanci_alim_firma_gun": 38.5290474225268,
+   "tuketici_girisi_firma_gun": 841.319538443563,
+   "ekside_firma": 0.060000000000000005,
+   "gecis": 280.8,
+   "fiyat_min": 0.4207657760623772,
+   "fiyat_max": 2.57293204517775,
+   "para_defteri_firma_gun": {
+    "tuketici": 841.319538443563,
+    "toptanci_alim": 38.5290474225268,
+    "toptanci_satis": 216.5114482820929,
+    "uretim": 200.34799999999998,
+    "tasima": 12.554173926925657,
+    "kira": 82.80159202521908,
+    "komisyon": 23.28549763914882,
+    "insaat": 258.4266666666667,
+    "vergi": 0.0
+   },
+   "rol_getirisi": {
+    "ara mal": {
+     "ort": 243.69562533237084,
+     "p10": -206.59128058912725,
+     "n": 9
+    },
+    "ham madde": {
+     "ort": 66.95978103020369,
+     "p10": -201.11673923360868,
+     "n": 17
+    },
+    "son ürün": {
+     "ort": -89.44952428164169,
+     "p10": -304.72971793067586,
+     "n": 9
+    },
+    "dükkân": {
+     "ort": 272.56362543644843,
+     "p10": -196.55853211922005,
+     "n": 14
+    }
+   }
+  },
+  "takipci %100 pano+kurulan kapasite": {
+   "kapsama": 0.3853566219265483,
+   "durus": 0.3948483097604958,
+   "toptanci_payi": 0.20074888810520566,
+   "gunluk_para_artisi_firma": 464.4395814881561,
+   "toptanci_net_basim_firma_gun": -233.85494760432556,
+   "toptanci_alim_firma_gun": 48.5977503964058,
+   "tuketici_girisi_firma_gun": 1405.2587441802139,
+   "ekside_firma": 0.32,
+   "gecis": 220.2,
+   "fiyat_min": 0.5198157138908459,
+   "fiyat_max": 2.663390555928092,
+   "para_defteri_firma_gun": {
+    "tuketici": 1405.2587441802139,
+    "toptanci_alim": 48.5977503964058,
+    "toptanci_satis": 282.4526980007314,
+    "uretim": 298.99199999999996,
+    "tasima": 21.267586454258286,
+    "kira": 145.420315663229,
+    "komisyon": 43.63649456063814,
+    "insaat": 214.28,
+    "vergi": 0.0
+   },
+   "rol_getirisi": {
+    "ham madde": {
+     "ort": 406.1164224588997,
+     "p10": -135.0,
+     "n": 11
+    },
+    "dükkân": {
+     "ort": 804.74457358816,
+     "p10": 0.0,
+     "n": 16
+    },
+    "son ürün": {
+     "ort": 304.44997361571683,
+     "p10": -193.26547185742584,
+     "n": 16
+    },
+    "ara mal": {
+     "ort": 191.89556632648546,
+     "p10": -322.02949939067827,
+     "n": 6
+    }
+   }
+  },
+  "takipci %100 pano+kapasite+12sa gecikme": {
+   "kapsama": 0.32346023577431754,
+   "durus": 0.38813400500881057,
+   "toptanci_payi": 0.24342873167701165,
+   "gunluk_para_artisi_firma": 437.94011143086993,
+   "toptanci_net_basim_firma_gun": -219.3844599825642,
+   "toptanci_alim_firma_gun": 42.97818114029954,
+   "tuketici_girisi_firma_gun": 1286.0070045548136,
+   "ekside_firma": 0,
+   "gecis": 226.6,
+   "fiyat_min": 0.4749009330179489,
+   "fiyat_max": 2.8915257485500088,
+   "para_defteri_firma_gun": {
+    "tuketici": 1286.0070045548136,
+    "toptanci_alim": 42.97818114029954,
+    "toptanci_satis": 262.3626411228638,
+    "uretim": 264.44,
+    "tasima": 19.371027500340855,
+    "kira": 133.91239836863514,
+    "komisyon": 40.47788345032766,
+    "insaat": 222.68,
+    "vergi": 0.0
+   },
+   "rol_getirisi": {
+    "dükkân": {
+     "ort": 665.5831323303669,
+     "p10": -6.100007248557086,
+     "n": 16
+    },
+    "ham madde": {
+     "ort": 283.9752693719572,
+     "p10": -139.50362766434083,
+     "n": 13
+    },
+    "ara mal": {
+     "ort": 313.759864231278,
+     "p10": -199.1166168825119,
+     "n": 7
+    },
+    "son ürün": {
+     "ort": 397.07552265206033,
+     "p10": -81.08818104394459,
+     "n": 13
+    }
+   }
+  },
+  "herkes fabrika takipci %0 toptanci=A": {
+   "kapsama": 0.7784657591492506,
+   "durus": 0.004912280701754385,
+   "toptanci_payi": 0.6281801952834701,
+   "gunluk_para_artisi_firma": 389.67647425642406,
+   "toptanci_net_basim_firma_gun": -877.177962669928,
+   "toptanci_alim_firma_gun": 24.170591271117175,
+   "tuketici_girisi_firma_gun": 1729.9762022122668,
+   "ekside_firma": 1.04,
+   "gecis": 0,
+   "fiyat_min": 1.0,
+   "fiyat_max": 1.315464277699856,
+   "para_defteri_firma_gun": {
+    "tuketici": 1729.9762022122668,
+    "toptanci_alim": 24.170591271117175,
+    "toptanci_satis": 901.3485539410452,
+    "uretim": 281.88933333333335,
+    "tasima": 20.63972959024504,
+    "kira": 176.60937694767043,
+    "komisyon": 53.34122236409489,
+    "insaat": 0.0,
+    "vergi": 0.0
+   },
+   "rol_getirisi": {
+    "ara mal": {
+     "ort": 72.07615459170574,
+     "p10": -45.538571703344495,
+     "n": 12
+    },
+    "son ürün": {
+     "ort": 88.1063353844657,
+     "p10": 0.0,
+     "n": 26
+    },
+    "dükkân": {
+     "ort": 1392.297822867748,
+     "p10": 759.9049221704405,
+     "n": 12
+    }
+   }
+  },
+  "tedarikci kaybi takipci %0 toptanci=A": {
+   "kapsama": 0.7255768029734009,
+   "durus": 0.020987654320987655,
+   "toptanci_payi": 0.20241029902048133,
+   "gunluk_para_artisi_firma": 764.0042115356216,
+   "toptanci_net_basim_firma_gun": -76.26085948708166,
+   "toptanci_alim_firma_gun": 115.44264077734577,
+   "tuketici_girisi_firma_gun": 1624.7665297946035,
+   "ekside_firma": 0.1,
+   "gecis": 0,
+   "fiyat_min": 0.7287564728847361,
+   "fiyat_max": 1.446302078091659,
+   "para_defteri_firma_gun": {
+    "tuketici": 1624.7665297946035,
+    "toptanci_alim": 115.44264077734577,
+    "toptanci_satis": 191.70350026442742,
+    "uretim": 495.144,
+    "tasima": 33.08924670614859,
+    "kira": 177.51177900742485,
+    "komisyon": 54.300792287291124,
+    "insaat": 0.0,
+    "vergi": 0.0
+   },
+   "rol_getirisi": {
+    "ham madde": {
+     "ort": 787.3023838580688,
+     "p10": 0.0,
+     "n": 14
+    },
+    "ara mal": {
+     "ort": 96.9786952551475,
+     "p10": -56.8729727445399,
+     "n": 9
+    },
+    "dükkân": {
+     "ort": 2728.184761170587,
+     "p10": 1735.9280825512135,
+     "n": 9
+    },
+    "son ürün": {
+     "ort": 115.48937817742046,
+     "p10": 0.0,
+     "n": 18
+    }
+   },
+   "sok": {
+    "once_kapsama": 0.7255679554551709,
+    "en_dusuk_kapsama": 0.7244186043537275,
+    "toparlanma_gun": 1.8,
+    "toparlanamayan_kosu": 0,
+    "fiyat_tepe": 1.4628394485416039,
+    "fiyat_dip": 0.6953967220876904,
+    "en_yuksek_durus": 0.18919753086419752
+   }
+  },
+  "herkes fabrika takipci %25 toptanci=A": {
+   "kapsama": 0.8200933289486754,
+   "durus": 0.018433572781866928,
+   "toptanci_payi": 0.45985451133157046,
+   "gunluk_para_artisi_firma": 517.8459537662906,
+   "toptanci_net_basim_firma_gun": -636.8523069437217,
+   "toptanci_alim_firma_gun": 64.02355000745207,
+   "tuketici_girisi_firma_gun": 1754.3206376045437,
+   "ekside_firma": 0.28,
+   "gecis": 44,
+   "fiyat_min": 0.6477820319665751,
+   "fiyat_max": 1.3479552638387398,
+   "para_defteri_firma_gun": {
+    "tuketici": 1754.3206376045437,
+    "toptanci_alim": 64.02355000745207,
+    "toptanci_satis": 700.8758569511738,
+    "uretim": 378.024,
+    "tasima": 24.142571239791305,
+    "kira": 185.02767383147145,
+    "komisyon": 56.46627867052151,
+    "insaat": 42.160000000000004,
+    "vergi": 0.0
+   },
+   "rol_getirisi": {
+    "ara mal": {
+     "ort": 89.34509453076656,
+     "p10": -57.88288577084495,
+     "n": 10
+    },
+    "son ürün": {
+     "ort": 179.96052846181593,
+     "p10": 0.0,
+     "n": 20
+    },
+    "dükkân": {
+     "ort": 1223.1615840131115,
+     "p10": 645.5201199140099,
+     "n": 14
+    },
+    "ham madde": {
+     "ort": 821.3352046873822,
+     "p10": 128.13585143405817,
+     "n": 4
+    }
+   }
+  },
+  "tedarikci kaybi takipci %25 toptanci=A": {
+   "kapsama": 0.7993906748035926,
+   "durus": 0.04215017718530304,
+   "toptanci_payi": 0.27191203675190034,
+   "gunluk_para_artisi_firma": 693.9085558113964,
+   "toptanci_net_basim_firma_gun": -271.3573266303618,
+   "toptanci_alim_firma_gun": 153.1561022888528,
+   "tuketici_girisi_firma_gun": 1759.1998756683392,
+   "ekside_firma": 0.04,
+   "gecis": 53.4,
+   "fiyat_min": 0.6796858006244905,
+   "fiyat_max": 1.4701783669411397,
+   "para_defteri_firma_gun": {
+    "tuketici": 1759.1998756683392,
+    "toptanci_alim": 153.1561022888528,
+    "toptanci_satis": 424.5134289192146,
+    "uretim": 486.4986666666667,
+    "tasima": 30.949684819302586,
+    "kira": 188.92550920687168,
+    "komisyon": 55.984626185406135,
+    "insaat": 57.18666666666667,
+    "vergi": 0.0
+   },
+   "rol_getirisi": {
+    "ham madde": {
+     "ort": 667.3050051024863,
+     "p10": 0.0,
+     "n": 12
+    },
+    "son ürün": {
+     "ort": 376.1878627516216,
+     "p10": 0.9100532428808037,
+     "n": 15
+    },
+    "dükkân": {
+     "ort": 1231.1153275982067,
+     "p10": 249.75254198529947,
+     "n": 14
+    },
+    "ara mal": {
+     "ort": 411.9405417951967,
+     "p10": 12.414966757583533,
+     "n": 7
+    }
+   },
+   "sok": {
+    "once_kapsama": 0.7772581619438969,
+    "en_dusuk_kapsama": 0.7544025309064777,
+    "toparlanma_gun": 5.4,
+    "toparlanamayan_kosu": 0,
+    "fiyat_tepe": 1.5044735613405884,
+    "fiyat_dip": 0.6554903952832587,
+    "en_yuksek_durus": 0.15196857289248594
+   }
+  },
+  "talep yariya toptanci=A": {
+   "kapsama": 0.7548302067845227,
+   "durus": 0.007098765432098765,
+   "toptanci_payi": 0.0,
+   "gunluk_para_artisi_firma": 538.8510171484236,
+   "toptanci_net_basim_firma_gun": 356.15707438894776,
+   "toptanci_alim_firma_gun": 393.7912698679154,
+   "tuketici_girisi_firma_gun": 1046.7430177158267,
+   "ekside_firma": 0.2,
+   "gecis": 0,
+   "fiyat_min": 0.6304062856463221,
+   "fiyat_max": 0.7787314716521957,
+   "para_defteri_firma_gun": {
+    "tuketici": 1046.7430177158267,
+    "toptanci_alim": 393.7912698679154,
+    "toptanci_satis": 37.634195478967605,
+    "uretim": 588.5213333333334,
+    "tasima": 29.602143043060906,
+    "kira": 135.90525682909674,
+    "komisyon": 38.327125469933236,
+    "insaat": 0.0,
+    "vergi": 0.0
+   },
+   "rol_getirisi": {
+    "ham madde": {
+     "ort": 597.9167310913978,
+     "p10": 316.5207444137806,
+     "n": 14
+    },
+    "ara mal": {
+     "ort": 96.80468454416749,
+     "p10": 0.0,
+     "n": 9
+    },
+    "dükkân": {
+     "ort": 1797.5273376841885,
+     "p10": 1017.9262964369973,
+     "n": 9
+    },
+    "son ürün": {
+     "ort": 79.75152923466386,
+     "p10": 0.0,
+     "n": 18
+    }
+   },
+   "sok": {
+    "once_kapsama": 0.7255679554551709,
+    "en_dusuk_kapsama": 0.731336358908377,
+    "toparlanma_gun": 1,
+    "toparlanamayan_kosu": 0,
+    "fiyat_tepe": 0.8494577787023839,
+    "fiyat_dip": 0.6300083447590117,
+    "en_yuksek_durus": 0.013580246913580247
+   }
+  },
+  "istifci (un) toptanci=A": {
+   "kapsama": 0.7247618058421921,
+   "durus": 0.003179012345679012,
+   "toptanci_payi": 0.00028901037659021303,
+   "gunluk_para_artisi_firma": 1016.854820465939,
+   "toptanci_net_basim_firma_gun": 88.11609108551491,
+   "toptanci_alim_firma_gun": 221.35653279339647,
+   "tuketici_girisi_firma_gun": 1628.1729172345026,
+   "ekside_firma": 0,
+   "gecis": 0,
+   "fiyat_min": 0.6681166958469402,
+   "fiyat_max": 0.8676768986223994,
+   "para_defteri_firma_gun": {
+    "tuketici": 1628.1729172345026,
+    "toptanci_alim": 221.35653279339647,
+    "toptanci_satis": 133.24044170788156,
+    "uretim": 618.7613333333334,
+    "tasima": 38.09825178645571,
+    "kira": 183.17364477464608,
+    "komisyon": 54.41830336394144,
+    "insaat": 0.0,
+    "vergi": 0.0
+   },
+   "rol_getirisi": {
+    "ham madde": {
+     "ort": 694.7450354491968,
+     "p10": 402.40363518962624,
+     "n": 14
+    },
+    "ara mal": {
+     "ort": 124.0453769029372,
+     "p10": 83.9256213729207,
+     "n": 9
+    },
+    "dükkân": {
+     "ort": 4101.717227426933,
+     "p10": 2463.944624818375,
+     "n": 9
+    },
+    "son ürün": {
+     "ort": 167.70113125673117,
+     "p10": 0.0,
+     "n": 18
+    }
+   },
+   "istifci_kar": -98255.1306023762,
+   "un_fiyat_ort": 1.0484998253308975,
+   "ekmek_kapsama": 0.7155886136974434
+  },
+  "herkes fabrika takipci %0 toptanci=B": {
+   "kapsama": 0.046089368331185876,
+   "durus": 0.47653508771929826,
+   "toptanci_payi": 0.7603283314861268,
+   "gunluk_para_artisi_firma": 77.84258841559793,
+   "toptanci_net_basim_firma_gun": -174.38288022736768,
+   "toptanci_alim_firma_gun": 5.774732031479453,
+   "tuketici_girisi_firma_gun": 321.5201714353393,
+   "ekside_firma": 0.6,
+   "gecis": 0,
+   "fiyat_min": 1.0,
+   "fiyat_max": 2.950497367550758,
+   "para_defteri_firma_gun": {
+    "tuketici": 321.5201714353393,
+    "toptanci_alim": 5.774732031479453,
+    "toptanci_satis": 180.15761225884714,
+    "uretim": 32.041333333333334,
+    "tasima": 3.4062886955440286,
+    "kira": 29.466897579737545,
+    "komisyon": 7.861291443837778,
+    "insaat": 0.0,
+    "vergi": 0.0
+   },
+   "rol_getirisi": {
+    "ara mal": {
+     "ort": 12.80817648772383,
+     "p10": -136.1040865154764,
+     "n": 12
+    },
+    "son ürün": {
+     "ort": 93.19108434581109,
+     "p10": 0.0,
+     "n": 26
+    },
+    "dükkân": {
+     "ort": 124.3592437633688,
+     "p10": 87.98828171476816,
+     "n": 12
+    }
+   }
+  },
+  "tedarikci kaybi takipci %0 toptanci=B": {
+   "kapsama": 0.41686645107574755,
+   "durus": 0.1837962962962963,
+   "toptanci_payi": 0.027688575067412506,
+   "gunluk_para_artisi_firma": 618.9318040160283,
+   "toptanci_net_basim_firma_gun": -2.735827268759887,
+   "toptanci_alim_firma_gun": 69.49965137615894,
+   "tuketici_girisi_firma_gun": 1421.2975505713869,
+   "ekside_firma": 0.5,
+   "gecis": 0,
+   "fiyat_min": 0.5784525060774258,
+   "fiyat_max": 2.9982867365869077,
+   "para_defteri_firma_gun": {
+    "tuketici": 1421.2975505713869,
+    "toptanci_alim": 69.49965137615894,
+    "toptanci_satis": 72.23547864491883,
+    "uretim": 417.4053333333333,
+    "tasima": 29.338313493038193,
+    "kira": 159.931381574352,
+    "komisyon": 51.23491288618828,
+    "insaat": 0.0,
+    "vergi": 0.0
+   },
+   "rol_getirisi": {
+    "ham madde": {
+     "ort": 825.6249145467724,
+     "p10": 0.0,
+     "n": 14
+    },
+    "ara mal": {
+     "ort": 339.0938271340848,
+     "p10": -171.7753521982238,
+     "n": 9
+    },
+    "dükkân": {
+     "ort": 2077.1918705060707,
+     "p10": 1105.8237914548765,
+     "n": 9
+    },
+    "son ürün": {
+     "ort": -57.45700617473115,
+     "p10": -374.3361804868029,
+     "n": 18
+    }
+   },
+   "sok": {
+    "once_kapsama": 0.7058589370054584,
+    "en_dusuk_kapsama": 0.49286949359664567,
+    "toparlanma_gun": 5,
+    "toparlanamayan_kosu": 4,
+    "fiyat_tepe": 2.999983383619657,
+    "fiyat_dip": 0.5707843551382772,
+    "en_yuksek_durus": 0.29845679012345677
+   }
+  },
+  "herkes fabrika takipci %25 toptanci=B": {
+   "kapsama": 0.15341413487737693,
+   "durus": 0.25736711535788054,
+   "toptanci_payi": 0.23778961712781996,
+   "gunluk_para_artisi_firma": 257.2796316584364,
+   "toptanci_net_basim_firma_gun": -127.08890498585703,
+   "toptanci_alim_firma_gun": 37.616507083648756,
+   "tuketici_girisi_firma_gun": 662.3182155907181,
+   "ekside_firma": 1.4,
+   "gecis": 62.8,
+   "fiyat_min": 0.5335340106765336,
+   "fiyat_max": 2.6780039316342026,
+   "para_defteri_firma_gun": {
+    "tuketici": 662.3182155907181,
+    "toptanci_alim": 37.616507083648756,
+    "toptanci_satis": 164.7054120695058,
+    "uretim": 149.664,
+    "tasima": 9.284874101467347,
+    "kira": 63.050853289946836,
+    "komisyon": 16.83247029373413,
+    "insaat": 51.44,
+    "vergi": 0.0
+   },
+   "rol_getirisi": {
+    "ara mal": {
+     "ort": -10.699478118478412,
+     "p10": -198.39240571298797,
+     "n": 10
+    },
+    "son ürün": {
+     "ort": 96.44338252836367,
+     "p10": 0.0,
+     "n": 20
+    },
+    "dükkân": {
+     "ort": 639.8291660668264,
+     "p10": -56.34333683338191,
+     "n": 12
+    },
+    "ham madde": {
+     "ort": 575.4057395742503,
+     "p10": -18.08459484305922,
+     "n": 7
+    }
+   }
+  },
+  "tedarikci kaybi takipci %25 toptanci=B": {
+   "kapsama": 0.4855748404079674,
+   "durus": 0.2070714969562319,
+   "toptanci_payi": 0.06982212428223873,
+   "gunluk_para_artisi_firma": 781.6468095737227,
+   "toptanci_net_basim_firma_gun": -42.6620151617485,
+   "toptanci_alim_firma_gun": 65.49739776275001,
+   "tuketici_girisi_firma_gun": 1516.409020082871,
+   "ekside_firma": 0.02,
+   "gecis": 70.8,
+   "fiyat_min": 0.5629301907283344,
+   "fiyat_max": 2.9915715299719476,
+   "para_defteri_firma_gun": {
+    "tuketici": 1516.409020082871,
+    "toptanci_alim": 65.49739776275001,
+    "toptanci_satis": 108.1594129244985,
+    "uretim": 404.92,
+    "tasima": 28.393404156694775,
+    "kira": 169.19572535533754,
+    "komisyon": 54.06024267783587,
+    "insaat": 73.68,
+    "vergi": 0.0
+   },
+   "rol_getirisi": {
+    "ham madde": {
+     "ort": 772.0032262515393,
+     "p10": 0.0,
+     "n": 14
+    },
+    "ara mal": {
+     "ort": 403.67701074513144,
+     "p10": -394.3090443716728,
+     "n": 10
+    },
+    "dükkân": {
+     "ort": 1685.0715204575554,
+     "p10": 436.8404792224108,
+     "n": 10
+    },
+    "son ürün": {
+     "ort": 406.1105673535497,
+     "p10": -73.0534134821908,
+     "n": 15
+    }
+   },
+   "sok": {
+    "once_kapsama": 0.6761474369259013,
+    "en_dusuk_kapsama": 0.4145347534974864,
+    "toparlanma_gun": 9,
+    "toparlanamayan_kosu": 4,
+    "fiyat_tepe": 2.9916107511179257,
+    "fiyat_dip": 0.5331753495701947,
+    "en_yuksek_durus": 0.36215254552211074
+   }
+  },
+  "talep yariya toptanci=B": {
+   "kapsama": 0.7465727262071506,
+   "durus": 0.016728395061728393,
+   "toptanci_payi": 0.0,
+   "gunluk_para_artisi_firma": 453.5015634762126,
+   "toptanci_net_basim_firma_gun": 168.0725924292708,
+   "toptanci_alim_firma_gun": 185.85132050103732,
+   "tuketici_girisi_firma_gun": 1060.4663585428332,
+   "ekside_firma": 0.62,
+   "gecis": 0,
+   "fiyat_min": 0.5707418439581499,
+   "fiyat_max": 0.6588649693263562,
+   "para_defteri_firma_gun": {
+    "tuketici": 1060.4663585428332,
+    "toptanci_alim": 185.85132050103732,
+    "toptanci_satis": 17.778728071766555,
+    "uretim": 477.6573333333333,
+    "tasima": 27.282503711276412,
+    "kira": 122.787742741048,
+    "komisyon": 36.283115273311516,
+    "insaat": 0.0,
+    "vergi": 0.0
+   },
+   "rol_getirisi": {
+    "ham madde": {
+     "ort": 211.41132578712399,
+     "p10": 42.5,
+     "n": 14
+    },
+    "ara mal": {
+     "ort": 59.05073038671807,
+     "p10": -2.941338322333377,
+     "n": 9
+    },
+    "dükkân": {
+     "ort": 2056.4305831968545,
+     "p10": 1167.8570446639092,
+     "n": 9
+    },
+    "son ürün": {
+     "ort": 53.576590375741304,
+     "p10": 0.0,
+     "n": 18
+    }
+   },
+   "sok": {
+    "once_kapsama": 0.7058589370054584,
+    "en_dusuk_kapsama": 0.7145156075326221,
+    "toparlanma_gun": 1,
+    "toparlanamayan_kosu": 0,
+    "fiyat_tepe": 0.8321996784166366,
+    "fiyat_dip": 0.5706699846970537,
+    "en_yuksek_durus": 0.020061728395061727
+   }
+  },
+  "istifci (un) toptanci=B": {
+   "kapsama": 0.6703988138848197,
+   "durus": 0.011358024691358024,
+   "toptanci_payi": 0.0,
+   "gunluk_para_artisi_firma": 1132.9007184976247,
+   "toptanci_net_basim_firma_gun": 85.33383435050652,
+   "toptanci_alim_firma_gun": 103.31862422301228,
+   "tuketici_girisi_firma_gun": 1699.2096534791606,
+   "ekside_firma": 0.26,
+   "gecis": 0,
+   "fiyat_min": 0.5707407878829244,
+   "fiyat_max": 1.6488013038259073,
+   "para_defteri_firma_gun": {
+    "tuketici": 1699.2096534791606,
+    "toptanci_alim": 103.31862422301228,
+    "toptanci_satis": 17.98478987250576,
+    "uretim": 553.7026666666667,
+    "tasima": 37.54276306570392,
+    "kira": 184.11781515783633,
+    "komisyon": 56.75085583051332,
+    "insaat": 0.0,
+    "vergi": 0.0
+   },
+   "rol_getirisi": {
+    "ham madde": {
+     "ort": 424.2428844267204,
+     "p10": 93.7190391417389,
+     "n": 14
+    },
+    "ara mal": {
+     "ort": 1017.0077299464363,
+     "p10": 43.8964590216663,
+     "n": 9
+    },
+    "dükkân": {
+     "ort": 4347.044544138689,
+     "p10": 2493.6593268410643,
+     "n": 9
+    },
+    "son ürün": {
+     "ort": 128.72133752079768,
+     "p10": 0.0,
+     "n": 18
+    }
+   },
+   "istifci_kar": -76376.71783719082,
+   "un_fiyat_ort": 1.5264493029801176,
+   "ekmek_kapsama": 0.6126552069245289
+  },
+  "ani suru (ureticilerin yarisi) pano": {
+   "kapsama": 0.38112256575369946,
+   "durus": 0.3454956419598543,
+   "toptanci_payi": 0.09230216623596504,
+   "gunluk_para_artisi_firma": 669.020078366834,
+   "toptanci_net_basim_firma_gun": -73.80561245844136,
+   "toptanci_alim_firma_gun": 69.68866502738216,
+   "tuketici_girisi_firma_gun": 1421.42909789546,
+   "ekside_firma": 0.28,
+   "gecis": 89.2,
+   "fiyat_min": 0.5306407043008231,
+   "fiyat_max": 2.9192969082793025,
+   "para_defteri_firma_gun": {
+    "tuketici": 1421.42909789546,
+    "toptanci_alim": 69.68866502738216,
+    "toptanci_satis": 143.49427748582352,
+    "uretim": 362.52666666666664,
+    "tasima": 25.081089257453087,
+    "kira": 151.683598343155,
+    "komisyon": 46.276626118204085,
+    "insaat": 77.92,
+    "vergi": 0.0
+   },
+   "rol_getirisi": {
+    "ara mal": {
+     "ort": 247.61356481180576,
+     "p10": -141.52451291165843,
+     "n": 14
+    },
+    "son ürün": {
+     "ort": 259.8267113059299,
+     "p10": -268.8607976977828,
+     "n": 15
+    },
+    "dükkân": {
+     "ort": 1733.0939765855342,
+     "p10": 123.78129954828364,
+     "n": 10
+    },
+    "ham madde": {
+     "ort": 849.1689949097339,
+     "p10": 120.17811289199635,
+     "n": 10
+    }
+   },
+   "sok": {
+    "once_kapsama": 0.6761474369259013,
+    "en_dusuk_kapsama": 0.28991024987593506,
+    "toparlanma_gun": 10,
+    "toparlanamayan_kosu": 4,
+    "fiyat_tepe": 2.9860868258740507,
+    "fiyat_dip": 0.4651836658672302,
+    "en_yuksek_durus": 0.6626994668835277
+   }
+  },
+  "ani suru (ureticilerin yarisi) pano+kurulan kapasite": {
+   "kapsama": 0.4812226984401378,
+   "durus": 0.4207147858011321,
+   "toptanci_payi": 0.08328897904219525,
+   "gunluk_para_artisi_firma": 791.9684424343534,
+   "toptanci_net_basim_firma_gun": -88.55738565359722,
+   "toptanci_alim_firma_gun": 69.04986641514569,
+   "tuketici_girisi_firma_gun": 1531.9403941711696,
+   "ekside_firma": 0,
+   "gecis": 82,
+   "fiyat_min": 0.559297540823269,
+   "fiyat_max": 2.796054287918217,
+   "para_defteri_firma_gun": {
+    "tuketici": 1531.9403941711696,
+    "toptanci_alim": 69.04986641514569,
+    "toptanci_satis": 157.6072520687429,
+    "uretim": 381.1306666666666,
+    "tasima": 26.777357956746936,
+    "kira": 162.55277393089565,
+    "komisyon": 49.501956540945855,
+    "insaat": 76.70666666666666,
+    "vergi": 0.0
+   },
+   "rol_getirisi": {
+    "ham madde": {
+     "ort": 860.7150904509828,
+     "p10": 175.20937264973637,
+     "n": 8
+    },
+    "son ürün": {
+     "ort": 340.9073484007022,
+     "p10": -274.23252234101926,
+     "n": 22
+    },
+    "dükkân": {
+     "ort": 1914.9528619568732,
+     "p10": 604.8340837705864,
+     "n": 10
+    },
+    "ara mal": {
+     "ort": 477.3775416389237,
+     "p10": -164.21192791040738,
+     "n": 8
+    }
+   },
+   "sok": {
+    "once_kapsama": 0.6966105165778782,
+    "en_dusuk_kapsama": 0.3644672717236221,
+    "toparlanma_gun": 11,
+    "toparlanamayan_kosu": 4,
+    "fiyat_tepe": 2.876197416785429,
+    "fiyat_dip": 0.4958072215374389,
+    "en_yuksek_durus": 0.6503995818597111
+   }
+  },
+  "ani suru (ureticilerin yarisi) pano+kapasite+12sa gecikme": {
+   "kapsama": 0.41718939050925086,
+   "durus": 0.18782607547306648,
+   "toptanci_payi": 0.09109179233341504,
+   "gunluk_para_artisi_firma": 704.6004722871685,
+   "toptanci_net_basim_firma_gun": -66.76622342874298,
+   "toptanci_alim_firma_gun": 72.8707667913514,
+   "tuketici_girisi_firma_gun": 1463.4827090505817,
+   "ekside_firma": 0.27999999999999997,
+   "gecis": 81.6,
+   "fiyat_min": 0.5660533932890102,
+   "fiyat_max": 2.867719464423533,
+   "para_defteri_firma_gun": {
+    "tuketici": 1463.4827090505817,
+    "toptanci_alim": 72.8707667913514,
+    "toptanci_satis": 139.6369902200944,
+    "uretim": 384.616,
+    "tasima": 26.877725079367163,
+    "kira": 158.9981865334212,
+    "komisyon": 49.308307644802106,
+    "insaat": 76.56,
+    "vergi": 0.0
+   },
+   "rol_getirisi": {
+    "ham madde": {
+     "ort": 705.1561123558637,
+     "p10": 52.171278584704666,
+     "n": 7
+    },
+    "son ürün": {
+     "ort": 310.66371203575517,
+     "p10": -280.8002281956236,
+     "n": 19
+    },
+    "dükkân": {
+     "ort": 1760.8958262503338,
+     "p10": 452.3254452007539,
+     "n": 12
+    },
+    "ara mal": {
+     "ort": 375.763718814361,
+     "p10": -146.57457645930964,
+     "n": 10
+    }
+   },
+   "sok": {
+    "once_kapsama": 0.6855001913123243,
+    "en_dusuk_kapsama": 0.38050231335848744,
+    "toparlanma_gun": null,
+    "toparlanamayan_kosu": 5,
+    "fiyat_tepe": 2.916053859983044,
+    "fiyat_dip": 0.5397078895017012,
+    "en_yuksek_durus": 0.5857208383307584
+   }
+  },
+  "vergi gunluk toptanci=B": {
+   "kapsama": 0.6746442182918173,
+   "durus": 0.011790123456790123,
+   "toptanci_payi": 0.0,
+   "gunluk_para_artisi_firma": 1016.7839210306596,
+   "toptanci_net_basim_firma_gun": 111.38207595604388,
+   "toptanci_alim_firma_gun": 129.89931714532028,
+   "tuketici_girisi_firma_gun": 1553.0587919700204,
+   "ekside_firma": 0.6,
+   "gecis": 0,
+   "fiyat_min": 0.5429560615261462,
+   "fiyat_max": 0.9887648553458185,
+   "para_defteri_firma_gun": {
+    "tuketici": 1553.0587919700204,
+    "toptanci_alim": 129.89931714532028,
+    "toptanci_satis": 18.517241189276398,
+    "uretim": 544.308,
+    "tasima": 33.24621063011654,
+    "kira": 76.36404352177043,
+    "komisyon": 43.509870841404805,
+    "insaat": 0.0,
+    "vergi": 5.491428571428552
+   },
+   "rol_getirisi": {
+    "ham madde": {
+     "ort": 263.0287102545289,
+     "p10": 73.98823464907983,
+     "n": 14
+    },
+    "ara mal": {
+     "ort": 241.16479188693157,
+     "p10": 0.0,
+     "n": 9
+    },
+    "dükkân": {
+     "ort": 4831.932538788203,
+     "p10": 2225.7579504460236,
+     "n": 9
+    },
+    "son ürün": {
+     "ort": 97.59336190297078,
+     "p10": 0.0,
+     "n": 18
+    }
+   }
+  },
+  "vergi toplu toptanci=B": {
+   "kapsama": 0.6746088438444885,
+   "durus": 0.011358024691358024,
+   "toptanci_payi": 0.0,
+   "gunluk_para_artisi_firma": 1014.5559203726173,
+   "toptanci_net_basim_firma_gun": 111.439548466239,
+   "toptanci_alim_firma_gun": 129.51686592881163,
+   "tuketici_girisi_firma_gun": 1552.8841527494683,
+   "ekside_firma": 0.6,
+   "gecis": 0,
+   "fiyat_min": 0.5429965151993464,
+   "fiyat_max": 0.9907692463439814,
+   "para_defteri_firma_gun": {
+    "tuketici": 1552.8841527494683,
+    "toptanci_alim": 129.51686592881163,
+    "toptanci_satis": 18.077317462572626,
+    "uretim": 544.2826666666667,
+    "tasima": 33.20896137341799,
+    "kira": 76.36061903288336,
+    "komisyon": 43.43222850838735,
+    "insaat": 0.0,
+    "vergi": 5.125333333333334
+   },
+   "rol_getirisi": {
+    "ham madde": {
+     "ort": 262.7758235345653,
+     "p10": 67.13109179193634,
+     "n": 14
+    },
+    "ara mal": {
+     "ort": 245.64207718457402,
+     "p10": 0.3506892581164266,
+     "n": 9
+    },
+    "dükkân": {
+     "ort": 4825.3080827048125,
+     "p10": 2224.7668363186976,
+     "n": 9
+    },
+    "son ürün": {
+     "ort": 92.80554483201387,
+     "p10": 0.0,
+     "n": 18
+    }
+   }
+  }
+ }
+}
