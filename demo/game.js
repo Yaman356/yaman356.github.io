@@ -54,6 +54,26 @@
     ['Net değerini ₺50.000 yap', s => netWorth() >= 50000],
   ];
   const SAVE_KEY = 'tezgah-demo-v1';
+  const BUYERS = ['Nazlı Hanım', 'Cemil Usta', 'Bakkal Rıza', 'Sirma Abla', 'Genç Tuna', 'Hacı Dayı', 'Mimar Efsun'];
+  const BT = {
+    aceleci: { hint: 'Saatine bakıp duruyor. Acelesi var.', max: [1.10, 1.20], pat: 3, open: 0.98 },
+    pazarlikci: { hint: 'Gözleri parlıyor. Pazarlığı seviyor.', max: [1.08, 1.18], pat: 5, open: 0.92 },
+    cimri: { hint: 'Cüzdanını sıkı sıkı tutuyor.', max: [1.02, 1.10], pat: 4, open: 0.95 },
+    zengin: { hint: 'Kapıda şoförü bekliyor.', max: [1.18, 1.32], pat: 3, open: 1.0 },
+    kararsiz: { hint: 'Bir rafa bir sana bakıyor.', max: [1.03, 1.24], pat: 4, open: 0.96 },
+  };
+  const SAY = {
+    open: ['Selam! {q} {p} lazım. Tanesine {o} veririm.', 'Hepsini alırım ama tanesi {o} olur.', 'Kolay gelsin. {q} {p}, tanesi {o}. Ne dersin?'],
+    far: ['Hmm, peki. {o} diyelim.', 'Tamam tamam, {o}.', 'İyi pazarlık ediyorsun. {o} olsun.'],
+    mid: ['Zorluyorsun ama... {o}.', 'Bu son olsun, {o}.', 'Evdekiler duymasın, {o}.'],
+    near: ['{o}. Kuruş daha çıkmaz.', 'Cebimde bu kadar var: {o}.', 'Terlettin beni. {o}, son sözüm.'],
+    ceil: ['Daha fazlası kesemden çıkmaz.', 'Olmaz, sınırım bu.', 'Boşuna uğraşma, daha veremem.'],
+    angry: ['Yok artık! Soyguna mı geldik?', 'Bu fiyata dükkânı da verirsin herhalde!', 'Sen beni turist mi sandın?'],
+    bluffWin: ['Dur dur, başkasına verme! {o} veriyorum.', 'Aman, elimden kaçmasın. {o}!'],
+    bluffLose: ['Öyleyse ona sat. Sabrım taşıyor.', 'Başka alıcı mı? Güldürme beni.'],
+    leave: ['Hayırlı işler. Ben karşı dükkâna gidiyorum.', 'Bu kadar naz yeter. Hoşça kal.'],
+    deal: ['Anlaştık! Hayırlı olsun.', 'El sıkışalım. Bereketini gör.', 'Sonunda! Paketle bakalım.'],
+  };
 
   // ---------- Durum ----------
   let s, ui = { tab: 'plots', dest: 1, qty: 20, listMul: 1, sel: {} };
@@ -71,6 +91,7 @@
       plots: [{ id: 1, region: 'kirsal', rented: true, ref: R.kirsal.land, b: null, inv: {}, last: -1e9, paid: 0 }],
       mult: {}, hist: {}, npcA: {}, listings: [], mine: [], auctions: [], events: [], news: [],
       today: emptyStats(), prev: emptyStats(), goals: [], freeSwap: true, lastEvent: '', nextListAt: 0,
+      hag: { left: 5, offer: null, streak: 0 },
     };
     for (const k of PK) { s.mult[k] = 1; s.hist[k] = [1]; }
     for (const r in R) { s.npcA[r] = {}; for (const k of PK) s.npcA[r][k] = rnd(1.4, 2.0); }
@@ -81,7 +102,7 @@
   }
   function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(s)); } catch (e) { /* depolama yoksa oyun yine çalışır */ } }
   function load() {
-    try { const d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (d && d.v === 1 && Array.isArray(d.plots)) { s = d; return true; } } catch (e) { /* yoksay */ }
+    try { const d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (d && d.v === 1 && Array.isArray(d.plots)) { s = d; if (!s.hag) s.hag = { left: 5, offer: null, streak: 0 }; if (!s.nextPlot) s.nextPlot = Math.max(...s.plots.map(p => p.id)) + 1; return true; } } catch (e) { /* yoksay */ }
     return false;
   }
 
@@ -183,12 +204,14 @@
       }
     }
     if (s.t >= s.nextListAt) genListings();
+    if (s.hag.offer && (s.t > s.hag.offer.until || (plot(s.hag.offer.plot)?.inv[s.hag.offer.p] || 0) < s.hag.offer.qty)) s.hag.offer = null;
+    if (!s.hag.offer && s.hag.left > 0 && !ui.neg && Math.random() < 0.6) newBuyer();
     if (h % 24 === 0) daily(h / 24);
   }
 
   function daily(day) {
     if (s.t >= FREE_UNTIL) for (const pl of s.plots) { const tx = dailyTax(pl); if (tx > 0) exp('Vergi', tx); }
-    s.prev = s.today; s.today = emptyStats();
+    s.prev = s.today; s.today = emptyStats(); s.hag.left = 5;
     s.events = s.events.filter(e => s.t < e.end);
     let top = PK[0]; for (const k of PK) if (Math.abs(s.mult[k] - 1) > Math.abs(s.mult[top] - 1)) top = k;
     if (Math.abs(s.mult[top] - 1) > 0.08) news('Piyasa: ' + P[top].n + (s.mult[top] > 1 ? ' pahalandı' : ' ucuzladı'), P[top].n + ' fiyatı olağan seviyesinin %' + Math.round(Math.abs(s.mult[top] - 1) * 100) + (s.mult[top] > 1 ? ' üstünde.' : ' altında.'));
@@ -248,8 +271,49 @@
     return { land, bld, goods, tr, total: land + bld + goods - tr, fits };
   }
 
+  // ---------- Pazarlık mini oyunu ----------
+  function newBuyer() {
+    const c = [];
+    for (const pl of s.plots) for (const p in pl.inv) if (P[p].d && pl.inv[p] >= 10) c.push([pl, p]);
+    if (!c.length) return;
+    const [pl, p] = pick(c), type = pick(Object.keys(BT));
+    s.hag.offer = { name: pick(BUYERS), type, p, plot: pl.id, qty: Math.min(pl.inv[p], Math.round(rnd(1, 4)) * 10), until: s.t + 360 };
+  }
+  const say = (k, n) => pick(SAY[k]).replace('{o}', fmt1(n.offer)).replace('{q}', n.qty).replace('{p}', P[n.p].n.toLocaleLowerCase('tr-TR'));
+  function negReply(n) { const g = n.max / n.offer; n.line = say(g > 1.12 ? 'far' : g > 1.04 ? 'mid' : 'near', n); }
+  function negEnd(n, result) {
+    n.done = result; s.hag.left--; s.hag.offer = null;
+    if (result === 'left') { s.hag.streak = 0; n.line = say('leave', n); return; }
+    const pl = plot(n.plot), v = n.qty * n.offer;
+    add(pl, n.p, -n.qty); inc('Pazarlık', v); rentOn(pl, v); pl.last = s.t;
+    n.gain = (n.offer - n.base) * n.qty;
+    if (result === 'deal') { s.hag.streak++; n.line = say('deal', n); n.rate = n.offer / n.max >= 0.97 ? 'Usta işi' : n.offer / n.max >= 0.9 ? 'İyi anlaşma' : 'İdare eder'; }
+  }
+
   // ---------- Oyuncu eylemleri ----------
   const A = {
+    negStart() {
+      const o = s.hag.offer; if (!o) return; const bt = BT[o.type], base = retailRef(o.p);
+      ui.neg = { ...o, base, max: base * rnd(bt.max[0], bt.max[1]), offer: base * bt.open, pat: bt.pat, maxPat: bt.pat, bluffed: false, done: null, mood: '' };
+      ui.neg.line = say('open', ui.neg);
+    },
+    negMove(d) {
+      const n = ui.neg; if (!n || n.done) return; n.mood = ''; n.moved = true;
+      if (d.v === 'bluff') {
+        n.bluffed = true;
+        if (Math.random() < 0.5) { n.offer = Math.min(n.max, n.offer * 1.15); n.line = say('bluffWin', n); n.mood = 'pop'; }
+        else { n.pat -= 2; n.line = say('bluffLose', n); n.mood = 'shake'; }
+      } else {
+        const target = n.offer * (d.v === 'hard' ? 1.10 : 1.04);
+        if (target <= n.max) { n.offer = target; if (d.v === 'hard' || Math.random() > 0.35) n.pat--; negReply(n); n.mood = 'pop'; }
+        else if (d.v === 'hard') { n.pat -= 2; n.line = say('angry', n); n.mood = 'shake'; }
+        else { n.pat--; n.line = say('ceil', n); }
+      }
+      if (n.pat <= 0) negEnd(n, 'left');
+    },
+    negAccept() { const n = ui.neg; if (n && !n.done) negEnd(n, 'deal'); },
+    negAuto() { const n = ui.neg; if (n && !n.done) { n.offer = n.base; negEnd(n, 'auto'); n.line = 'Olağan fiyattan anlaştınız.'; } },
+    negClose() { ui.neg = null; },
     tab(d) { ui.tab = d.v; },
     speed(d) { s.speed = +d.v; },
     reset() { if (ui.confirmReset) { newGame(); ui.confirmReset = false; ui.tab = 'plots'; } else { ui.confirmReset = true; setTimeout(() => { ui.confirmReset = false; }, 4000); } },
@@ -362,8 +426,22 @@
     return h + '</div>';
   }
 
+  function negCard(n) {
+    const face = n.done === 'left' ? '😤' : n.done ? '🤝' : n.pat / n.maxPat > 0.67 ? '😀' : n.pat / n.maxPat > 0.34 ? '😐' : '😠';
+    const diff = (n.offer / n.base - 1) * 100;
+    let h = `<div class="card neg"><div class="row head"><h3>${esc(n.name)}</h3><span class="tag">${n.qty} ${P[n.p].n}</span></div><p class="muted small">${BT[n.type].hint}</p>
+      <div class="talk ${n.mood}"><span class="face" aria-hidden="true">${face}</span><p class="bubble">${esc(n.line)}</p></div>
+      <div class="row"><div><span class="small muted">Teklifi, tanesi</span><div class="offer ${n.mood === 'pop' ? 'bump' : ''}">${fmt1(n.offer)}</div></div><div class="small" style="text-align:right"><span class="muted">olağan ${fmt1(n.base)}</span><br><span class="${diff >= 0 ? 'up' : 'down'}">${diff >= 0 ? '+' : '−'}%${Math.abs(diff).toFixed(0)}</span></div></div>
+      <div class="row small"><span class="muted">Sabır</span><span class="pips" aria-label="Kalan sabır ${Math.max(0, n.pat)}">${Array.from({ length: n.maxPat }, (_, i) => `<i class="${i < n.pat ? 'on' : ''}"></i>`).join('')}</span></div>`;
+    if (!n.done) h += `<div class="moves">${btn('Biraz artır<small>az risk</small>', 'negMove', { v: 'soft' }, 'ghost')}${btn('Sıkı pazarlık<small>çok kazanç, çok risk</small>', 'negMove', { v: 'hard' }, 'ghost')}${n.bluffed ? '' : btn('Blöf yap<small>başka alıcım var</small>', 'negMove', { v: 'bluff' }, 'ghost')}</div><div class="row wrap">${btn('Anlaştık ' + fmt(n.offer * n.qty), 'negAccept')}${n.moved ? '' : btn('Pazarlıksız sat ' + fmt(n.base * n.qty), 'negAuto', {}, 'ghost')}</div>`;
+    else h += `<div class="result">${n.done === 'left' ? '<b>Alıcı gitti.</b><span class="small">Malın sende kaldı.</span>' : `<b>${n.done === 'deal' ? n.rate : 'Satıldı'} · ${fmt(n.offer * n.qty)}</b><span class="small">Olağan fiyata göre ${n.gain >= 0 ? '+' : '−'}${fmt(Math.abs(n.gain)).replace('−', '')}${n.done === 'deal' && s.hag.streak > 1 ? ' · ' + s.hag.streak + ' anlaşmalık seri' : ''}</span>`}</div>${btn('Tamam', 'negClose')}`;
+    return h + '</div>';
+  }
+
   function viewPlots() {
+    if (ui.neg) return [['neg', negCard(ui.neg)]];
     const out = [];
+    if (s.hag.offer) { const o = s.hag.offer; out.push(['buyer', `<div class="card buyer"><div class="row"><div><b>Kapıda bir alıcı var</b><p class="small muted">${esc(o.name)}, ${o.qty} ${P[o.p].n.toLocaleLowerCase('tr-TR')} istiyor · bugün ${s.hag.left} pazarlık hakkın kaldı</p></div>${btn('Pazarlık et', 'negStart')}</div></div>`]); }
     const next = GOALS.findIndex((g, i) => !s.goals[i]);
     out.push(['goal', next < 0 ? '<div class="goal">Bütün hedefler tamamlandı. Şirketini büyütmeye devam et.</div>' : `<div class="goal"><span class="small">Sıradaki hedef ${next + 1}/${GOALS.length}</span><b>${GOALS[next][0]}</b></div>`]);
     out.push(['lm', `<div class="row small"><label for="listMul">Pazara ilan fiyatı</label><select id="listMul" data-c="listMul"><option value="0.9" ${ui.listMul === 0.9 ? 'selected' : ''}>olağanın %10 altı (hızlı satar)</option><option value="1" ${ui.listMul === 1 ? 'selected' : ''}>olağan fiyat</option><option value="1.1" ${ui.listMul === 1.1 ? 'selected' : ''}>olağanın %10 üstü (yavaş satar)</option></select></div>`]);
@@ -467,7 +545,7 @@
     if (!plot(ui.dest)) ui.dest = s.plots[0].id;
     root.addEventListener('click', e => { const el = e.target.closest('[data-a]'); if (!el || !A[el.dataset.a]) return; A[el.dataset.a](el.dataset); render(); });
     root.addEventListener('change', e => { const el = e.target.closest('[data-c]'); if (!el || !C[el.dataset.c]) return; C[el.dataset.c](el); el.blur(); render(); });
-    setInterval(() => { if (s.speed > 0) step(3.75 * s.speed); render(); }, 250);
+    setInterval(() => { if (s.speed > 0 && !ui.neg) step(3.75 * s.speed); render(); }, 250);
     setInterval(save, 8000);
     render();
   }
