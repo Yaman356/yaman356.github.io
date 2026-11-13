@@ -157,3 +157,82 @@ Fire (yüzde 10'dan 2'ye) ve verim (parti süresinde yüzde 15'e kadar kısalma)
 - Ar-Ge bireysel olarak kârlı, ama herkes yapınca fiyatlar düşüyor ve kazanç dükkânlara geçiyor.
 - Perakende fiyatını piyasa fiyatına bağlamak da denendi: Ar-Ge olmadan bile fiyatlar olağanın iki katına çıktı. Toplam tüketici talebi fiyata tepki vermediği sürece bu bağ istikrarsız.
 - Seviye 0 artık yüzde 10 fireyle başladığı için bu senaryoların sayıları ana bölümdeki sayılarla doğrudan karşılaştırılamaz.
+
+## İkinci test turu (değerlendirme sonrası)
+
+Dış değerlendirmede istenen ilk adımlar koşuldu. Kod: `sim/stage1.py`. Ham sonuçlar: `sim/stage1_results.json`. Toptancı B, 50 firma, beş tohum; ölçüm 10–30. günler. Rol tabloları yalnızca rolünü hiç değiştirmemiş firmaları kapsar. Sermaye; bina bedeli, stokun olağan değeri ve kasadaki paranın toplamıdır.
+
+### Dükkân farkının büyük kısmı dükkân azlığından geliyor
+
+Kâr takipçisi olmadan, dükkân sayısı artırılarak:
+
+| Dükkân sayısı | Talebin karşılanması | Dükkân günlük kâr | Dükkân sermaye getirisi (günlük) | Ham madde getirisi | Son ürün getirisi | Dükkânın zararlı gün oranı |
+|---:|---:|---:|---:|---:|---:|---:|
+| 9 | %71 | 4.817 | %5,7 | %1,6 | %1,1 | %0 |
+| 15 | %54 | 2.069 | %5,0 | %2,0 | %0,4 | %0 |
+| 20 | %29 | 347 | %2,7 | %2,2 | %1,8 | %12 |
+| 24 | %43 | 344 | %2,7 | %1,8 | %3,1 | %16 |
+
+- Önceki raporda "dükkân kârın neredeyse tamamını alıyor" sonucu 9 dükkânlı bir dağılımda çıkmıştı. Dükkân sayısı 20'ye çıkınca dükkân getirisi üreticilere yaklaşıyor ve dükkân da zarar günleri yaşamaya başlıyor.
+- Yani fark büyük ölçüde perakende marjından değil, az sayıda dükkânın tüm talebi paylaşmasından kaynaklanıyor. Serbest girişli bir oyunda oyuncular dükkân açtıkça fark kendiliğinden daralır.
+- Ama dükkân sayısı artarken üretici azaldığı için talebin karşılanması düşüyor. Asıl denge noktası 50 firmada yaklaşık 12–15 dükkân gibi görünüyor; ara noktalar koşulmadı.
+- Ara mal üreticisi her senaryoda en düşük getiriye sahip (günlük %0,6–0,8) ve zararlı gün oranı en yüksek rol. Ara mal tarifleri ayrıca ayarlanmalı.
+- Son ürün fabrikaları kapasitelerinin yalnızca %49–78'ini kullanabiliyor; girdi bekliyorlar.
+
+### Toptancı: acil stok ihtiyacın tamamına çıkabilmeli
+
+| Acil stok kotası (günlük ihtiyacın) | Hiç ham madde üreticisi yokken karşılama | Dengeli dağılımda karşılama |
+|---:|---:|---:|
+| %5 | %3 | %68 |
+| %15 | %5 | %71 |
+| %30 | %10 | %73 |
+| %50 | %18 | %73 |
+| %100 | %78 | %73 |
+
+- Dengeli dağılımda kota neredeyse hiç fark etmiyor.
+- Kriz anında kota doğrusal değil çalışıyor: ihtiyacın yarısı bile yetmiyor. Uyarlanır kotanın gerektiğinde ihtiyacın tamamına çıkabilmesi gerekiyor; o durumda alımların %62'si toptancıdan geliyor.
+
+Talep yarıya düştüğünde, son alıcının günlük bütçesine göre:
+
+| Alım bütçesi (günlük ihtiyacın) | Toptancının yarattığı para (tüketici girişine oranı) | Ham madde günlük kârı |
+|---:|---:|---:|
+| %2 | %4 | 122 |
+| %5 | %9 | 157 |
+| %10 | %18 | 225 |
+| %25 | %30 | 363 |
+| %50 | %33 | 396 |
+
+Bütçe büyüdükçe ham madde üreticisinin geliri korunuyor ama para basımı artıyor. %5–10 arası bir orta nokta; tercih tasarım kararı.
+
+### Rol değişimi: sürtünme işe yaramadı, bilgi yaradı
+
+| Kâr takipçisi oranı | Karşılama | Duruş | 30 günde geçiş |
+|---:|---:|---:|---:|
+| %0 | %71 | %1 | 0 |
+| %10 | %69 | %3 | 26 |
+| %20 | %71 | %7 | 54 |
+| %30 | %65 | %15 | 93 |
+| %40 | %58 | %17 | 119 |
+| %50 | %52 | %27 | 154 |
+
+Keskin bir eşik yok; duruş %10'dan itibaren artıyor, talebin karşılanması %30'dan sonra belirgin düşüyor. Önceki rapordaki "dörtte bir" ifadesi yalnızca üç noktaya dayanıyordu; bu tablo onun yerine geçer.
+
+%50 takipçide, geçiş sürtünmesi ayrı ayrı denendi:
+
+| Önlem | Karşılama | Duruş | Geçiş |
+|---|---:|---:|---:|
+| Yok | %52 | %27 | 154 |
+| 12 saat gecikme | %48 | %26 | 153 |
+| 24 saat gecikme | %42 | %18 | 138 |
+| 48 saat gecikme | %33 | %16 | 128 |
+| Bina bedelinin %10'u geçiş ücreti | %52 | %24 | 140 |
+| %25 geçiş ücreti | %53 | %22 | 137 |
+| %50 geçiş ücreti | %51 | %21 | 125 |
+
+- Gecikme, geçiş sırasında üretim durduğu için talebin karşılanmasını kötüleştiriyor.
+- Geçiş ücreti geçişleri ve duruşu biraz azaltıyor ama talebin karşılanmasını değiştirmiyor.
+- İlk turda kurulmakta olan kapasiteyi göstermek karşılamayı %51'den %58'e çıkarmıştı. Bu modelde sürüye karşı en etkili araç bilgi, sürtünme değil.
+
+### Hâlâ eksik olanlar
+
+Boş arsa vergisi, yeniden yatırım, çok arsalı oyuncular, organize gruplar ve yeni oyuncunun ilerlemesi bu turda da modelde yok. Takipçilerin karar kuralı (son üç günün kârı) basit; gerçek oyuncular farklı davranabilir.

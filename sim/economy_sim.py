@@ -76,7 +76,7 @@ class Firm:
         s.incost = {p: float(P[p]['ref']) for p in PK}
         s.rd = 0; s.outq = 10.0  # girdiye ödenen teslim fiyatı (üstel ortalama)
         s.offered = defaultdict(float); s.sold = defaultdict(float)
-        s.wealth0 = s.cash; s.hist = []
+        s.wealth0 = s.cash; s.hist = []; s.capital = []; s.made = 0.0
         s.hours = 0; s.halt_in = 0.0; s.halt_cash = 0.0
 
     def set_role(s, role):
@@ -97,16 +97,16 @@ class Firm:
 class Wholesaler:
     """A: sınırsız, her bölgede şube (mevcut doküman). B: stok kotalı ve bütçeli, her bölgede şube.
     C: B ile aynı ama tek şube Merkez'de (taşıma mesafeye göre)."""
-    def __init__(s, mode, scale):
-        s.mode, s.scale = mode, scale
+    def __init__(s, mode, scale, qf=0.15, bf=0.10):
+        s.mode, s.scale, s.qf, s.bf = mode, scale, qf, bf
         s.m = {p: 1.0 for p in PK}; s.stock = defaultdict(float)
         s.quota = {}; s.budget = {}; s.new_day()
 
     def new_day(s):
         for p in PK:
             base = NEED[p] * 24 * s.scale
-            s.quota[p] = 0.15 * base
-            s.budget[p] = 0.10 * base * P[p]['ref']
+            s.quota[p] = s.qf * base
+            s.budget[p] = s.bf * base * P[p]['ref']
 
     def sell_price(s, p, ema):
         return 1.3 * P[p]['ref'] * s.m[p] if s.mode == 'A' else 1.3 * max(P[p]['ref'], ema)
@@ -123,17 +123,19 @@ class Wholesaler:
 
 class Sim:
     def __init__(s, n=50, seed=1, wmode='A', alloc='dengeli', followers=0.5, info_pending=False,
-                 switch_delay=0, tax=None, days=30, hook=None, hoarder=False, fire=False, rd=None, retail_follow=False):
+                 switch_delay=0, tax=None, days=30, hook=None, hoarder=False, fire=False, rd=None, retail_follow=False,
+                 qf=0.15, bf=0.10, switch_fee=0.0, shop_w=None):
         s.rng = random.Random(seed)
         s.n, s.days, s.hook, s.tax = n, days, hook, tax
         s.info_pending, s.switch_delay = info_pending, switch_delay
         s.scale = n / sum(WEIGHT.values())
         s.dmult = 1.0
-        s.W = Wholesaler(wmode, s.scale)
+        s.W = Wholesaler(wmode, s.scale, qf, bf); s.switch_fee = switch_fee
         s.ema = {p: float(P[p]['ref']) for p in PK}
         s.money = defaultdict(float); s.goods = {p: defaultdict(float) for p in PK}
         s.firms = []
         w = dict(WEIGHT)
+        if shop_w is not None: w['dukkan'] = shop_w
         if alloc == 'fabrika':
             for p in RAW: w[p] = 0.0
         roles = s.apportion(w, n)
@@ -218,7 +220,7 @@ class Sim:
                 d = min(f.busy, minutes); f.busy -= d; minutes -= d
                 if f.busy <= 1e-9:
                     q = f.outq * (1.25 if BONUS.get(f.region) == f.btype else 1.0)
-                    f.inv[f.prod] += q; s.goods[f.prod]['uretilen'] += q; f.busy = 0
+                    f.inv[f.prod] += q; s.goods[f.prod]['uretilen'] += q; f.busy = 0; f.made += q
                 continue
             if any(f.inv[k] < q - 1e-9 for k, q in rc['inp'].items()):
                 f.halt_in += minutes / 60; s.day['halt_in'] += minutes / 60 if f.btype == 'fabrika' else 0; break
@@ -310,6 +312,7 @@ class Sim:
                     x = LAND[f.region] * 0.01 * (1 / 7 if s.tax == 'gunluk' else 1); f.cash -= x; s.money['vergi'] += x
         prof = defaultdict(list)
         for f in s.firms:
+            f.capital.append(BCOST[f.btype] + sum(q * P[p]['ref'] for p, q in f.inv.items()) + max(0.0, f.cash))
             w = f.wealth(); f.hist.append(w - f.wealth0); f.wealth0 = w; prof[f.role].append(statistics.mean(f.hist[-3:]))
         board = {r: statistics.mean(v) for r, v in prof.items()}
         count = defaultdict(int)
@@ -334,7 +337,7 @@ class Sim:
                     v = s.est(r, board, count)
                     if v > bv: best, bv = r, v
                 nb = 'dukkan' if best == 'dukkan' else P[best]['b']
-                cost = 0 if nb == f.btype else BCOST[nb] - 0.5 * BCOST[f.btype]
+                cost = (0 if nb == f.btype else BCOST[nb] - 0.5 * BCOST[f.btype]) + s.switch_fee * BCOST[nb]
                 if best != f.role and bv > max(own, 0) * 1.25 + cost / 10 + 50 and f.cash >= cost + 300:
                     s.switch(f, best, day)
         s.W.new_day()
@@ -343,6 +346,7 @@ class Sim:
         nb = 'dukkan' if role == 'dukkan' else P[role]['b']
         if nb != f.btype:
             s.money['insaat'] += BCOST[nb]; s.money['iade'] += 0.5 * BCOST[f.btype]; f.cash += 0.5 * BCOST[f.btype] - BCOST[nb]
+        fee = s.switch_fee * BCOST[nb]; f.cash -= fee; s.money['insaat'] += fee
         f.set_role(role); f.busy = 0; f.last_switch = day; f.down_until = s.t + s.switch_delay
         s.pending[role] += 1; s.switches += 1
 

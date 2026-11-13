@@ -1,0 +1,410 @@
+{
+ "1 roller, dukkan agirligi=10": {
+  "dukkan_sayisi": 9,
+  "kapsama": 0.707,
+  "durus": 0.009,
+  "toptanci_payi": 0.0,
+  "toptanci_para_girisi_tuketiciye_orani": 0.083,
+  "gecis": 0,
+  "roller": {
+   "ara mal": {
+    "n": 9.0,
+    "gunluk_kar": 101,
+    "p10": 0,
+    "sermaye": 11400,
+    "sermaye_getirisi_gunluk_yuzde": 0.8,
+    "oynaklik": 99,
+    "zararli_gun_orani": 0.13,
+    "kapasite_kullanimi": 0.9
+   },
+   "dükkân": {
+    "n": 9.0,
+    "gunluk_kar": 4817,
+    "p10": 2881,
+    "sermaye": 83733,
+    "sermaye_getirisi_gunluk_yuzde": 5.7,
+    "oynaklik": 101,
+    "zararli_gun_orani": 0.0,
+    "kapasite_kullanimi": null
+   },
+   "ham madde": {
+    "n": 14.0,
+    "gunluk_kar": 305,
+    "p10": 90,
+    "sermaye": 18858,
+    "sermaye_getirisi_gunluk_yuzde": 1.6,
+    "oynaklik": 59,
+    "zararli_gun_orani": 0.01,
+    "kapasite_kullanimi": 1.01
+   },
+   "son ürün": {
+    "n": 18.0,
+    "gunluk_kar": 150,
+    "p10": 0,
+    "sermaye": 10214,
+    "sermaye_getirisi_gunluk_yuzde": 1.1,
+    "oynaklik": 133,
+    "zararli_gun_orani": 0.11,
+    "kapasite_kullanimi": 0.78
+   }
+  }
+ },
+ "1 roller, dukkan agirligi=20": {
+  "dukkan_sayisi": 15,
+  "kapsama": 0.538,
+  "durus": 0.025,
+  "toptanci_payi": 0.0,
+  "toptanci_para_girisi_tuketiciye_orani": 0.109,
+  "gecis": 0,
+  "roller": {
+   "ara mal": {
+    "n": 7.0,
+    "gunluk_kar": 84,
+    "p10": -13,
+    "sermaye": 16450,
+    "sermaye_getirisi_gunluk_yuzde": 0.8,
+    "oynaklik": 79,
+    "zararli_gun_orani": 0.21,
+    "kapasite_kullanimi": 0.74
+   },
+   "dükkân": {
+    "n": 15.0,
+    "gunluk_kar": 2069,
+    "p10": 1137,
+    "sermaye": 40703,
+    "sermaye_getirisi_gunluk_yuzde": 5.0,
+    "oynaklik": 123,
+    "zararli_gun_orani": 0.0,
+    "kapasite_kullanimi": null
+   },
+   "ham madde": {
+    "n": 12.0,
+    "gunluk_kar": 504,
+    "p10": 119,
+    "sermaye": 22006,
+    "sermaye_getirisi_gunluk_yuzde": 2.0,
+    "oynaklik": 103,
+    "zararli_gun_orani": 0.0,
+    "kapasite_kullanimi": 0.99
+   },
+   "son ürün": {
+    "n": 16.0,
+    "gunluk_kar": 109,
+    "p10": 0,
+    "sermaye": 9346,
+    "sermaye_getirisi_gunluk_yuzde": 0.4,
+    "oynaklik": 99,
+    "zararli_gun_orani": 0.14,
+    "kapasite_kullanimi": 0.6
+   }
+  }
+ },
+ "1 roller, dukkan agirligi=30": {
+  "dukkan_sayisi": 20,
+  "kapsama": 0.289,
+  "durus": 0.026,
+  "toptanci_payi": 0.0,
+  "toptanci_para_girisi_tuketiciye_orani": 0.091,
+  "gecis": 0,
+  "roller": {
+   "ara mal": {
+    "n": 6.0,
+    "gunluk_kar": 345,
+    "p10": -26,
+    "sermaye": 23485,
+    "sermaye_getirisi_gunluk_yuzde": 0.6,
+    "oynaklik": 168,
+    "zararli_gun_orani": 0.33,
+    "kapasite_kullanimi": 0.56
+   },
+   "dükkân": {
+    "n": 20.0,
+    "gunluk_kar": 347,
+    "p10": 193,
+    "sermaye": 12427,
+    "sermaye_getirisi_gunluk_yuzde": 2.7,
+    "oynaklik": 264,
+    "zararli_gun_orani": 0.12,
+    "kapasite_kullanimi": null
+   },
+   "ham madde": {
+    "n": 10.0,
+    "gunluk_kar": 1171,
+    "p10": 50,
+    "sermaye": 32904,
+    "sermaye_getirisi_gunluk_yuzde": 2.2,
+    "oynaklik": 144,
+    "zararli_gun_orani": 0.0,
+    "kapasite_kullanimi": 0.91
+   },
+   "son ürün": {
+    "n": 14.0,
+    "gunluk_kar": 690,
+    "p10": 0,
+    "sermaye": 17907,
+    "sermaye_getirisi_gunluk_yuzde": 1.8,
+    "oynaklik": 238,
+    "zararli_gun_orani": 0.02,
+    "kapasite_kullanimi": 0.49
+   }
+  }
+ },
+ "1 roller, dukkan agirligi=45": {
+  "dukkan_sayisi": 24,
+  "kapsama": 0.431,
+  "durus": 0.067,
+  "toptanci_payi": 0.0,
+  "toptanci_para_girisi_tuketiciye_orani": 0.05,
+  "gecis": 0,
+  "roller": {
+   "ara mal": {
+    "n": 6.0,
+    "gunluk_kar": 67,
+    "p10": 0,
+    "sermaye": 11848,
+    "sermaye_getirisi_gunluk_yuzde": 0.6,
+    "oynaklik": 52,
+    "zararli_gun_orani": 0.08,
+    "kapasite_kullanimi": 0.64
+   },
+   "dükkân": {
+    "n": 24.0,
+    "gunluk_kar": 344,
+    "p10": 232,
+    "sermaye": 12317,
+    "sermaye_getirisi_gunluk_yuzde": 2.7,
+    "oynaklik": 352,
+    "zararli_gun_orani": 0.16,
+    "kapasite_kullanimi": null
+   },
+   "ham madde": {
+    "n": 9.0,
+    "gunluk_kar": 496,
+    "p10": 146,
+    "sermaye": 23290,
+    "sermaye_getirisi_gunluk_yuzde": 1.8,
+    "oynaklik": 72,
+    "zararli_gun_orani": 0.0,
+    "kapasite_kullanimi": 1.04
+   },
+   "son ürün": {
+    "n": 11.0,
+    "gunluk_kar": 2655,
+    "p10": 0,
+    "sermaye": 53318,
+    "sermaye_getirisi_gunluk_yuzde": 3.1,
+    "oynaklik": 352,
+    "zararli_gun_orani": 0.0,
+    "kapasite_kullanimi": 0.64
+   }
+  }
+ },
+ "2a kota=0.05 herkes fabrika": {
+  "kapsama": 0.027,
+  "durus": 0.658,
+  "toptanci_payi": 0.779,
+  "toptanci_para_girisi_tuketiciye_orani": 0.0,
+  "gecis": 0
+ },
+ "2a kota=0.05 dengeli": {
+  "kapsama": 0.678,
+  "durus": 0.01,
+  "toptanci_payi": 0.0,
+  "toptanci_para_girisi_tuketiciye_orani": 0.076,
+  "gecis": 0
+ },
+ "2a kota=0.15 herkes fabrika": {
+  "kapsama": 0.046,
+  "durus": 0.493,
+  "toptanci_payi": 0.766,
+  "toptanci_para_girisi_tuketiciye_orani": 0.018,
+  "gecis": 0
+ },
+ "2a kota=0.15 dengeli": {
+  "kapsama": 0.707,
+  "durus": 0.009,
+  "toptanci_payi": 0.0,
+  "toptanci_para_girisi_tuketiciye_orani": 0.083,
+  "gecis": 0
+ },
+ "2a kota=0.3 herkes fabrika": {
+  "kapsama": 0.095,
+  "durus": 0.373,
+  "toptanci_payi": 0.812,
+  "toptanci_para_girisi_tuketiciye_orani": 0.056,
+  "gecis": 0
+ },
+ "2a kota=0.3 dengeli": {
+  "kapsama": 0.727,
+  "durus": 0.009,
+  "toptanci_payi": 0.0,
+  "toptanci_para_girisi_tuketiciye_orani": 0.077,
+  "gecis": 0
+ },
+ "2a kota=0.5 herkes fabrika": {
+  "kapsama": 0.175,
+  "durus": 0.18,
+  "toptanci_payi": 0.802,
+  "toptanci_para_girisi_tuketiciye_orani": 0.05,
+  "gecis": 0
+ },
+ "2a kota=0.5 dengeli": {
+  "kapsama": 0.728,
+  "durus": 0.01,
+  "toptanci_payi": 0.0,
+  "toptanci_para_girisi_tuketiciye_orani": 0.072,
+  "gecis": 0
+ },
+ "2a kota=1.0 herkes fabrika": {
+  "kapsama": 0.783,
+  "durus": 0.023,
+  "toptanci_payi": 0.624,
+  "toptanci_para_girisi_tuketiciye_orani": 0.01,
+  "gecis": 0
+ },
+ "2a kota=1.0 dengeli": {
+  "kapsama": 0.728,
+  "durus": 0.01,
+  "toptanci_payi": 0.0,
+  "toptanci_para_girisi_tuketiciye_orani": 0.073,
+  "gecis": 0
+ },
+ "2b alim butcesi=0.02 talep yariya": {
+  "kapsama": 0.744,
+  "durus": 0.017,
+  "toptanci_payi": 0.0,
+  "toptanci_para_girisi_tuketiciye_orani": 0.037,
+  "gecis": 0,
+  "ham_madde_kari": 122
+ },
+ "2b alim butcesi=0.05 talep yariya": {
+  "kapsama": 0.744,
+  "durus": 0.017,
+  "toptanci_payi": 0.0,
+  "toptanci_para_girisi_tuketiciye_orani": 0.091,
+  "gecis": 0,
+  "ham_madde_kari": 157
+ },
+ "2b alim butcesi=0.1 talep yariya": {
+  "kapsama": 0.744,
+  "durus": 0.017,
+  "toptanci_payi": 0.0,
+  "toptanci_para_girisi_tuketiciye_orani": 0.177,
+  "gecis": 0,
+  "ham_madde_kari": 225
+ },
+ "2b alim butcesi=0.25 talep yariya": {
+  "kapsama": 0.744,
+  "durus": 0.009,
+  "toptanci_payi": 0.0,
+  "toptanci_para_girisi_tuketiciye_orani": 0.304,
+  "gecis": 0,
+  "ham_madde_kari": 363
+ },
+ "2b alim butcesi=0.5 talep yariya": {
+  "kapsama": 0.744,
+  "durus": 0.012,
+  "toptanci_payi": 0.0,
+  "toptanci_para_girisi_tuketiciye_orani": 0.329,
+  "gecis": 0,
+  "ham_madde_kari": 396
+ },
+ "3a takipci=0.0": {
+  "kapsama": 0.707,
+  "durus": 0.009,
+  "toptanci_payi": 0.0,
+  "toptanci_para_girisi_tuketiciye_orani": 0.083,
+  "gecis": 0
+ },
+ "3a takipci=0.1": {
+  "kapsama": 0.688,
+  "durus": 0.029,
+  "toptanci_payi": 0.005,
+  "toptanci_para_girisi_tuketiciye_orani": 0.072,
+  "gecis": 25.6
+ },
+ "3a takipci=0.2": {
+  "kapsama": 0.711,
+  "durus": 0.072,
+  "toptanci_payi": 0.02,
+  "toptanci_para_girisi_tuketiciye_orani": 0.055,
+  "gecis": 54.4
+ },
+ "3a takipci=0.3": {
+  "kapsama": 0.654,
+  "durus": 0.145,
+  "toptanci_payi": 0.034,
+  "toptanci_para_girisi_tuketiciye_orani": 0.054,
+  "gecis": 93
+ },
+ "3a takipci=0.4": {
+  "kapsama": 0.584,
+  "durus": 0.166,
+  "toptanci_payi": 0.044,
+  "toptanci_para_girisi_tuketiciye_orani": 0.05,
+  "gecis": 119
+ },
+ "3a takipci=0.5": {
+  "kapsama": 0.523,
+  "durus": 0.266,
+  "toptanci_payi": 0.083,
+  "toptanci_para_girisi_tuketiciye_orani": 0.058,
+  "gecis": 153.8
+ },
+ "3b gecikme=0sa takipci=0.5": {
+  "kapsama": 0.523,
+  "durus": 0.266,
+  "toptanci_payi": 0.083,
+  "toptanci_para_girisi_tuketiciye_orani": 0.058,
+  "gecis": 153.8
+ },
+ "3b gecikme=12sa takipci=0.5": {
+  "kapsama": 0.479,
+  "durus": 0.263,
+  "toptanci_payi": 0.084,
+  "toptanci_para_girisi_tuketiciye_orani": 0.057,
+  "gecis": 153.4
+ },
+ "3b gecikme=24sa takipci=0.5": {
+  "kapsama": 0.418,
+  "durus": 0.182,
+  "toptanci_payi": 0.063,
+  "toptanci_para_girisi_tuketiciye_orani": 0.062,
+  "gecis": 137.6
+ },
+ "3b gecikme=48sa takipci=0.5": {
+  "kapsama": 0.33,
+  "durus": 0.158,
+  "toptanci_payi": 0.057,
+  "toptanci_para_girisi_tuketiciye_orani": 0.064,
+  "gecis": 128.2
+ },
+ "3c gecis ucreti=0.0 takipci=0.5": {
+  "kapsama": 0.523,
+  "durus": 0.266,
+  "toptanci_payi": 0.083,
+  "toptanci_para_girisi_tuketiciye_orani": 0.058,
+  "gecis": 153.8
+ },
+ "3c gecis ucreti=0.1 takipci=0.5": {
+  "kapsama": 0.52,
+  "durus": 0.244,
+  "toptanci_payi": 0.072,
+  "toptanci_para_girisi_tuketiciye_orani": 0.055,
+  "gecis": 140.4
+ },
+ "3c gecis ucreti=0.25 takipci=0.5": {
+  "kapsama": 0.532,
+  "durus": 0.222,
+  "toptanci_payi": 0.067,
+  "toptanci_para_girisi_tuketiciye_orani": 0.057,
+  "gecis": 137.4
+ },
+ "3c gecis ucreti=0.5 takipci=0.5": {
+  "kapsama": 0.514,
+  "durus": 0.206,
+  "toptanci_payi": 0.062,
+  "toptanci_para_girisi_tuketiciye_orani": 0.059,
+  "gecis": 124.8
+ }
+}
