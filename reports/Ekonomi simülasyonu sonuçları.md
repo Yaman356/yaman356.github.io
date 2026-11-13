@@ -141,3 +141,19 @@ B ve C kuralları dengeli dağılımda aynı sonucu verdi, çünkü arz yeterliy
 - Yeniden yatırım, bina yükseltme ve borç.
 - Çoklu hesap ve fiyat referansı manipülasyonu.
 - Aynı işlemin iki kez gönderilmesi gibi teknik hatalar; bunlar sunucu kodunda sınanmalı.
+
+## Ek: Ar-Ge senaryoları
+
+Fire (yüzde 10'dan 2'ye) ve verim (parti süresinde yüzde 15'e kadar kısalma) eklenerek dört senaryo koşuldu. Kod: `sim/rd_test.py`. Ham sonuçlar: `sim/rd_results.json`. Toptancı B, kâr takipçisi yok, 50 firma, beş tohum.
+
+| Senaryo | Ortalama fiyat | Ham madde | Ara mal | Son ürün | Dükkân |
+|---|---:|---:|---:|---:|---:|
+| Kimse Ar-Ge yapmamış | 1,05 | 876 | 98 | 294 | 3.573 |
+| Üreticilerin yarısı seviye 5, yapanlar | 0,74 | 353 | 512 | 262 | 4.372 |
+| Üreticilerin yarısı seviye 5, yapmayanlar | 0,74 | 221 | 193 | 234 | 4.372 |
+| Tüm üreticiler seviye 5 | 0,63 | 302 | 87 | 80 | 4.829 |
+| Tüm üreticiler seviye 5, talep %25 büyür | 0,70 | 485 | 133 | 160 | 6.428 |
+
+- Ar-Ge bireysel olarak kârlı, ama herkes yapınca fiyatlar düşüyor ve kazanç dükkânlara geçiyor.
+- Perakende fiyatını piyasa fiyatına bağlamak da denendi: Ar-Ge olmadan bile fiyatlar olağanın iki katına çıktı. Toplam tüketici talebi fiyata tepki vermediği sürece bu bağ istikrarsız.
+- Seviye 0 artık yüzde 10 fireyle başladığı için bu senaryoların sayıları ana bölümdeki sayılarla doğrudan karşılaştırılamaz.

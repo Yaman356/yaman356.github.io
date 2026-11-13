@@ -38,6 +38,9 @@ CAP = {'dukkan': 150, 'tarla': 200, 'maden': 200, 'fabrika': 250}
 LAND = {'merkez': 12000, 'kirsal': 6000, 'dag': 7000}
 RETAIL, RENT, COMM, K = 1.6, 0.05, 0.03, 1.0
 START_CASH = 5000
+# Ar-Ge seviyesi 0-5: fire (çıktı kaybı) ve verim (parti süresinin kısalması)
+FIRE = [0.10, 0.08, 0.065, 0.05, 0.035, 0.02]
+VERIM = [0.0, 0.03, 0.06, 0.09, 0.12, 0.15]
 
 
 def tr(p, a, b):
@@ -70,7 +73,8 @@ class Firm:
         s.rp = {p: P[p]['ref'] * RETAIL for p in PK}  # dükkân raf fiyatı
         s.rate = defaultdict(float)  # dükkân: saatlik satış tahmini
         s.busy = 0.0; s.down_until = 0; s.last_switch = -99
-        s.incost = {p: float(P[p]['ref']) for p in PK}  # girdiye ödenen teslim fiyatı (üstel ortalama)
+        s.incost = {p: float(P[p]['ref']) for p in PK}
+        s.rd = 0; s.outq = 10.0  # girdiye ödenen teslim fiyatı (üstel ortalama)
         s.offered = defaultdict(float); s.sold = defaultdict(float)
         s.wealth0 = s.cash; s.hist = []
         s.hours = 0; s.halt_in = 0.0; s.halt_cash = 0.0
@@ -84,7 +88,7 @@ class Firm:
         return sum(s.inv.values())
 
     def unit_cost(s, p):
-        rc = P[p]; return (rc['op'] + sum(q * s.incost[k] for k, q in rc['inp'].items())) / 10
+        rc = P[p]; return (rc['op'] + sum(q * s.incost[k] for k, q in rc['inp'].items())) / s.outq
 
     def wealth(s):
         return s.cash + sum(q * P[p]['ref'] * 0.75 for p, q in s.inv.items())
@@ -119,7 +123,7 @@ class Wholesaler:
 
 class Sim:
     def __init__(s, n=50, seed=1, wmode='A', alloc='dengeli', followers=0.5, info_pending=False,
-                 switch_delay=0, tax=None, days=30, hook=None, hoarder=False):
+                 switch_delay=0, tax=None, days=30, hook=None, hoarder=False, fire=False, rd=None, retail_follow=False):
         s.rng = random.Random(seed)
         s.n, s.days, s.hook, s.tax = n, days, hook, tax
         s.info_pending, s.switch_delay = info_pending, switch_delay
@@ -138,6 +142,10 @@ class Sim:
             reg = s.rng.choices(['merkez', 'kirsal', 'dag'], {'tarla': [15, 70, 15], 'maden': [15, 15, 70], 'fabrika': [40, 30, 30], 'dukkan': [48, 30, 22]}[bt])[0]
             s.firms.append(Firm(i, role, reg, tax is not None and s.rng.random() < 0.5, s.rng.random() < followers))
         s.cash0 = sum(f.cash for f in s.firms)
+        s.fire = fire; s.retail_follow = retail_follow
+        for f in s.firms:
+            f.rd = rd(f, s.rng) if rd else 0
+            f.outq = 10 * (1 - FIRE[f.rd]) if fire else 10.0
         s.hoarder = None
         if hoarder:
             h = Firm(n, 'un', 'merkez', True, False); h.btype = 'tuccar'; h.prod = None; h.cash = 200000.0; h.wealth0 = h.cash
@@ -209,7 +217,7 @@ class Sim:
             if f.busy > 0:
                 d = min(f.busy, minutes); f.busy -= d; minutes -= d
                 if f.busy <= 1e-9:
-                    q = 10 * (1.25 if BONUS.get(f.region) == f.btype else 1.0)
+                    q = f.outq * (1.25 if BONUS.get(f.region) == f.btype else 1.0)
                     f.inv[f.prod] += q; s.goods[f.prod]['uretilen'] += q; f.busy = 0
                 continue
             if any(f.inv[k] < q - 1e-9 for k, q in rc['inp'].items()):
@@ -218,7 +226,7 @@ class Sim:
                 f.halt_cash += minutes / 60; s.day['halt_cash'] += minutes / 60; break
             if f.stock() + 13 > CAP[f.btype] + sum(rc['inp'].values()): break
             for k, q in rc['inp'].items(): f.inv[k] -= q; s.goods[k]['recete'] += q
-            f.cash -= rc['op']; s.money['uretim'] += rc['op']; f.busy = float(rc['t'])
+            f.cash -= rc['op']; s.money['uretim'] += rc['op']; f.busy = rc['t'] / (1 + VERIM[f.rd])
         if f.btype == 'fabrika': s.day['fab_hours'] += 1
 
     def hour(s):
@@ -257,7 +265,7 @@ class Sim:
             for p in PK:
                 if not P[p]['d']: continue
                 D = P[p]['d'] * DM[reg] * s.scale * s.dmult
-                rr = P[p]['ref'] * RETAIL
+                rr = (s.ema[p] if s.retail_follow else P[p]['ref']) * RETAIL
                 act = [(f, (rr / f.rp[p]) ** 2) for f in shops if f.inv[p] > 1e-9]
                 tot = sum(a for _, a in act) + K
                 s.day['D_' + p] += D
