@@ -2,49 +2,98 @@
 
 Bu belge, sohbette alınan tasarım kararlarını tek yerde toplar. Bütün oranlar ve sayılar başlangıç ayarıdır; oyun içi ölçümle düzeltilmelidir. Oyunun adı, görsel dili, ürünleri ve şehirleri özgün olacaktır.
 
+**Geçerlilik kuralı:** Bölüm 0 tek doğru kaynaktır ve demodaki kodla (`demo/game.js`) birebir aynıdır. Başka bir bölüm bölüm 0 ile çelişirse bölüm 0 geçerlidir. Henüz yapılmamış fikirler "Planlanan" başlığıyla ayrıca işaretlidir.
+
+## 0. Geçerli kurallar (tek sayfa)
+
+### Zaman birimleri
+| Birim | Değer | Not |
+|---|---|---|
+| Oyun günü | 1.440 oyun dakikası; ekonomide **bir hafta** sayılır | Maaş, faiz, vergi, kredi taksiti günlük işler ama haftalık orandır |
+| Gerçek süre (demo, 1×) | 1 gerçek saniye = 15 oyun dakikası → 1 oyun günü ≈ 96 sn | 2× ve 4× hız düğmeleri var |
+| Çevrim dışı telafi | Aynı hız, **en fazla 1 oyun günü** | Bölüm 13'teki 1. açık karar: değişmesi gerekiyor |
+| Mevsim | 13 oyun günü; yıl 52 gün; oyun ilkbaharda başlar | Kurumlar vergisi mevsim sonunda |
+| Haftalık görev haftası | 7 oyun günü | |
+| Sezon | 60 oyun günü; sonunda herkes ₺2,5 mn ile sıfırlanır | Rozet, kooperatif ve holding üyeliği kalır |
+| Ücretsiz dönem | İlk **2 oyun günü** kira ve emlak vergisi yok | |
+
+### Başlangıç
+| Kural | Değer |
+|---|---|
+| Sermaye | ₺2,5 mn |
+| Başlangıç arsası | Kırsal'da 10 dönüm **kiralık** arsa; satılamaz, vergi çarpanına girmez |
+| Kurulabilen binalar | Dört bina da seçenekte görünür; sermaye yalnızca **dükkân (₺1,2 mn) ya da tarlaya (₺1,6 mn)** yeter. Maden ₺4,5 mn, fabrika ₺12 mn |
+| İlk bina değişikliği | İlk yıkımda harcamanın **tamamı** iade edilir, sonrakilerde yarısı |
+
+### Arsa, kira, vergi ve harçlar
+| Kalem | Değer |
+|---|---|
+| Kira (kiralık arsa) | Arsadaki satış cirosunun %5'i, satış anında |
+| Emlak vergisi (yıllık, her gün 1/52'si) | Şehir bölgeleri (Merkez, Liman, Metropol): boş arsa binde 6, binalı binde 4. Kırsal/Dağ/Ova: binde 2 |
+| Atıl arsa | Boş arsa ya da **son 1 oyun gününde** üretim/satış yapmamış bina → vergi 5 kat |
+| Arsa sayısı çarpanı | Sahip olunan her ek arsa tüm emlak vergisini %10 artırır |
+| Tapu harcı | Alıcı %2, satıcı %2 + %1 ilan ücreti |
+| Satıcı tavanı | Artırmada satıcı en fazla referans değerin %150'sini alır |
+| Sisteme arsa satışı | Arsa: referansın %50'si ile ödenen tutardan düşük olanı. Bina: harcamanın yarısı. Depodaki mal: değerinin yarısı ya da başka arsaya taşıma |
+| Pazar ilanı komisyonu | Satıştan %3 |
+| KDV | Yalnızca dükkân perakendesinde, katma değer üzerinden: gıda %1, tekstil %10, diğer %20 |
+| Kurumlar vergisi | Çeyrek kârının %25'i; zarar devreder; inşaat yerine %10/yıl amortisman |
+| Arsa değeri artışı | Yılda %20 (her oyun günü 1/52) |
+
+### Fiyat ve ticaret
+| Kalem | Değer |
+|---|---|
+| Sistem toptancısından alış | Piyasa fiyatı × 1,12 (+ bölge içi sabit taşıma). Alım kooperatifi tam güçte ×0,92 → **×1,03** |
+| Sistem toptancısına satış | Piyasa fiyatı × 0,85 (Liman'da 0,92) |
+| Dükkân perakende referansı | Piyasa fiyatı × 1,35 |
+| Taşıma | Ton başına ₺150 + bölge adımı başına ₺600 |
+| Fiyat dalgalanması | Piyasa çarpanı 0,6–1,5 arası; her saat mevsim seviyesine %3 çekilir |
+| Pazar derinliği | √(şirket sayısı / 12) × (1 + %0,6 × sezon günü) |
+
+### Para kaynakları (ticaret dışı)
+| Kaynak | Miktar |
+|---|---|
+| Başlangıç hedefleri (7 adet, bir kez) | Toplam ₺5,6 mn |
+| Haftalık görevler | Görev başına max(₺150 bin, net değerin %3'ü) × 3 + zincir ödülü 2 × ödül → haftada net değerin ~%15'i, başta ₺750 bin |
+| Holding hedefi | Haftada net değerin %2'si (en az ₺200 bin) |
+| Mevduat | Yıllık %36 brüt, %15 stopaj sonrası |
+| Hisse temettüsü | Hisseye göre yıllık %0–3 |
+| Banka kredisi | Borçtur, para yaratmaz; faiz para yutağıdır |
+
+### Sıralama ve unvanlar
+| Kural | Değer |
+|---|---|
+| Net değer | Kasa + sahip olunan arsalar + bina harcamasının yarısı + stok ve ilanlar (toptancıya satış fiyatıyla) + yatırımlar + artırma teminatı − kredi borcu |
+| Sektör unvanı | Son 7 günde o üründe en çok satan. **Şu an toptancıya ve sözleşmeye satış da sayılıyor** (bölüm 13, 6. madde) |
+| Servet unvanı ayrıcalıkları | Kalıcı ve birikimli: taşıma %10→%30, borç faizi yarı→çeyrek, emlak vergisi %25→%50 indirim |
+
+
+
 ## 1. Başlangıç
 
-- Her oyuncu sunucuda **bir kiralık arsa** ve bir miktar parayla başlar.
-- Başlangıç arsası garantilidir, satılamaz ve arsa sayısı vergi çarpanına dahil değildir.
-- Oyuncu arsaya ne kuracağına kendi karar verir:
-  - **Dükkân:** başkasından mal alıp simüle tüketiciye satar.
-  - **Tarla, maden:** ham madde üretir.
-  - **Fabrika:** ham maddeyi işleyip ürün yapar.
-- Seçim ekranı o günün talebini ve beklenen kârı gösterir. İlk bina ucuza yıkılıp değiştirilebilir.
-- Her ürünü alıp satan bir **sistem toptancısı** bulunur; fiyatı oyunculardan biraz kötüdür. Az oyunculu sunucuda oyunun dönmesini sağlar.
-- İlk hafta kira ve vergi alınmaz.
+Geçerli değerler bölüm 0'dadır. Tasarım niyeti:
+
+- Her oyuncu garantili bir kiralık arsa ve sermayeyle başlar. Bu arsa satılamaz ve vergi çarpanına girmez.
+- Oyuncu arsaya ne kuracağına kendi karar verir: **dükkân** başkasından mal alıp tüketiciye satar, **tarla ve maden** ham madde üretir, **fabrika** ham maddeyi işler. Sermaye ilk etapta dükkân ya da tarlaya yeter.
+- İlk bina tam iadeyle değiştirilebilir; yanlış ilk karar oyuncuyu oyundan koparmamalıdır.
+- Her ürünü alıp satan bir **sistem toptancısı** bulunur; az oyunculu sunucuda oyunun dönmesini sağlayan güvenlik ağıdır ve oyunculardan kötü fiyat vermelidir (bölüm 13, 5. madde).
+
+**Planlanan:** seçim ekranında o günün talebi ve beklenen kâr önizlemesi.
 
 ## 2. Arsa, kira ve vergi
 
-### Kira
+Geçerli oranlar bölüm 0'dadır. İlk taslaktaki haftalık %1–8 arsa vergisi, %5 arsa satış vergisi ve "7 günde aktif" kuralı **kaldırıldı**; yerlerine gerçek emlak vergisi oranları, %2 tapu harcı ve "son 1 günde aktif" kuralı geldi.
 
-- Kiralık arsa için sürekli kira ödenir. Kira sabit tutar değil, cironun küçük bir yüzdesidir.
-- Kirayı ödeyemeyen arsasını kaybetmez; üretimi yavaşlar ve borç birikir.
-- Oyuncular kendi arsalarını başka oyunculara kiraya verebilir. Kira ilanları açık ve isimsizdir, ilk kabul eden alır; kira bedeli referans değere bağlı bir bant içinde kalır.
+- Kira cironun yüzdesidir; ciro yoksa kira da yoktur.
+- Atıl arsa vergisi, arsa biriktirip beklemeyi pahalı kılar. Arsa sayısı çarpanı tekelleşmeyi yavaşlatır.
+- Vergi ve kira ödenemezse kasa eksiye düşer; eksi bakiyeye günlük %0,8 faiz işler ve para yetmeyen üretim hatları durur.
+- Oyuncu her kalemi Rapor sekmesinde ve arsa kartında görür.
 
-### Arsa vergisi
-
-Vergi, arsanın referans değeri üzerinden haftalık hesaplanır.
-
-| Arsa durumu | Haftalık vergi |
-|---|---|
-| Sahibi üretim yapıyor | %1 |
-| Kiraya verilmiş, kiracı üretim yapıyor | %2 |
-| Bina var ama aktif değil | %4 |
-| Boş | %8 |
-
-- **Aktif sayılma koşulu:** arsa son 7 günde kapasitesinin belirli bir oranında üretim ya da satış yapmış olmalıdır. Yalnızca bina dikmek yetmez.
-- **Arsa sayısı çarpanı:** her ek arsa, tüm arsaların vergisini %10 artırır.
-- **Kiralık arsa indirimi** yalnızca kiracı gerçekten üretim yapıyorsa geçerlidir.
-- Vergi borcu birikir ve faiz işler. Uzun süre ödenmezse arsa sistem artırmasına çıkar.
-- Yönetim binası ya da muhasebeci gibi bir yatırım vergiyi düşürür.
-- Oyuncu toplam vergisini ve her kalemin nedenini tek ekranda görür; arsa almadan önce vergiye etkisi önizlenir.
-
-### Satış vergisi
-
-- Oyuncular arası mal satışı: %3.
-- Arsa satışı: %5 ve küçük bir ilan ücreti.
-- Simüle tüketiciye perakende satıştan ayrıca vergi alınmaz.
+**Planlanan:**
+- Oyuncuların arsalarını birbirine kiraya vermesi (isimsiz ilan, referans değere bağlı kira bandı).
+- Uzun süre ödenmeyen vergi borcu nedeniyle arsanın sistem artırmasına çıkması.
+- Vergiyi düşüren yönetim binası ya da muhasebeci.
+- Arsa almadan önce vergiye etkisinin önizlenmesi.
 
 ## 3. Arsa piyasası
 
@@ -71,7 +120,7 @@ Oyuncu arsasını beklemeden sisteme satabilir. Sistem, oyuncunun piyasada alabi
 - **Bina:** yıkılır. Binaya ve yükseltmelerine oyun parasıyla harcanan toplam tutarın yarısı ödenir. Premium parayla yapılan harcamalar iadeye girmez.
 - **Devam eden üretim:** iptal olur; kullanılan ham madde mal gibi değerlenir.
 - **Vergi ve kira borcu:** ödenecek tutardan düşülür.
-- Yeni alınan arsa birkaç gün sisteme satılamaz. Oyuncu günde bir, haftada birkaç arsadan fazlasını sisteme satamaz.
+- **Planlanan:** yeni alınan arsa birkaç gün sisteme satılamaz; oyuncu günde bir, haftada birkaç arsadan fazlasını sisteme satamaz.
 - Onaydan önce oyuncuya kalem kalem döküm gösterilir.
 
 #### Depodaki mallar için seçenekler
@@ -80,7 +129,9 @@ Satış ekranında oyuncu her mal için birini seçer:
 
 1. **Sisteme bırak.** Malın değerinin yarısı ödenir. Değer, son 7 günün gerçekleşmiş satış ortalamasıdır; hiç satış yoksa sistem toptancısının alım fiyatı kullanılır. Ödeme, malın üretim maliyetini geçemez.
 2. **Başka arsama taşı.** Oyuncunun başka arsasında depo yeri varsa mal oraya gider; taşıma maliyeti ödenir (bölüm 4).
-3. **Önce pazarda sat.** Mallar pazara ilan edilir; arsa satışı mallar satılınca ya da oyuncu kalanı sisteme bırakınca tamamlanır.
+3. **Planlanan — önce pazarda sat.** Mallar pazara ilan edilir; arsa satışı mallar satılınca ya da oyuncu kalanı sisteme bırakınca tamamlanır.
+
+Demoda depodaki mal, değerinin yarısıyla (güncel piyasa fiyatı × 0,5) değerlenir; üretim maliyeti tavanı henüz yok.
 
 #### Bina için seçenekler
 
@@ -88,6 +139,9 @@ Satış ekranında oyuncu her mal için birini seçer:
 2. **Binasıyla artırmaya çıkar** (sonraki sürüm): oyuncu sisteme değil doğrudan artırmaya binalı satar; alıcı hazır bina için daha çok öder.
 
 ### Sistem artırması
+
+Demoda sisteme satılan arsa, değeri korunarak normal artırmaya çıkar. Aşağıdakiler **planlanan** kurallardır:
+
 
 - Sistem, aldığı arsayı boş olarak artırmaya çıkarır. Açılış fiyatı sistemin ödediği arsa bedelidir.
 - Teklif gelmezse fiyat her gün biraz düşer.
@@ -113,7 +167,7 @@ Malın bir arsadan diğerine gitmesi para tutar. Bu, konumu anlamlı kılar ve s
 | Orta | 1 |
 | Ağır | 2 |
 
-Sabit ücret birim başına 1, adım ücreti birim başına 2 alınırsa: 100 birim cevheri (ağır) 3 adım uzağa taşımak `100 × 2 × (1 + 3 × 2) = 1.400` tutar.
+Bu tablo ve örnek ilk taslaktır, soyut birim kullanır. Geçerli değerler bölüm 0'da: ton başına ₺150 + adım başına ₺600, ağırlık ürünün gerçek kilosundan gelir. Taslak örnek: sabit ücret birim başına 1, adım ücreti birim başına 2 alınırsa: 100 birim cevheri (ağır) 3 adım uzağa taşımak `100 × 2 × (1 + 3 × 2) = 1.400` tutar.
 
 ### Nerede uygulanır
 
@@ -149,12 +203,11 @@ Oyun içinde bir kurum olarak sunulur; kurallar oyuncuya açıkça yazılıdır.
 
 ## 6. Açık konular
 
-- Bina türleri, ürün zincirleri ve ürün listesi.
-- Simüle tüketici talebi: doygunluk ve fiyat esnekliği formülü.
-- Bölge sayısı, harita düzeni ve konum bonusları.
-- Kalite sistemi.
+Çözülenler: bina türleri ve ürün zincirleri (bölüm 8), bölgeler (bölüm 11), kalite (bölüm 11), sunucu mimarisi (bölüm 12). Açık kalanlar:
+- Simüle tüketici talebinin doygunluk formülünün çok oyunculu ayarı.
 - Gelir modeli ve reklam yerleşimi.
-- Sunucu mimarisi ve sunucu başına oyuncu sayısı.
+- Sunucu başına oyuncu sayısı.
+- Bölüm 13'teki denge kararları.
 
 ## 7. Görsel yön ve teknoloji
 
@@ -400,3 +453,39 @@ Bağımlılıksız bir Node sunucusu. Çalıştırmak için `node server/server.
 
 ### Aşama 3: mobil
 Capacitor uygulaması (`app/`) aynı API'yi kullanır. Google Play Games ya da Apple ile girişte hesap bağlama eklenir.
+
+## 13. Denge riskleri ve test planı
+
+Dış inceleme (Kasım 2026) altı risk saydı. Her biri koda karşı kontrol edildi; altısı da doğru.
+
+| # | Risk | Koddaki durum | Öneri |
+|---|---|---|---|
+| 1 | Belgede eski ve yeni kurallar çelişiyor | Doğruydu: bölüm 1–2 ilk taslaktaydı (haftalık %1–8 vergi, %5 arsa satış vergisi, 7 günde aktiflik). | **Yapıldı:** bölüm 0 tek doğru kaynak; bölüm 1–2 ona göre yeniden yazıldı. |
+| 2 | Sürekli açık kalmak ödüllendiriliyor | 1 saat uzak kalan oyuncu ~37,5 oyun günü kaçırıyor, yalnızca 1 günü telafi ediliyor (`AWAY_MAX`). | Demo hızı ile çevrim içi hızı ayır. Sunucuda zaman herkes için aynı akmalı; çevrim dışı binalar çalışmaya devam etmeli. Bu, sezon uzunluğunu gerçek takvime bağlar (aşağıdaki 1. karar). |
+| 3 | Zenginin avantajı kalıcı birikiyor | Unvan ayrıcalıkları kalıcı ve birikimli. Görev ve holding ödülleri net değerle ölçekleniyor. | Kalıcı prestij (unvan adı, rozet) ile sezonluk ekonomik avantajı ayır: ayrıcalıklar sezon başında sıfırlansın ya da sabit tavanla sınırlansın. Ödüller net değer yerine sabit tutar olsun. |
+| 4 | Para ticaret yerine yan ödüllerden gelebilir | Başta haftalık görevler ₺750 bin = sermayenin %30'u. Hedefler toplam ₺5,6 mn. Holding haftada %2, mevduat yıllık %36. | Para kaynağı ölçümü (aşağıda) yapılmadan karar verme. Hedef: ilk 10 günden sonra ticaret dışı para, toplam girişin %15'ini geçmemeli. |
+| 5 | Toptancı oyuncu ticaretini gölgeleyebilir | Alım kooperatifiyle toptancı fiyatı ×1,12 × 0,92 = **×1,03**; neredeyse piyasa fiyatı. Stok ve bütçe sınırı yok. | Kooperatif indirimi toptancıya değil oyuncu ilanlarına uygulansın. Toptancının bölge başına günlük stok ve alım bütçesi olsun; aşıldıkça fiyatı kötüleşsin. |
+| 6 | Sıralama hacim şişirmeyi ödüllendiriyor | Toptancıya ve sözleşmeye satış sektör unvanına sayılıyor (`sold()` her ikisinde). | Sektör unvanına yalnızca dükkân perakendesi ve başka şirkete (ilan, sözleşme) satış saysın; toptancı saymasın. |
+
+### Test planı
+1. **Çekirdek ekonomi:** görev, hedef, holding, yatırım ve kooperatif kapalı. Yalnızca üretim–ticaret. Bot her rol için (tarla, maden, fabrika, dükkân, karma) ayrı oynar.
+2. **Avantajları tek tek aç:** her bonusu açıp çekirdekle farkını ölç.
+3. **Senaryolar:**
+   - yeni / eski oyuncu (sezon ortasında başlayan),
+   - az / çok aktif (günde 1 kez vs. sürekli bakan),
+   - tek / ekip (kooperatifte üretim zinciri paylaşan 3 bot).
+4. **Ölçülecekler:**
+   - Rol başına günlük net kâr.
+   - Para kaynağı payları: ticaret, ödül, faiz, temettü, toptancı.
+   - Oyuncudan tedarik oranı (girdinin ne kadarı ilanlardan, ne kadarı toptancıdan).
+   - Üretimin durduğu süre ve nedeni (girdi yok, depo dolu, para yok).
+   - Yeni oyuncunun toparlanma süresi: kötü bir kararla (yanlış bina, cezalı sözleşme) düştükten sonra eski net değerine dönüş süresi.
+   - Gini katsayısı ve ilk oyuncunun toplam servetteki payı (tekelleşme).
+5. Bot bu ölçümleri `window.__tezgah.dbg` üzerinden toplar. Ham çıktılar `tasarim/testler/` altına CSV olarak konur, böylece belgeyi okuyan kişi sonuçları kendisi de inceleyebilir.
+
+Bot testi tek oyunculudur. Gerçek çok oyunculu rekabeti, tekelleşmeyi ve eğlenceyi kanıtlamaz; bunlar için sunucu aşaması ve gerçek oyuncularla kapalı test gerekir.
+
+### Açık kararlar
+1. **Çevrim içi zaman ölçeği:** öneri, 1 oyun günü = 1 gerçek saat. Bu durumda sezon (60 gün) 2,5 gerçek gün sürer. Alternatif: 1 oyun günü = 4 gerçek saat, sezon 10 gerçek gün sürer. Demo hızı (96 sn) yalnızca deneme için kalır.
+2. **Unvan ayrıcalıkları:** sezonluk mu olsun, yoksa tavanlı kalıcı mı?
+3. **Ödüller:** sabit tutar mı olsun, yoksa net değerle ölçeklenip tavanlı mı?

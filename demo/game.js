@@ -323,7 +323,7 @@
   }
   // Yıllık emlak vergisi oranı. Boş ya da son günde üretim/satış yapmamış arsaya oyun kuralı olarak 5 kat atıl arsa vergisi uygulanır.
   function taxRate(pl) {
-    const base = R[pl.region].tax, built = pl.region === 'merkez' ? TAX_BUILT : base;
+    const base = R[pl.region].tax, built = R[pl.region].u === 'm²' ? TAX_BUILT : base;  // şehir bölgelerinde binalı arsa işyeri oranıyla
     if (pl.part) { const m = plot(pl.part); return m && s.t - m.last < 1440 ? built : built * IDLE_TAX; }
     return !pl.b ? base * IDLE_TAX : (s.t - pl.last < 1440 ? built : built * IDLE_TAX);
   }
