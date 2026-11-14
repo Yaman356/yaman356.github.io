@@ -61,6 +61,15 @@
   const rnd = (a, b) => a + Math.random() * (b - a);
   const pick = a => a[Math.floor(Math.random() * a.length)];
   const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+  // Alım hızı: fiyat piyasa fiyatının her %10 üstünde alım hızı %20 düşer, %50 üstünde alıcı kalmaz;
+  // piyasanın altında hız artar (en fazla %50). Hem şehir halkına hem pazardaki ilanlara uygulanır.
+  const buySpeed = r => clamp(1 - 2 * (r - 1), 0, 1.5);
+  const speedNote = r => {
+    const d = Math.round((r - 1) * 100), v = Math.round(buySpeed(r) * 100);
+    if (d > 0) return `<span class="${v < 60 ? 'warn' : ''}">Piyasanın %${d} üstünde · alım hızı %${v}</span>`;
+    if (d < 0) return `<span class="up">Piyasanın %${-d} altında · alım hızı %${v}</span>`;
+    return 'Piyasa fiyatında · alım hızı %100';
+  };
   const fmt = n => (n < 0 ? '−' : '') + '₺' + Math.abs(Math.round(n)).toLocaleString('tr-TR');
   const fmt1 = n => '₺' + (Math.round(n * 10) / 10).toLocaleString('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -105,7 +114,7 @@
   function shopRate(pl, p) {
     const pr = pl.b.prices[p] || retailRef(p);
     const A = Math.pow(retailRef(p) / pr, 2) * (1 + 0.1 * (pl.b.level - 1));
-    const D = (P[p].d || 0) * R[pl.region].dm * demandMult(pl.region, p);
+    const D = (P[p].d || 0) * R[pl.region].dm * demandMult(pl.region, p) * buySpeed(pr / retailRef(p));
     const RA = s.rivals[pl.region][p].reduce((a, m) => a + 1 / (m * m), 0);
     return D * A / (A + RA + 1);
   }
@@ -208,8 +217,7 @@
     }
     // Pazardaki ilanlarım
     for (const l of s.mine) {
-      const r = l.price / price(l.p), f = Math.pow(clamp((1.3 - r) / 0.4, 0, 1), 1.5);
-      l.acc += 15 * f * dt / 60;
+      l.acc += 15 * buySpeed(l.price / price(l.p)) * dt / 60;
       const n = Math.min(Math.floor(l.acc), l.qty);
       if (n > 0) { l.acc -= n; l.qty -= n; const v = n * l.price; inc('Pazar', v); exp('Komisyon', v * COMM); s.mult[l.p] = clamp(s.mult[l.p] - 0.00002 * P[l.p].ref * n, 0.6, 1.5); }
     }
@@ -434,6 +442,7 @@
         <label for="pr${id}">Raf fiyatı</label><input id="pr${id}" class="price" inputmode="decimal" data-c="price" data-plot="${pl.id}" data-p="${p}" value="${pr.toFixed(1)}" ${r.mode !== 'elle' ? 'disabled' : ''}>
         <label for="au${id}">Stok azalınca</label><select id="au${id}" data-c="auto" data-plot="${pl.id}" data-p="${p}">${opt([[0, 'Elle alırım'], [1, 'Olağan fiyata kadar al'], [1.1, 'Olağanın %10 fazlasına kadar al'], [1.35, 'Toptancı dahil al (%35 fazlası)']], au)}</select>
       </div>
+      <p class="small">${speedNote(pr / retailRef(p))} <span class="muted">(piyasa fiyatı ${fmt1(retailRef(p))})</span></p>
       <p class="muted small">Birim maliyetin ${fmt1(shopCost(pl, p))} · saatte ≈${shopRate(pl, p).toFixed(1)} satış${au ? ' · stok 20’nin altına inince 60’a tamamlanır' : ''}</p>`;
   }
 
@@ -441,7 +450,7 @@
     const out = [];
     const next = GOALS.findIndex((g, i) => !s.goals[i]);
     out.push(['goal', next < 0 ? '<div class="goal">Bütün hedefler tamamlandı. Şirketini büyütmeye devam et.</div>' : `<div class="goal"><span class="small">Sıradaki hedef ${next + 1}/${GOALS.length}</span><b>${GOALS[next][0]}</b></div>`]);
-    out.push(['lm', `<div class="row small"><label for="listMul">Pazara ilan fiyatı</label><select id="listMul" data-c="listMul"><option value="0.9" ${ui.listMul === 0.9 ? 'selected' : ''}>olağanın %10 altı (hızlı satar)</option><option value="1" ${ui.listMul === 1 ? 'selected' : ''}>olağan fiyat</option><option value="1.1" ${ui.listMul === 1.1 ? 'selected' : ''}>olağanın %10 üstü (yavaş satar)</option></select></div>`]);
+    out.push(['lm', `<div class="row small"><label for="listMul">Pazara ilan fiyatı</label><select id="listMul" data-c="listMul"><option value="0.9" ${ui.listMul === 0.9 ? 'selected' : ''}>olağanın %10 altı (%20 daha hızlı satar)</option><option value="1" ${ui.listMul === 1 ? 'selected' : ''}>olağan fiyat</option><option value="1.1" ${ui.listMul === 1.1 ? 'selected' : ''}>olağanın %10 üstü (%20 daha yavaş satar)</option></select></div>`]);
     for (const pl of s.plots) out.push(['p' + pl.id, plotCard(pl)]);
     return out;
   }
@@ -449,7 +458,7 @@
   function viewMarket() {
     const out = [], dst = plot(ui.dest) || s.plots[0];
     out.push(['dest', `<div class="card"><div class="row wrap"><label for="dest">Teslim arsası</label><select id="dest" data-c="dest">${s.plots.map(p => `<option value="${p.id}" ${p.id === dst.id ? 'selected' : ''}>Arsa ${p.id} · ${R[p.region].n}${p.b ? ' · ' + B[p.b.type].n : ' · boş'}</option>`).join('')}</select><label for="qty">Adet</label><input id="qty" class="price" inputmode="numeric" data-c="qty" value="${ui.qty}"></div><p class="muted small">Fiyatlar teslim fiyatıdır: mal bedeli ve ${R[dst.region].n} bölgesine taşıma dahil.${transMult() > 1 ? ' Taşıma ücretleri şu an zamlı.' : ''}</p></div>`]);
-    if (s.mine.length) out.push(['mine', '<div class="card"><h3>İlanlarım</h3>' + s.mine.map(l => `<div class="row"><span>${P[l.p].n} · ${l.qty} adet · ${fmt1(l.price)}</span>${btn('Geri çek', 'unlist', { id: l.id }, 'ghost')}</div>`).join('') + '<p class="muted small">Satışlardan %3 komisyon kesilir.</p></div>']);
+    if (s.mine.length) out.push(['mine', '<div class="card"><h3>İlanlarım</h3>' + s.mine.map(l => `<div class="row"><span>${P[l.p].n} · ${l.qty} adet · ${fmt1(l.price)}<br><span class="small">${speedNote(l.price / price(l.p))}</span></span>${btn('Geri çek', 'unlist', { id: l.id }, 'ghost')}</div>`).join('') + '<p class="muted small">Satışlardan %3 komisyon kesilir.</p></div>']);
     for (const k of PK) {
       const wU = price(k) * W_BUY + trans(1, k, dst.region, dst.region);
       let h = `<div class="card"><div class="row head"><h3>${P[k].n}</h3><span class="small">${trend(k)}</span></div><p class="muted small">Olağan fiyat ${fmt1(price(k))} · ${WNAME[P[k].w]} yük</p><div class="row"><span>Sistem toptancısı</span><span class="num">${fmt1(wU)}</span>${btn('Al', 'buy', { p: k })}</div>`;
