@@ -287,3 +287,16 @@ Oyunun sonu yok ama oyuncuyu taşıyan dört amaç var. Demoda rakipler 11 sanal
 
 ### Test (bot, 60 gün)
 Bot 1. sezonu ₺569 mn net değer ve Fabrikatör unvanıyla 1. bitirdi; en iyi sanal rakip ~₺230 mn idi. Bu yüzden rakiplerin yetenek aralığı 0,65–1,15'ten 0,7–1,3'e çıkarıldı. Sezon sonu sıfırlama ve rozet kaydı çalıştı.
+
+### Kooperatifler
+Oyuncu kendi kooperatifini kurar (ad verir, tür seçer, ₺500 bin kuruluş sermaye payı öder) ve diğer şirketleri davet eder. Kooperatif sezonlar arasında kalır; çevrim içi sürümde üyeler gerçek oyuncular olur.
+
+| Tür | Ayrıcalık (5 üyede tam güç) | Gerçek karşılığı |
+|---|---|---|
+| Satış kooperatifi | Pazar ilanları %25 hızlı satar | Tariş, Çukobirlik gibi ortak satış |
+| Alım kooperatifi | Toptancıdan alış %8 ucuz | Ortak gübre, yem, hammadde alımı |
+| Kredi kooperatifi | Borç faizi %40 indirimli | Tarım kredi kooperatifleri |
+
+- Ayrıcalığın gücü üye sayısıyla artar: (üye + kurucu) / 5.
+- Günde bir davet gönderilebilir. Kabul olasılığı %15'ten başlar; şirketin odak ürünleri senin üretiminle örtüştükçe (+%15 her ürün), kooperatif büyüdükçe (+%4 her üye) artar, şirket senden çok büyükse düşer. Reddeden şirkete bir hafta sonra yeniden sorulabilir.
+- Kooperatif dağıtılabilir; ayrıcalıklar o an biter.

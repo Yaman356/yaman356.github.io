@@ -219,7 +219,7 @@
   }
   // Dükkânın rafındaki ürünler: stokta olanlar ve kuralı tanımlı olanlar
   const shelf = pl => [...new Set([...Object.keys(pl.inv), ...Object.keys(pl.b.rule), ...Object.keys(pl.b.auto).filter(p => pl.b.auto[p])])].filter(p => P[p]);
-  const shopCost = (pl, p) => pl.b.cost[p] || price(p) * W_BUY;
+  const shopCost = (pl, p) => pl.b.cost[p] || price(p) * wBuy();
   function ruleFloor(pl, p) { const r = pl.b.rule[p]; return shopCost(pl, p) * (1 + (r ? r.margin : 0.1)) / (pl.rented ? 1 - RENT : 1); }
   function applyRule(pl, p) {
     const r = pl.b.rule[p]; if (!r || r.mode === 'elle' || !P[p].d) return;
@@ -229,7 +229,7 @@
   // Satın alma: pazardaki ilanlar ve sistem toptancısı, teslim fiyatına göre
   function sources(p, region) {
     const src = s.listings.filter(l => l.p === p).map(l => ({ l, unit: l.price + trans(1, p, l.region, region) }));
-    src.push({ l: null, unit: price(p) * W_BUY + trans(1, p, region, region) });
+    src.push({ l: null, unit: price(p) * wBuy() + trans(1, p, region, region) });
     return src.sort((a, b) => a.unit - b.unit);
   }
   const crew = pl => s.workers.filter(w => w.plot === pl.id);
@@ -247,7 +247,7 @@
   function fireCrew(pl, why) { const c = crew(pl); if (c.length) { s.workers = s.workers.filter(w => w.plot !== pl.id); news('İşçiler ayrıldı', c.map(w => w.name).join(', ') + ' ' + why + ' işten ayrıldı.'); } }
   function addCost(pl, p, q, unit) { if (!pl.b || pl.b.type !== 'dukkan') return; const old = pl.inv[p] || 0; pl.b.cost[p] = (old * (pl.b.cost[p] || unit) + q * unit) / (old + q); }
   function purchase(to, p, q, l) {
-    const unit = (l ? l.price : price(p) * W_BUY * (1 - wEff(to, 'mudur'))), tu = trans(1, p, l ? l.region : to.region, to.region) * (1 - wEff(to, 'sofor'));
+    const unit = (l ? l.price : price(p) * wBuy() * (1 - wEff(to, 'mudur'))), tu = trans(1, p, l ? l.region : to.region, to.region) * (1 - wEff(to, 'sofor'));
     q = Math.min(q, l ? l.qty : Infinity, cap(to) - invTotal(to), Math.floor(s.money / (unit + tu)));
     if (q <= 0) return 0;
     exp('Mal alımı', unit * q); exp('Taşıma', tu * q); addCost(to, p, q, unit + tu); add(to, p, q);
@@ -459,7 +459,7 @@
     }
     // Pazardaki ilanlarım
     for (const l of s.mine) {
-      l.acc += listRate(l.p) * buySpeed(l.price / price(l.p)) * dt / 60;
+      l.acc += listRate(l.p) * coopSell() * buySpeed(l.price / price(l.p)) * dt / 60;
       const n = Math.min(Math.floor(l.acc), l.qty);
       if (n > 0) { l.acc -= n; l.qty -= n; const v = n * l.price; sold(l.p, n); inc('Pazar', v); exp('Komisyon', v * COMM); s.mult[l.p] = clamp(s.mult[l.p] - 0.00002 * impact(l.p) * n, 0.6, 1.5); }
     }
@@ -524,7 +524,7 @@
     if (s.auctions.filter(a => !a.plot).length < 2) spawnAuction();
     if (day % 2 === 0) announceEvent();
     if (s.money < 0) {
-      const fee = -s.money * DEBT_RATE * perk('debt'); exp('Borç faizi', fee);
+      const fee = -s.money * DEBT_RATE * perk('debt') * coopDebt(); exp('Borç faizi', fee);
       news('Kasan ekside', 'Borcun var: ' + fmt(-s.money) + '. Borca günde %' + (DEBT_RATE * perk('debt') * 100).toLocaleString('tr-TR') + ' faiz işler (yıllık ~%40 ticari kredi); bugün ' + fmt(fee) + ' faiz ödendi. Para yetmeyen üretim hatları durur. Mal sat ya da bir arsanı sisteme devret.', true);
     }
   }
@@ -607,6 +607,22 @@
     tab(d) { ui.tab = d.v; if (d.v === 'news') { s.unread = 0; ui.away = null; } },
     awayOk() { ui.away = null; },
     joinH(d) { ensureComp(); const h = HOLDINGS.find(x => x.id === d.v); if (!h || s.comp.holding) return; s.comp.holding = h.id; s.comp.week.hTarget = holdingTarget(); news(h.n + '’na katıldın', 'Ortak haftalık gelir hedefine katkı veriyorsun; üyeler %5 ucuz taşır.'); },
+    coopFound(d) {
+      ensureComp(); if (s.comp.coop || !COOP_T[d.v]) return;
+      const n = (ui.coopName || '').trim(); if (n.length < 3) return toast('Önce kooperatife bir ad ver');
+      if (s.money < COOP_FEE) return toast('Para yetersiz');
+      exp('Kooperatif', COOP_FEE); s.comp.coop = { n, type: d.v, members: [], asked: {}, founded: s.t }; ui.coopName = '';
+      news(n + ' kuruldu', COOP_T[d.v].n + ' olarak kuruldu. Diğer şirketleri davet ettikçe ayrıcalığı güçlenir: ' + COOP_T[d.v].perk.toLocaleLowerCase('tr-TR') + '.');
+    },
+    coopInvite(d) {
+      const c = s.comp && s.comp.coop, x = c && s.comp.npc.find(n => n.n === d.v); if (!x || c.members.includes(x.n)) return;
+      const wk = s.comp.week.n, day = Math.floor(s.t / 1440); if (c.asked[x.n] === wk) return;
+      if (c.lastInvite === day) return toast('Günde bir davet gönderebilirsin');
+      c.lastInvite = day;
+      if (Math.random() < coopChance(x)) { c.members.push(x.n); delete c.asked[x.n]; news(x.n + ' kooperatife katıldı', c.n + ' artık ' + (c.members.length + 1) + ' üyeli; ayrıcalık gücü %' + Math.round(coopPow() * 100) + '.'); }
+      else { c.asked[x.n] = wk; toast(x.n + ' daveti reddetti'); }
+    },
+    coopClose() { if (!s.comp || !s.comp.coop) return; if (!ui.confirmCoop) { ui.confirmCoop = true; setTimeout(() => { ui.confirmCoop = false; }, 4000); return; } ui.confirmCoop = false; news(s.comp.coop.n + ' dağıtıldı', 'Kooperatif kapandı; ayrıcalıkları sona erdi.'); s.comp.coop = null; },
     leaveH() { if (!s.comp || !s.comp.holding) return; const h = HOLDINGS.find(x => x.id === s.comp.holding); s.comp.holding = null; s.comp.week.hTarget = 0; toast(h.n + '’ndan ayrıldın'); },
     trade(d) {
       const tl = d.side === 'sellall' ? Infinity : ui.invTL;
@@ -693,6 +709,7 @@
     listMul(el) { ui.listMul = +el.value; },
     sel(el) { ui.sel[el.dataset.k] = el.value; },
     cur(el) { if (CUR[el.value]) s.cur = el.value; },
+    coopName(el) { ui.coopName = el.value.slice(0, 28); },
     invAmt(el) { ui.invTL = clamp(parseFloat(el.value.replace(',', '.')) || 0, 0, 1e12) * rate(s.cur); },
   };
   const eligible = c => s.plots.filter(pl => pl.b && pl.region === Object.keys(s.cands).find(r => s.cands[r].includes(c)) && WK[c.type].b.includes(pl.b.type) && crew(pl).length < slots(pl));
@@ -839,7 +856,7 @@
     out.push(['dest', `<div class="card"><div class="row wrap"><label for="dest">Teslim arsası</label><select id="dest" data-c="dest">${s.plots.filter(p => !p.part).map(p => `<option value="${p.id}" ${p.id === dst.id ? 'selected' : ''}>Arsa ${p.id} · ${R[p.region].n}${p.b ? ' · ' + B[p.b.type].n : ' · boş'}</option>`).join('')}</select><label for="qty">Miktar (birim)</label><input id="qty" class="price" inputmode="numeric" data-c="qty" value="${ui.qty}"></div><p class="muted small">Fiyatlar teslim fiyatıdır: mal bedeli ve ${R[dst.region].n} bölgesine taşıma dahil.${transMult() > 1 ? ' Taşıma ücretleri şu an zamlı.' : ''}</p></div>`]);
     if (s.mine.length) out.push(['mine', '<div class="card"><h3>İlanlarım</h3>' + s.mine.map(l => `<div class="row"><span>${P[l.p].n} · ${l.qty} × ${P[l.p].u} · ${fmt1(l.price)}${l.auto ? ' · otomatik' : ''}<br><span class="small">${speedNote(l.price / price(l.p))}</span></span>${btn('Geri çek', 'unlist', { id: l.id }, 'ghost')}</div>`).join('') + '<p class="muted small">Satışlardan %3 komisyon kesilir.</p></div>']);
     for (const k of PK) {
-      const wU = price(k) * W_BUY + trans(1, k, dst.region, dst.region);
+      const wU = price(k) * wBuy() + trans(1, k, dst.region, dst.region);
       let h = `<div class="card"><div class="row head"><h3 class="named">${ic(k, 28)}${P[k].n}</h3><span class="small">${trend(k)}</span></div><p class="muted small">Olağan fiyat ${fmt1(price(k))} / ${P[k].u} · ${WNAME[P[k].w]} yük · 1. seviye ${B[P[k].b].n.toLocaleLowerCase('tr-TR')}: ${qtyTxt(k, 10 * B[P[k].b].scale)} / ${durTxt(P[k].t)}${Object.keys(P[k].in).length ? ' (' + Object.entries(P[k].in).map(([x, q]) => qtyTxt(x, q * B[P[k].b].scale) + ' ' + P[x].n.toLocaleLowerCase('tr-TR')).join(' + ') + ')' : ''}</p><div class="row"><span>Sistem toptancısı</span><span class="num">${fmt1(wU)}</span>${btn('Al', 'buy', { p: k })}</div>`;
       for (const l of s.listings.filter(x => x.p === k)) {
         const u = l.price + trans(1, k, l.region, dst.region);
@@ -954,7 +971,7 @@
     const k = keep || {};
     s.comp = {
       season: k.season || 1, start: Math.floor(s.t / 1440), badges: k.badges || [], best: k.best || null,
-      holding: k.holding || null, kings: [],
+      holding: k.holding || null, coop: k.coop || null, kings: [],
       npc: NPC.map(([n, h, f]) => ({ n, h, f, nw: START_MONEY * rnd(0.9, 1.1), skill: rnd(0.7, 1.3), vol: {} })),
       sold: {}, week: null,
     };
@@ -1050,7 +1067,7 @@
     const c = s.comp, b = board(), place = b.findIndex(x => x.me) + 1, nw = netWorth();
     const badge = { season: c.season, place, of: b.length, nw, rank: RANKS[rankNow()].n, kings: c.kings.map(p => KING[p]) };
     const badges = [...c.badges, badge], best = !c.best || place < c.best.place || (place === c.best.place && nw > c.best.nw) ? badge : c.best;
-    const keep = { season: c.season + 1, badges, best, holding: c.holding }, cur = s.cur;
+    const keep = { season: c.season + 1, badges, best, holding: c.holding, coop: c.coop }, cur = s.cur;
     newGame(); s.cur = cur; s.news = []; initComp(keep);
     news('Sezon ' + badge.season + ' bitti: ' + place + '. oldun', (place <= 3 ? MEDAL[place - 1] + ' rozet kazandın. ' : '') + 'Net değerin ' + fmt(nw) + ', unvanın ' + badge.rank + ' idi. Yeni sezonda herkes ' + fmt(START_MONEY) + ' ile sıfırdan başlıyor; rozetlerin profilinde kalıyor.', true);
   }
@@ -1072,9 +1089,47 @@
     hb.forEach((x, i) => { const mine = c.holding === x.id; h += `<div class="row"><span><b>${i + 1}. ${x.n}</b>${mine ? ' <span class="tag own">üyesin</span>' : ''}<br><span class="small muted">${x.note} · ${x.members.length} üye · toplam ${fmt(x.nw)}</span></span>${mine ? btn('Ayrıl', 'leaveH', {}, 'ghost') : c.holding ? '' : btn('Katıl', 'joinH', { v: x.id })}</div>`; });
     if (c.holding && w.hTarget) { const f = Math.min(1, holdingDone() / w.hTarget); h += `<p class="small">Bu haftanın ortak hedefi: ${fmt(w.hTarget)} ticari gelir · %${Math.floor(f * 100)}</p><div class="bar"><i style="width:${(f * 100).toFixed(1)}%"></i></div>`; }
     out.push(['hd', h + '</div>']);
+    out.push(['coop', coopCard()]);
     // Rozetler
     if (c.badges.length) out.push(['bd', `<div class="card"><h3>Rozetlerin</h3>${c.badges.map(x => `<div class="row"><span>Sezon ${x.season}: <b>${x.place}.</b> / ${x.of}${x.place <= 3 ? ' · ' + MEDAL[x.place - 1] : ''}<br><span class="small muted">${x.rank}${x.kings.length ? ' · ' + x.kings.join(', ') : ''}</span></span><span class="num small">${fmt(x.nw)}</span></div>`).join('')}</div>`]);
     return out;
+  }
+
+  // ---------- Kooperatifler: oyuncunun kurduğu ortaklık ----------
+  // Türü bir ayrıcalık verir; ayrıcalığın gücü üye sayısıyla artar (5 üyede tam güç). Çevrim içi sürümde üyeler gerçek oyuncular olur.
+  const COOP_FEE = 500000, COOP_FULL = 5;
+  const COOP_T = {
+    satis: { n: 'Satış kooperatifi', perk: 'Pazar ilanların %25’e kadar hızlı satar (ortak satış ağı)', ex: 'Tariş, Çukobirlik gibi' },
+    alim: { n: 'Alım kooperatifi', perk: 'Toptancıdan alış %8’e kadar ucuz (toplu alım)', ex: 'ortak gübre, yem, hammadde alımı' },
+    kredi: { n: 'Kredi kooperatifi', perk: 'Borç faizi %40’a kadar indirimli', ex: 'tarım kredi kooperatifleri gibi' },
+  };
+  const coopPow = () => { const c = s.comp && s.comp.coop; return c ? Math.min(1, (c.members.length + 1) / COOP_FULL) : 0; };
+  const coopIs = k => s.comp && s.comp.coop && s.comp.coop.type === k;
+  const coopSell = () => coopIs('satis') ? 1 + 0.25 * coopPow() : 1;
+  const wBuy = () => W_BUY * (coopIs('alim') ? 1 - 0.08 * coopPow() : 1);
+  const coopDebt = () => coopIs('kredi') ? 1 - 0.4 * coopPow() : 1;
+  function coopCard() {
+    const c = s.comp.coop;
+    if (!c) {
+      return `<div class="card"><h3>Kooperatif kur</h3><p class="muted small">Kendi kooperatifini kur, diğer şirketleri davet et. Türü bir ayrıcalık verir; ayrıcalık üye sayısıyla güçlenir (${COOP_FULL} üyede tam). Kuruluş sermaye payı ${fmt(COOP_FEE)}. Kooperatif sezonlar arasında kalır.</p>
+        <div class="row wrap small"><label for="coopName">Adı</label><input id="coopName" class="price" data-c="coopName" maxlength="28" value="${esc(ui.coopName || '')}" placeholder="ör. Yeşilova Üreticileri"></div>
+        ${Object.entries(COOP_T).map(([k, x]) => `<div class="row"><span><b>${x.n}</b><br><span class="small muted">${x.perk} · ${x.ex}</span></span>${btn('Kur', 'coopFound', { v: k })}</div>`).join('')}</div>`;
+    }
+    const T = COOP_T[c.type], pow = coopPow(), all = [{ n: 'Sen (kurucu)', nw: netWorth() }, ...c.members.map(m => s.comp.npc.find(x => x.n === m)).filter(Boolean)];
+    const wk = s.comp.week ? s.comp.week.n : 0, others = s.comp.npc.filter(x => !c.members.includes(x.n));
+    return `<div class="card"><div class="row head"><h3>${esc(c.n)}</h3><span class="tag own">${T.n}</span></div>
+      <p class="small">${T.perk}. Şu anki güç: %${Math.round(pow * 100)} · ${all.length} üye (${COOP_FULL} üyede tam güç)</p><div class="bar"><i style="width:${(pow * 100).toFixed(0)}%"></i></div>
+      <p class="muted small">Üyeler · toplam ${fmt(all.reduce((a, x) => a + x.nw, 0))}</p>
+      ${all.map(x => `<div class="row small"><span>${esc(x.n)}</span><span class="num">${fmt(x.nw)}</span></div>`).join('')}
+      ${others.length ? `<h3 class="small">Davet et</h3><p class="muted small">Aynı ürünlerle uğraşan şirketler ve büyük kooperatifler daveti daha kolay kabul eder. Günde bir davet gönderebilirsin; reddeden şirkete bir hafta sonra yeniden sorabilirsin.${c.lastInvite === Math.floor(s.t / 1440) ? ' <b>Bugünkü davetini gönderdin.</b>' : ''}</p>` + others.map(x => { const asked = c.asked[x.n] === wk; return `<div class="row small"><span>${esc(x.n)} <span class="muted">· ${fmt(x.nw)} · %${Math.round(coopChance(x) * 100)} kabul</span></span>${asked ? '<span class="muted">bu hafta reddetti</span>' : btn('Davet et', 'coopInvite', { v: x.n })}</div>`; }).join('') : ''}
+      <div class="row">${btn(ui.confirmCoop ? 'Emin misin? Tekrar dokun' : 'Kooperatifi dağıt', 'coopClose', {}, 'ghost')}</div></div>`;
+  }
+  // Davet kabul olasılığı: kooperatif büyüdükçe ve odak ürünler kendi üretiminle örtüştükçe artar; çok büyük şirketler küçük kooperatife zor girer
+  function coopChance(x) {
+    const c = s.comp.coop, mine = new Set(s.plots.flatMap(pl => pl.b && pl.b.lines ? pl.b.lines.map(l => l.r) : []));
+    const fit = x.f.filter(p => mine.has(p)).length, size = c.members.length + 1;
+    const ratio = netWorth() / Math.max(1, x.nw);
+    return Math.max(0.05, Math.min(0.9, 0.15 + 0.15 * fit + 0.04 * size + (ratio < 0.5 ? -0.2 : ratio > 2 ? 0.1 : 0)));
   }
 
   const VIEWS = { compete: viewCompete, invest: viewInvest, crew: viewCrew, plots: viewPlots, market: viewMarket, auction: viewAuction, news: viewNews, report: viewReport };
