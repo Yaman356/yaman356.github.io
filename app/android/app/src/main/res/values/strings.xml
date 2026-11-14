@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Tezgâh</string>
+    <string name="title_activity_main">Tezgâh</string>
+    <string name="package_name">com.archyntech.tezgah</string>
+    <string name="custom_url_scheme">com.archyntech.tezgah</string>
+</resources>
