@@ -300,3 +300,103 @@ Oyuncu kendi kooperatifini kurar (ad verir, tür seçer, ₺500 bin kuruluş ser
 - Ayrıcalığın gücü üye sayısıyla artar: (üye + kurucu) / 5.
 - Günde bir davet gönderilebilir. Kabul olasılığı %15'ten başlar; şirketin odak ürünleri senin üretiminle örtüştükçe (+%15 her ürün), kooperatif büyüdükçe (+%4 her üye) artar, şirket senden çok büyükse düşer. Reddeden şirkete bir hafta sonra yeniden sorulabilir.
 - Kooperatif dağıtılabilir; ayrıcalıklar o an biter.
+
+## 11. Şirket yönetimi: sözleşme, kredi, mevsim, marka, vergi
+
+Bu bölümdeki her şey demoda çalışır (yeni **Şirket** sekmesi ve ilgili ekranlar).
+
+### Sözleşmeler ve siparişler
+- Sanal şirketler her gün 3 sabit fiyatlı sipariş teklif eder: ürün, miktar, 3/5/7 günlük süre, teslim bölgesi. Alıcı genelde o ürünü girdi olarak kullanan şirkettir (un için Akıncı Un gibi).
+- Sipariş tutarı net değerin ~%5–12'si kadardır (en az ₺300 bin). Birim fiyat piyasanın %4–24 üstündedir; kalite primi de eklenir.
+- **Güvenilirlik** 50'den başlar. Tamamlanan sözleşme +5, cezalı sözleşme −15 puan getirir. Puan arttıkça teklif fiyatları yükselir (her puan +%0,2).
+- Teslim edilmeyen kısım için bedelin %25'i ceza ödenir. Aynı anda en fazla 3 sözleşme yürütülür.
+- Teslimat depolardan yapılır; taşıma ücreti oyuncuya aittir. İstenirse ürün depoya girdikçe saatlik olarak otomatik teslim edilir.
+
+### Banka kredisi
+- Limit: ₺1 mn teminatsız + (arsa değeri + bina harcamasının yarısı) × %60 − mevcut kredi borcu.
+- Faiz yıllık %45 (2026 ticari kredi tahmini). Tüccar ve Dünya markası unvanları ile kredi kooperatifi bunu en düşük ~%26'ya indirir.
+- Vade 4, 8 ya da 13 hafta (oyun günü). Eşit taksit her gün kasadan alınır; erken kapamada kalan anaparanın %1'i ücret alınır.
+- Taksit ödenemezse faiz ve %1 gecikme bedeli borca eklenir. **Üç taksit üst üste kaçarsa** banka en değerli arsayı binası ve deposuyla birlikte alır (arsanın %70'i + binanın %30'u borca sayılır), arsa haciz artırmasına çıkar.
+- Kredi borcu net değerden düşülür. Eski otomatik eksi bakiye (günlük %0,8 faiz) acil durum için kalır.
+
+### Mevsimler ve hasat
+Bir oyun günü bir haftadır: 52 günde bir yıl, her mevsim 13 gün. Oyun ilkbaharda başlar.
+
+| Mevsim | Buğday verimi | Pamuk verimi | Süt verimi | Fiyat eğilimi |
+|---|---|---|---|---|
+| İlkbahar | ×0,9 | ×0,7 | ×1,2 | Buğday %6 pahalı, süt %5 ucuz |
+| Yaz | ×1,7 | ×1,1 | ×1,0 | Buğday %12 ucuz (hasat) |
+| Sonbahar | ×1,0 | ×1,7 | ×0,95 | Pamuk %12 ucuz (hasat) |
+| Kış | ×0,5 | ×0,4 | ×0,85 | Buğday %12, pamuk %10, kömür %10 pahalı |
+
+- Fiyatlar her saat mevsimin seviyesine doğru çekilir. Hasatta ucuz alıp depolamak, kışın satmak kazandırır.
+- Yeni hava olayı: **zirai don** (Kırsal tarlaları %40 az verir). Kuraklık ve bereket olayları da sürüyor.
+
+### Marka ve kalite
+- **Kalite** (1–5 yıldız, ürün başına): Ar-Ge ile yükselir. Maliyeti ürünün fiyatı × 400 × seviye². Örneğin buğdayda 2. yıldız ₺660 bin, alette 5. yıldız ~₺224 mn.
+- Her yıldız, alıcının kabul ettiği fiyatı %6 artırır: dükkânda ve pazarda aynı fiyata daha hızlı satılır, sözleşmede daha yüksek fiyat gelir. Toptancı primin yarısını öder.
+- **Marka bilinirliği** (0–100): reklamla yükselir. Üç seçenek var: yerel gazete ₺250 bin (+4), bölgesel radyo ₺1,5 mn (+12), ulusal TV ₺8 mn (+30). Puan arttıkça reklamın getirisi azalır.
+- Bilinirlik her gün %3 söner; satış yapılan günler +0,3 ekler. Dükkân talebini en fazla %50, ilan satış hızını en fazla %25 artırır.
+- Şirket sekmesinde "en tanınan marka" sıralaması gösterilir. Sanal şirketlerin bilinirliği net değerleriyle logaritmik büyür.
+
+### Vergi ve muhasebe
+- **Kurumlar vergisi %25**: her mevsim sonunda (çeyrek, 13 gün) o çeyreğin kârı üzerinden alınır. Zarar sonraki çeyreğe devreder.
+- Gider sayılmayanlar: inşaat (yerine binalar yılda %10 amortismanla gider yazılır), arsa alımı ve satışı, kredi anaparası, KDV, kooperatif sermayesi. Faiz, maaş, reklam, Ar-Ge, taşıma, kira ve emlak vergisi gider sayılır.
+- **KDV**: yalnızca dükkândaki perakende satışta, satış fiyatı ile maliyet arasındaki fark üzerinden alınır. Oranlar: temel gıda (buğday, süt, un, ekmek, peynir) %1, kumaş ve giysi %10, diğerleri %20. Şirketler arası satışta KDV indirimle sıfırlandığı için gösterilmez.
+- Not: kurumlar vergisi büyümeyi yaklaşık dörtte bir yavaşlatır. Bölüm 9'daki bot süreleri vergisiz ekonomiye göredir; yeniden ölçülmeli.
+
+### Yeni bölgeler
+Unvan yükseldikçe yeni bölgeler açılır. Açılınca o bölgede bir arsa artırmaya çıkar.
+
+| Bölge | Açılma | Özellik | Arsa fiyatı |
+|---|---|---|---|
+| Ova (Konya benzeri) | Esnaf | Tarlalar %40 fazla ürün verir | ~₺190 bin/dönüm |
+| Liman (İzmir benzeri) | Tüccar | Toptancı malı %92'den alır (ihracat; başka yerde %85) | ~₺14 bin/m² |
+| Metropol (İstanbul benzeri) | Sanayici | Dükkân talebi 2,4 kat (Merkez 1,6) | ~₺30 bin/m² |
+
+Bölgeler arası mesafe 1–3 adımdır; Liman ve Metropol birbirine yakın, Dağ'a uzaktır.
+
+### Talebin oyuncu sayısıyla büyümesi
+Pazar derinliği = √(aktif şirket sayısı / 12) × (1 + %0,6 × sezon günü).
+- Dükkân talebi ve ilan satış hızı derinlikle çarpılır; tek satışın fiyata etkisi derinliğe bölünür.
+- Demoda şirket sayısı sabit 12'dir (sen + 11 sanal şirket); sezon içinde talep %36'ya kadar büyür.
+- Çevrim içi sürümde aktif şirket sayısı, son 7 günde oynayan oyuncular ile sanal şirketlerin toplamıdır. Böylece 1.000 oyunculu bir pazar 12 oyunculuktan ~9 kat derindir ve erken doymaz.
+
+### Oyuncular arası ticaret (demo karşılığı)
+- Pazardaki ilanlar artık satıcı şirketin adını gösterir.
+- Her ilanda bir kez pazarlık yapılabilir: %5 indirimin kabul şansı %55, %10 indirimin %25'tir. Alım kooperatifi +%10, piyasanın üstündeki ilan +%15 şans ekler.
+- Çevrim içi sürümde ilanları gerçek oyuncular verir, pazarlık teklif-karşı teklif olarak karşı tarafa gider. Sözleşme teklifleri de oyuncular arasında açılır.
+
+### İlk dakikalar için rehber
+Yeni oyunda ana ekranın üstünde 7 adımlık rehber çıkar:
+1. Tarla kur.
+2. Ürün seç.
+3. İlk partiyi bekle.
+4. İlk satışı yap.
+5. Satışı otomatiğe bağla.
+6. Şirket sekmesine bak.
+7. Arsa al ya da kredi çek.
+
+Her adım, oyuncu o işi yapınca kendiliğinden geçer. Rehber kapatılabilir; bitince hedefler kartı görünür.
+
+## 12. Sunucu ve hesaplar
+
+### Aşama 1: prototip (repoda, `server/server.js`)
+Bağımlılıksız bir Node sunucusu. Çalıştırmak için `node server/server.js` (port 8790); demo dosyalarını da aynı adresten sunar. Sağladıkları:
+- **Hesap açma ve giriş**: ad (3–24 karakter, büyük-küçük harf duyarsız) ve şifre (en az 8 karakter, scrypt ile tuzlanıp saklanır). Girişte rastgele bir oturum anahtarı verilir.
+- **Bulut kaydı**: `PUT /api/save` oyun durumunu, net değeri ve oyun gününü saklar; `GET /api/save` geri verir. Eski güne ait kayıt, yenisinin üstüne yazılamaz.
+- **Makullük kontrolü**: net değer bir oyun gününde 1,6 katından fazla artamaz. En hızlı bot günde ~1,15 kat büyüyor; bunu aşan kayıt reddedilir.
+- **Sezon sıralaması**: `GET /api/board` aynı sezondaki ilk 50 oyuncu.
+- Bu aşamada simülasyon hâlâ tarayıcıda döner. Kontrol kaba hileleri durdurur ama kayıt düzenlemeyi tamamen engellemez.
+
+### Aşama 2: sunucu otoriteli ekonomi (hedef)
+- **Simülasyon sunucuda**: oyun mantığı (`step`, `hourly`, `daily`) ortak bir modüle taşınır. İstemci yalnızca eylem gönderir (inşa et, fiyat koy, teklif ver, kredi çek); para ve stok sunucuda hesaplanır. Böylece hile imkânsızlaşır.
+- **Ortak pazar**: ilanlar, sözleşmeler, artırmalar ve fiyat çarpanları tüm oyuncular için tek bir yerde tutulur. Fiyat etkisi pazar derinliğiyle (bölüm 11) ölçeklenir.
+- **Zaman**: sunucu dakikada bir oyun saati ilerletir. Çevrim dışı oyuncunun binaları çalışmaya devam eder; istemci açılınca durumu çeker. Telafi hesabı gerekmez.
+- **Veri**: oyuncu, arsa, ilan, sözleşme ve kredi tabloları için PostgreSQL. Oturum ve anlık fiyatlar için Redis. Canlı fiyat ve haberler istemciye WebSocket ile gider.
+- **Kooperatif ve holding**: gerçek üyelik, davetler, ortak hedefler ve ortak sohbet.
+- **Güvenlik**: hız sınırı, oturum süresi, e-posta doğrulama, şifre sıfırlama, hesap başına tek aktif oturum.
+- **Barındırma**: GitHub Pages yalnızca statik dosya sunar. Sunucu için Fly.io, Render ya da bir VPS gerekir.
+
+### Aşama 3: mobil
+Capacitor uygulaması (`app/`) aynı API'yi kullanır. Google Play Games ya da Apple ile girişte hesap bağlama eklenir.

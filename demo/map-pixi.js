@@ -10,6 +10,8 @@
   const TW = 128, TH = 64, N = 4, W = 560, H = 400, OX = 280, OY = 100;
   const P = (i, j) => [OX + (i - j) * TW / 2, OY + (i + j) * TH / 2];
   const SLOTS = [[1, 1], [2, 1], [1, 2], [2, 2], [0, 1], [3, 2], [1, 0], [2, 3], [0, 2], [3, 1], [0, 0], [3, 3], [2, 0], [1, 3], [0, 3], [3, 0]];
+  // Sonradan açılan bölgeler mevcut çizimlerden birini kullanır
+  const LOOK = { ova: 'kirsal', liman: 'merkez', metropol: 'merkez' };
   const GROUND = { merkez: ['--map-pave', '--map-pave2'], kirsal: ['--map-grass', '--map-grass2'], dag: ['--map-dirt', '--map-dirt2'] };
   const DECOR = { merkez: [['m_office'], ['m_houses', 'm_tree'], ['m_office', 'm_tree']], kirsal: [['m_tree', 'm_cow'], ['m_ewe', 'm_tree', 'm_ewe'], ['m_cow', 'm_tree']], dag: [['m_pine', 'm_rock'], ['m_mountain'], ['m_rock', 'm_pine', 'm_pine']] };
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -28,7 +30,7 @@
   // ---------- Bölge sahnesi ----------
   class Region {
     constructor(key) {
-      this.key = key; this.sig = ''; this.anim = [];
+      this.key = key; this.look = LOOK[key] || key; this.sig = ''; this.anim = [];
       this.fig = document.createElement('figure'); this.fig.className = 'region';
       this.cap = document.createElement('figcaption');
       this.app = new X.Application();
@@ -53,7 +55,7 @@
 
       // zemin ve kenar
       const g = new X.Graphics();
-      const [a, b] = GROUND[this.key].map(css);
+      const [a, b] = GROUND[this.look].map(css);
       g.poly([...P(0, N), ...P(N, N), P(N, N)[0], P(N, N)[1] + 14, P(0, N)[0], P(0, N)[1] + 14]).fill(css('--map-edgeL'));
       g.poly([...P(N, N), ...P(N, 0), P(N, 0)[0], P(N, 0)[1] + 14, P(N, N)[0], P(N, N)[1] + 14]).fill(css('--map-edgeR'));
       for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) g.poly(tile(i, j)).fill((i + j) % 2 ? b : a).stroke({ width: 1.5, color: 0xffffff, alpha: 0.35 });
@@ -70,7 +72,7 @@
       for (const au of m.auctions) { const t = take(); if (t) items.push({ d: t[0] + t[1], draw: () => this.auction(t) }); }
       SLOTS.forEach(t => { if (!used.has(t.join())) items.push({ d: t[0] + t[1] - 0.1, draw: () => this.decor(t) }); });
       items.sort((x, y) => x.d - y.d).forEach(it => st.addChild(it.draw()));
-      if (this.key !== 'dag' || m.plots.length) st.addChild(this.truck());
+      if (this.look !== 'dag' || m.plots.length) st.addChild(this.truck());
     }
 
     plot(p, [ti, tj], parts, onFocus) {
@@ -116,7 +118,7 @@
     }
 
     decor([ti, tj]) {
-      const c = new X.Container(), set = DECOR[this.key][(ti * 3 + tj * 5) % 3];
+      const c = new X.Container(), set = DECOR[this.look][(ti * 3 + tj * 5) % 3];
       const spots = [[0.5, 0.55], [0.3, 0.75], [0.75, 0.35]];
       set.forEach((k, n) => {
         if (!tex[k]) return;
@@ -160,7 +162,7 @@
       const s = sprite('m_truck', 0, 0, TW * 0.42);
       c.addChild(s);
       const [x0, y0] = P(0.2, N + 0.15), [x1, y1] = P(N - 0.2, N + 0.15);
-      const sp = { merkez: 0.05, kirsal: 0.035, dag: 0.03 }[this.key];
+      const sp = { merkez: 0.05, kirsal: 0.035, dag: 0.03 }[this.look];
       if (reduced) { s.position.set((x0 + x1) / 2, (y0 + y1) / 2); return c; }
       this.anim.push(t => {
         const u = (t * sp) % 1, f = u < 0.5 ? u * 2 : 2 - u * 2;

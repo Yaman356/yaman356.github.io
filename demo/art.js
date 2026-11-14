@@ -223,6 +223,7 @@
   }
 
   function regionSvg(region, m) {
+    region = ({ ova: 'kirsal', liman: 'merkez', metropol: 'merkez' })[region] || region;
     const used = new Set(), items = [];
     let ground = '';
     for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) ground += flat(tileP(i, j), GROUND[region][(i + j) % 2], 'stroke="var(--map-line)" stroke-width="1"');

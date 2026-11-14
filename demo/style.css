@@ -127,3 +127,7 @@ select.cur { font: inherit; font-size: 13px; padding: 2px 4px; border-radius: 6p
 .rank .bar i { background: var(--gold, var(--accent)); }
 .board tr.me td { font-weight: 600; color: var(--accent); }
 .quest { display: grid; gap: 4px; margin: 8px 0; }
+.goal.tut { gap: 4px; }
+.goal.tut .btn { background: transparent; color: var(--on-accent); border: 1px solid currentColor; margin-top: 4px; }
+.chk { display: inline-flex; align-items: center; gap: 6px; }
+.haggle { justify-content: flex-start; gap: 6px; margin: -2px 0 6px; }

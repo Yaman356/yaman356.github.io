@@ -27,9 +27,13 @@
   // Kırsal: tarım arazisi (Konya ~190 bin, Çanakkale ~470 bin TL/dönüm). Dağ: dağlık arazi + maden ruhsat sahası (tahmin).
   // tax: yıllık emlak vergisi oranı (büyükşehir: arsa binde 6, tarla/arazi binde 2, işyeri binde 4).
   const R = {
-    merkez: { n: 'Merkez', dm: 1.6, u: 'm²', size: [350, 700], up: 12000, tax: 0.006, note: 'Tüketici talebi en yüksek bölge' },
+    merkez: { n: 'Merkez', dm: 1.6, u: 'm²', size: [350, 700], up: 12000, tax: 0.006, note: 'Şehir merkezi: dükkân talebi yüksek' },
     kirsal: { n: 'Kırsal', dm: 1.0, u: 'dönüm', size: [6, 16], up: 250000, tax: 0.002, bonus: 'tarla', note: 'Tarlalar %25 fazla ürün verir' },
     dag: { n: 'Dağ', dm: 0.7, u: 'dönüm', size: [25, 60], up: 37500, tax: 0.002, bonus: 'maden', note: 'Madenler %25 fazla ürün verir' },
+    // Unvanla açılan bölgeler (rank: gereken servet basamağı). Ova: Konya ovası (~190 bin TL/dönüm); Liman: İzmir; Metropol: İstanbul (~19.400 TL/m², 2026'ya taşındı ~30.000).
+    ova: { n: 'Ova', dm: 0.9, u: 'dönüm', size: [10, 25], up: 190000, tax: 0.002, bonus: 'tarla', bm: 1.4, rank: 1, note: 'Geniş ova: tarlalar %40 fazla ürün verir · Esnaf unvanıyla açılır' },
+    liman: { n: 'Liman', dm: 1.3, u: 'm²', size: [400, 900], up: 14000, tax: 0.006, wsell: 0.92, rank: 2, note: 'İhracat limanı: toptancı malı %92’den alır (başka yerde %85) · Tüccar unvanıyla açılır' },
+    metropol: { n: 'Metropol', dm: 2.4, u: 'm²', size: [250, 500], up: 30000, tax: 0.006, rank: 3, note: 'En kalabalık pazar: dükkân talebi Merkez’in 1,5 katı · Sanayici unvanıyla açılır' },
   };
   const LAND_GROWTH = 0.20, TAX_BUILT = 0.004, IDLE_TAX = 5, DEED = 0.02, LIST_FEE = 0.01;  // arsa değeri yılda %20 artar; tapu harcı alıcı ve satıcıya %2
   const midSize = r => Math.round((R[r].size[0] + R[r].size[1]) / 2);
@@ -37,9 +41,12 @@
   const sizeOf = pl => pl.size || midSize(pl.region);
   const landTxt = pl => `${sizeOf(pl).toLocaleString('tr-TR')} ${R[pl.region].u} · ${R[pl.region].u === 'm²' ? 'm²' : 'dönümü'} ${fmt(pl.ref / sizeOf(pl))}`;
   const DIST = {
-    merkez: { merkez: 0, kirsal: 1, dag: 2 },
-    kirsal: { merkez: 1, kirsal: 0, dag: 1 },
-    dag: { merkez: 2, kirsal: 1, dag: 0 },
+    merkez: { merkez: 0, kirsal: 1, dag: 2, ova: 1, liman: 2, metropol: 1 },
+    kirsal: { merkez: 1, kirsal: 0, dag: 1, ova: 1, liman: 2, metropol: 2 },
+    dag: { merkez: 2, kirsal: 1, dag: 0, ova: 2, liman: 3, metropol: 3 },
+    ova: { merkez: 1, kirsal: 1, dag: 2, ova: 0, liman: 2, metropol: 2 },
+    liman: { merkez: 2, kirsal: 2, dag: 3, ova: 2, liman: 0, metropol: 1 },
+    metropol: { merkez: 1, kirsal: 2, dag: 3, ova: 2, liman: 1, metropol: 0 },
   };
   const B = {
     dukkan: { n: 'Dükkân', cost: 1200000, cap: 150, scale: 1, hint: 'Raf, soğutucu, kasa ve ruhsat · mal alır, perakende satar' },
@@ -53,6 +60,7 @@
     moda: { title: 'Merkez’de yeni moda akımı', body: 'Giysi talebi Merkez’de %60 artacak.', d: { region: 'merkez', ps: ['giysi'], m: 1.6 } },
     insaat: { title: 'Belediye inşaat hamlesi başlatıyor', body: 'Alet talebi tüm bölgelerde %60 artacak.', d: { ps: ['alet'], m: 1.6 } },
     kuraklik: { title: 'Kırsal’da kuraklık bekleniyor', body: 'Kırsal’daki tarlaların verimi %30 düşecek.', y: { region: 'kirsal', b: 'tarla', m: 0.7 } },
+    don: { title: 'Kırsal’da zirai don', body: 'Geç gelen don Kırsal’daki tarlaların verimini %40 düşürecek.', y: { region: 'kirsal', b: 'tarla', m: 0.6 } },
     bereket: { title: 'Kırsal’da bereketli mevsim', body: 'Kırsal’daki tarlaların verimi %30 artacak.', y: { region: 'kirsal', b: 'tarla', m: 1.3 } },
     damar: { title: 'Dağ’da yeni damar bulundu', body: 'Dağ’daki madenlerin verimi %30 artacak.', y: { region: 'dag', b: 'maden', m: 1.3 } },
     yol: { title: 'Dağ yolunda bakım çalışması', body: 'Çalışma süresince tüm taşıma ücretleri %80 artacak.', tr: 1.8 },
@@ -64,7 +72,7 @@
     satis: { n: 'Satış görevlisi', b: ['dukkan'], eff: [1, 2, 3], wage: [8200, 12000, 16500], desc: e => `rafa ${e} ek ürün` },
     sofor: { n: 'Şoför', b: ['tarla', 'maden', 'fabrika', 'dukkan'], eff: [0.10, 0.20, 0.30], wage: [15700, 23500, 31500], desc: e => `taşıma ücreti %${e * 100} azalır` },
   };
-  const REG_WK = { merkez: { mudur: 3, satis: 3, usta: 1, sofor: 1 }, kirsal: { usta: 3, sofor: 2, mudur: 1, satis: 1 }, dag: { usta: 3, sofor: 3, mudur: 1, satis: 1 } };
+  const REG_WK = { merkez: { mudur: 3, satis: 3, usta: 1, sofor: 1 }, kirsal: { usta: 3, sofor: 2, mudur: 1, satis: 1 }, dag: { usta: 3, sofor: 3, mudur: 1, satis: 1 }, ova: { usta: 3, sofor: 2, mudur: 1, satis: 1 }, liman: { sofor: 3, mudur: 2, satis: 2, usta: 1 }, metropol: { mudur: 3, satis: 3, usta: 1, sofor: 1 } };
   const NAMES = ['Ayşe', 'Mehmet', 'Zeynep', 'Can', 'Elif', 'Mert', 'Deniz', 'Selin', 'Burak', 'Ece', 'Emre', 'Derya', 'Kerem', 'Nil', 'Onur', 'Sena', 'Tuna', 'Melis'];
   const RETAIL = 1.35, W_BUY = 1.12, W_SELL = 0.85, RENT = 0.05, COMM = 0.03, FREE_UNTIL = 2 * 1440;
   // Hedefler: [metin, koşul, ödül]. Ödül hedef tamamlanınca kasaya eklenir.
@@ -99,7 +107,7 @@
   const SAVE_KEY = 'tezgah-demo-v3';
 
   // ---------- Durum ----------
-  let s, ui = { tab: 'plots', dest: 1, qty: 20, listMul: 1, sel: {}, invTL: 1000 };
+  let s, ui = { tab: 'plots', dest: 1, qty: 20, listMul: 1, sel: {}, invTL: 1000, loanTL: 1000000 };
   let awayLog = null;  // çevrimdışı telafi sırasında gelir ve giderleri toplar
   const rnd = (a, b) => a + Math.random() * (b - a);
   const pick = a => a[Math.floor(Math.random() * a.length)];
@@ -139,6 +147,7 @@
     news('Tezgâh açıldı', 'Kırsal’da kiralık bir arsan ve ' + fmt(START_MONEY) + ' sermayen var. Tarla ya da dükkân kurmaya yeter; fabrika için büyümen gerekecek. İlk iki gün kira ve vergi alınmaz.');
     ui.dest = 1;
     initComp();
+    migrate();
   }
   function save() { s.savedAt = Date.now(); try { localStorage.setItem(SAVE_KEY, JSON.stringify(s)); } catch (e) { /* depolama yoksa oyun yine çalışır */ } }
   // Uygulama kapalıyken ya da arka plandayken geçen gerçek süreyi 1× hızda oynatır ve özetini hazırlar.
@@ -155,7 +164,7 @@
     if (min >= AWAY_MIN) ui.away = log;
   }
   function load() {
-    try { const d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (d && d.v === 3 && Array.isArray(d.plots)) { s = d; for (const pl of s.plots) if (pl.b && !pl.b.out) pl.b.out = {}; if (!s.workers) { s.workers = []; s.cands = {}; for (const r in R) s.cands[r] = genCands(r); } return true; } } catch (e) { /* yoksay */ }
+    try { const d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (d && d.v === 3 && Array.isArray(d.plots)) { s = d; for (const pl of s.plots) if (pl.b && !pl.b.out) pl.b.out = {}; if (!s.workers) { s.workers = []; s.cands = {}; for (const r in R) s.cands[r] = genCands(r); } migrate(); return true; } } catch (e) { /* yoksay */ }
     return false;
   }
 
@@ -163,13 +172,13 @@
   const price = p => P[p].ref * s.mult[p];
   // Bir birimlik alım-satımın piyasa fiyatına etkisi: birimin değeri arttıkça etki büyür (eski ölçekle aynı aralıkta)
   // Ulusal piyasa büyüktür: tek oyuncunun alımı fiyatı az etkiler. Fabrika ölçeğinde alım-satım fiyatı tavana ya da tabana itmesin.
-  const impact = p => Math.min(15, P[p].ref / 1600) / B[P[p].b].scale;
+  const impact = p => Math.min(15, P[p].ref / 1600) / B[P[p].b].scale / depth();
   // Pazardaki bir ilanın saatlik satış hızı: ürünün üretildiği binanın ölçeğiyle büyür (fabrika malının alıcısı da çoktur)
-  const listRate = p => 15 * B[P[p].b].scale;
+  const listRate = p => 15 * B[P[p].b].scale * depth();
   const retailRef = p => price(p) * RETAIL;
   const activeEvents = () => s.events.filter(e => s.t >= e.start && s.t < e.end);
   function demandMult(region, p) { let m = 1; for (const e of activeEvents()) { const d = EVENTS[e.key].d; if (d && d.ps.includes(p) && (!d.region || d.region === region)) m *= d.m; } return m; }
-  function yieldMult(region, b) { let m = R[region].bonus === b ? 1.25 : 1; for (const e of activeEvents()) { const y = EVENTS[e.key].y; if (y && y.b === b && y.region === region) m *= y.m; } return m; }
+  function yieldMult(region, b, p) { let m = (R[region].bonus === b ? R[region].bm || 1.25 : 1) * seasonYield(p); for (const e of activeEvents()) { const y = EVENTS[e.key].y; if (y && y.b === b && y.region === region) m *= y.m; } return m; }
   function transMult() { let m = perk('tr') * (s.comp && s.comp.holding ? HOLD_PERK : 1); for (const e of activeEvents()) if (EVENTS[e.key].tr) m *= EVENTS[e.key].tr; return m; }
   // Taşıma: ton başına sabit ücret + bölge adımı başına ücret (yaklaşık 3 TL/ton-km, bir adım ≈ 200 km)
   const trans = (qty, p, from, to) => qty * P[p].kg / 1000 * (TR_FIXED + DIST[from][to] * TR_STEP) * transMult();
@@ -186,14 +195,14 @@
   }
   const durTxt = min => min < 60 ? Math.round(min) + ' dk' : (+(min / 60).toFixed(1)).toLocaleString('tr-TR') + ' sa';
   // Bir hattın oyun günü başına üretimi (usta hızı ve bölge/olay verimi dahil)
-  const lineInfo = (pl, p) => { const k = batch(pl), t = P[p].t / (1 + wEff(pl, 'usta')), n = 10 * k * yieldMult(pl.region, pl.b.type);
+  const lineInfo = (pl, p) => { const k = batch(pl), t = P[p].t / (1 + wEff(pl, 'usta')), n = 10 * k * yieldMult(pl.region, pl.b.type, p);
     return `Parti ${qtyTxt(p, n)} ${P[p].n.toLocaleLowerCase('tr-TR')} · her ${durTxt(t)} · günde ~${qtyTxt(p, n * 1440 / t)}`; };
   // Yeni hat için aynı bölgedeki boş arsalar (binanın genişleyebileceği yer)
   const freePlots = pl => s.plots.filter(x => x !== pl && !x.b && !x.part && x.region === pl.region);
   const plot = id => s.plots.find(p => p.id === id);
   function add(pl, p, q) { pl.inv[p] = (pl.inv[p] || 0) + q; if (pl.inv[p] <= 0) delete pl.inv[p]; }
-  function inc(kind, amt) { s.money += amt; s.totalIncome += amt; s.today.inc[kind] = (s.today.inc[kind] || 0) + amt; if (awayLog) awayLog.inc[kind] = (awayLog.inc[kind] || 0) + amt; }
-  function exp(kind, amt) { s.money -= amt; s.today.exp[kind] = (s.today.exp[kind] || 0) + amt; if (awayLog) awayLog.exp[kind] = (awayLog.exp[kind] || 0) + amt; }
+  function inc(kind, amt) { if (s.acct && !NOTAX.has(kind)) s.acct.inc += amt; s.money += amt; s.totalIncome += amt; s.today.inc[kind] = (s.today.inc[kind] || 0) + amt; if (awayLog) awayLog.inc[kind] = (awayLog.inc[kind] || 0) + amt; }
+  function exp(kind, amt) { if (s.acct && !NOTAX.has(kind)) s.acct.exp += amt; s.money -= amt; s.today.exp[kind] = (s.today.exp[kind] || 0) + amt; if (awayLog) awayLog.exp[kind] = (awayLog.exp[kind] || 0) + amt; }
   // Hedef ödülü, temettü ve faiz kasaya girer ama ticari gelir sayılmaz (totalIncome'a eklenmez).
   // inPlace: tutar kasaya değil başka yere (ör. mevduat bakiyesine) eklendi, yalnızca kayda geçer.
   function finInc(kind, amt, inPlace) { if (!inPlace) s.money += amt; s.today.inc[kind] = (s.today.inc[kind] || 0) + amt; if (awayLog) awayLog.inc[kind] = (awayLog.inc[kind] || 0) + amt; }
@@ -201,9 +210,9 @@
   function rentOn(pl, amt) { if (pl.rented && s.t >= FREE_UNTIL) exp('Kira', amt * RENT); }
   function news(title, body, alert) { s.news.unshift({ t: s.t, title, body }); if (s.news.length > 40) s.news.pop(); if (ui.tab !== 'news') s.unread = (s.unread || 0) + 1; if (alert && !awayLog) toast(title); }
   function shopRate(pl, p) {
-    const pr = pl.b.prices[p] || retailRef(p);
-    const A = Math.pow(retailRef(p) / pr, 2) * (1 + 0.1 * (pl.b.level - 1));
-    const D = (P[p].d || 0) * R[pl.region].dm * demandMult(pl.region, p) * buySpeed(pr / retailRef(p));
+    const pr = pl.b.prices[p] || retailRef(p), ref = retailRef(p) * qPrem(p);
+    const A = Math.pow(ref / pr, 2) * (1 + 0.1 * (pl.b.level - 1));
+    const D = (P[p].d || 0) * R[pl.region].dm * demandMult(pl.region, p) * buySpeed(pr / ref) * brandShop() * depth();
     const RA = s.rivals[pl.region][p].reduce((a, m) => a + 1 / (m * m), 0);
     return D * A / (A + RA + 1);
   }
@@ -284,7 +293,7 @@
           if (!l) { l = { id: s.nextId++, p, qty: 0, price: 0, acc: 0, auto: true, plot: pl.id }; s.mine.push(l); }
           l.qty += q; add(pl, p, -q); pl.last = s.t;
         }
-        if (l) l.price = Math.round(price(p) * +rule.slice(5) * 10) / 10;
+        if (l) l.price = Math.round(price(p) * qPrem(p) * +rule.slice(5) * 10) / 10;
       }
     }
   }
@@ -301,13 +310,14 @@
     s.rank = rankNow() + 1;
     const day = Math.floor(s.t / 1440) + 1;
     news('Yeni unvan: ' + nx.n, 'Net değerin ' + fmt(nx.at) + ' sınırını aştı (' + day + '. gün). Açılan ayrıcalık: ' + nx.perk + '.', true);
+    for (const r in R) if (R[r].rank === s.rank) { spawnAuction(null, r); news('Yeni bölge açıldı: ' + R[r].n, R[r].note.split(' · ')[0] + '. Artırma sekmesinde ilk arsası satışta.', true); }
   }
   function landValue() { return s.plots.filter(p => !p.rented).reduce((a, p) => a + p.ref, 0); }
   function netWorth() {
     let v = s.money + landValue();
     for (const pl of s.plots) { if (pl.b) v += pl.b.spent * 0.5; for (const p in pl.inv) v += pl.inv[p] * price(p) * W_SELL; }
     for (const l of s.mine) v += l.qty * price(l.p) * W_SELL;
-    v += portfolioValue();
+    v += portfolioValue() - loanDebt();
     for (const a of s.auctions) { if (a.bidder === 'me') v += a.bid; if (a.plot) v += a.plot.ref; }
     return v;
   }
@@ -432,7 +442,7 @@
           const n = Math.min(Math.floor(pl.b.acc[p]), pl.inv[p]);
           if (n > 0) {
             pl.b.acc[p] -= n; const pr = pl.b.prices[p] || retailRef(p);
-            add(pl, p, -n); sold(p, n); inc('Perakende', n * pr); rentOn(pl, n * pr); pl.last = s.t;
+            add(pl, p, -n); sold(p, n); kdv(pl, p, n, pr); inc('Perakende', n * pr); rentOn(pl, n * pr); pl.last = s.t;
             s.mult[p] = clamp(s.mult[p] + 0.00001 * impact(p) * n, 0.6, 1.5);
           }
         }
@@ -446,7 +456,7 @@
           ln.prog += dt * (1 + wEff(pl, 'usta'));
           if (ln.prog < rc.t) continue;
           // parti bitti: artan süre bir sonraki partiye devreder, yeni parti aynı adımda başlar
-          add(pl, ln.r, Math.round(10 * k * yieldMult(pl.region, pl.b.type))); ln.busy = false; ln.carry = ln.prog - rc.t; ln.prog = 0; pl.last = s.t;
+          add(pl, ln.r, Math.round(10 * k * yieldMult(pl.region, pl.b.type, ln.r))); ln.busy = false; ln.carry = ln.prog - rc.t; ln.prog = 0; pl.last = s.t;
         }
         const need = Object.entries(rc.in).find(([x, q]) => (pl.inv[x] || 0) < q * k);
         if (need) { ln.st = 'Girdi yok: ' + qtyTxt(need[0], need[1] * k) + ' ' + P[need[0]].n.toLocaleLowerCase('tr-TR'); continue; }
@@ -459,7 +469,7 @@
     }
     // Pazardaki ilanlarım
     for (const l of s.mine) {
-      l.acc += listRate(l.p) * coopSell() * buySpeed(l.price / price(l.p)) * dt / 60;
+      l.acc += listRate(l.p) * coopSell() * brandList() * buySpeed(l.price / (price(l.p) * qPrem(l.p))) * dt / 60;
       const n = Math.min(Math.floor(l.acc), l.qty);
       if (n > 0) { l.acc -= n; l.qty -= n; const v = n * l.price; sold(l.p, n); inc('Pazar', v); exp('Komisyon', v * COMM); s.mult[l.p] = clamp(s.mult[l.p] - 0.00002 * impact(l.p) * n, 0.6, 1.5); }
     }
@@ -471,6 +481,7 @@
     checkRank();
     if (s.compDue) { s.compDue = false; compDay(); }
     checkQuests();
+    checkTut();
     for (let i = 0; i < GOALS.length; i++) if (!s.goals[i] && GOALS[i][1](s)) {
       s.goals[i] = true; reward(GOALS[i][2]);
       news('Hedef tamamlandı: ' + goalText(i), 'Ödül olarak kasana ' + fmt(GOALS[i][2]) + ' eklendi.', true);
@@ -480,7 +491,7 @@
   function hourly(h) {
     marketHour(h);
     for (const k of PK) {
-      s.mult[k] = clamp(s.mult[k] + (1 - s.mult[k]) * 0.03 + rnd(-0.012, 0.012), 0.6, 1.5);
+      s.mult[k] = clamp(s.mult[k] + (seasonPrice(k) - s.mult[k]) * 0.03 + rnd(-0.012, 0.012), 0.6, 1.5);
       if (h % 2 === 0) { s.hist[k].push(s.mult[k]); if (s.hist[k].length > 36) s.hist[k].shift(); }
     }
     for (const a of s.auctions) {
@@ -494,6 +505,7 @@
     if (s.t >= s.nextListAt) genListings();
     rivalsMove();
     for (const w of s.workers) exp('Maaş', w.wage / 24);
+    dealsHour();
     for (const pl of s.plots) {
       if (!pl.b) continue;
       if (pl.b.type === 'dukkan') { for (const p of shelf(pl)) { autoRestock(pl, p); applyRule(pl, p); } }
@@ -508,6 +520,7 @@
     marketDay();
     landDay();
     s.compDue = true;
+    financeDay(day);
     for (const w of s.workers) {
       const pl = plot(w.plot);
       if (!pl || s.t - pl.last > 1440) continue;
@@ -544,7 +557,7 @@
     const home = { tarla: ['kirsal', 'kirsal', 'kirsal', 'merkez'], maden: ['dag', 'dag', 'dag', 'kirsal'], fabrika: ['merkez', 'merkez', 'kirsal', 'dag'] };
     for (const k of PK) {
       const n = Math.random() < 0.6 ? 2 : 1;
-      for (let i = 0; i < n; i++) s.listings.push({ id: s.nextId++, p: k, region: pick(home[P[k].b]), qty: Math.round(rnd(2, 8)) * 10, price: Math.round(price(k) * rnd(0.86, 1.14) * 10) / 10 });
+      for (let i = 0; i < n; i++) s.listings.push({ id: s.nextId++, p: k, region: pick(home[P[k].b]), qty: Math.round(rnd(2, 8)) * 10, price: Math.round(price(k) * rnd(0.86, 1.14) * 10) / 10, from: sellerOf(k) });
     }
     s.nextListAt = s.t + 240;
   }
@@ -557,8 +570,8 @@
     for (const a of s.auctions) { a.ref *= g; a.npc = a.npc.map(x => x * g); if (a.plot) a.plot.ref *= g; }
   }
 
-  function spawnAuction(pl) {
-    const region = pl ? pl.region : pick(Object.keys(R));
+  function spawnAuction(pl, at) {
+    const region = pl ? pl.region : at || pick(openR());
     // Yeni arsa: bölgenin büyüklük aralığından, konum çarpanı (yol kenarı, köşe, eğim) ±%20
     const size = pl ? sizeOf(pl) : Math.round(rnd(R[region].size[0], R[region].size[1]) / (region === 'merkez' ? 10 : 1)) * (region === 'merkez' ? 10 : 1);
     const ref = pl ? pl.ref : Math.round(size * R[region].up * (s.landIdx || 1) * rnd(0.8, 1.2) / 1000) * 1000;
@@ -606,6 +619,36 @@
     focus(d) { ui.tab = 'plots'; ui.focusPlot = +d.plot; },
     tab(d) { ui.tab = d.v; if (d.v === 'news') { s.unread = 0; ui.away = null; } },
     awayOk() { ui.away = null; },
+    tutOff() { s.tutOff = true; },
+    loanTake(d) {
+      const n = +d.v, amt = Math.min(ui.loanTL || 0, loanLimit()); if (!LOAN_TERMS.includes(n)) return;
+      if (amt < 1e5) return toast('Limitin yetersiz ya da tutar çok küçük');
+      const r = loanRate() / 52, inst = installment(amt, n, r);
+      s.loans.push({ id: s.nextId++, amt, left: amt, n, k: 0, r, inst, miss: 0 }); finInc('Kredi', amt);
+      news('Kredi çektin', fmt(amt) + ', ' + n + ' hafta vadeli, yıllık %' + Math.round(r * 5200) + ' faizle. Her gün ' + fmt(inst) + ' taksit kasandan alınacak.');
+    },
+    loanPay(d) {
+      const l = s.loans.find(x => x.id === +d.id); if (!l) return;
+      if (s.money < l.left * 1.01) return toast('Para yetersiz');
+      exp('Kredi anapara', l.left); exp('Kredi faizi', l.left * 0.01); s.loans = s.loans.filter(x => x !== l); toast('Kredi kapandı');
+    },
+    dealAcc(d) {
+      const D = s.deals, o = D.offers.find(x => x.id === +d.id); if (!o) return;
+      if (D.active.length >= DEAL_MAX) return toast('Aynı anda en fazla ' + DEAL_MAX + ' sözleşme');
+      D.offers = D.offers.filter(x => x !== o); D.active.push({ ...o, got: 0, due: s.t + o.days * 1440, auto: true });
+      toast(o.from + ' ile sözleşme imzalandı');
+    },
+    dealGive(d) { const x = s.deals.active.find(y => y.id === +d.id); if (!x) return; const n = deliver(x); if (!n) toast('Depolarında ' + P[x.p].n.toLocaleLowerCase('tr-TR') + ' yok'); else toast(qtyTxt(x.p, n) + ' teslim edildi'); s.deals.active = s.deals.active.filter(y => y.got < y.qty); },
+    ad(d) { const a = ADS[+d.v]; if (!a) return; if (s.money < a.c) return toast('Para yetersiz'); exp('Reklam', a.c); s.brand = Math.min(100, brand() + a.g * (1 - brand() / 100)); toast(a.n + ' yayında'); },
+    rd(d) {
+      const p = d.p; if (!P[p] || qual(p) >= QMAX) return; const c = rdCost(p); if (s.money < c) return toast('Para yetersiz');
+      exp('Ar-Ge', c); s.qual[p] = qual(p) + 1; news(P[p].n + ' kalitesi ' + qual(p) + '. seviyede', 'Ar-Ge çalışması bitti. Alıcılar ' + P[p].n.toLocaleLowerCase('tr-TR') + ' için artık olağan fiyatın %' + Math.round((qPrem(p) - 1) * 100) + ' fazlasını kabul ediyor.');
+    },
+    haggle(d) {
+      const l = s.listings.find(x => x.id === +d.id); if (!l || l.hg) return; const v = +d.v; l.hg = true;
+      const ch = (v <= 0.05 ? 0.55 : 0.25) + (coopIs('alim') ? 0.1 : 0) + (l.price > price(l.p) ? 0.15 : 0);
+      if (Math.random() < ch) { l.price = Math.round(l.price * (1 - v) * 10) / 10; toast(l.from + ' %' + v * 100 + ' indirimi kabul etti'); } else toast(l.from + ' pazarlığı reddetti');
+    },
     joinH(d) { ensureComp(); const h = HOLDINGS.find(x => x.id === d.v); if (!h || s.comp.holding) return; s.comp.holding = h.id; s.comp.week.hTarget = holdingTarget(); news(h.n + '’na katıldın', 'Ortak haftalık gelir hedefine katkı veriyorsun; üyeler %5 ucuz taşır.'); },
     coopFound(d) {
       ensureComp(); if (s.comp.coop || !COOP_T[d.v]) return;
@@ -659,8 +702,8 @@
       fireCrew(pl, 'bina yıkıldığı için');
       s.money += pl.b.spent * (s.freeSwap ? 1 : 0.5); s.freeSwap = false; pl.b = null;
     },
-    sellw(d) { const pl = plot(+d.plot), q = pl.inv[d.p]; sold(d.p, q); inc('Toptancı', q * price(d.p) * W_SELL); rentOn(pl, q * price(d.p) * W_SELL); s.mult[d.p] = clamp(s.mult[d.p] - 0.00002 * impact(d.p) * q, 0.6, 1.5); add(pl, d.p, -q); pl.last = s.t; },
-    list(d) { const pl = plot(+d.plot), q = pl.inv[d.p]; s.mine.push({ id: s.nextId++, p: d.p, qty: q, price: Math.round(price(d.p) * ui.listMul * 10) / 10, acc: 0 }); add(pl, d.p, -q); pl.last = s.t; },
+    sellw(d) { const pl = plot(+d.plot), q = pl.inv[d.p]; sold(d.p, q); inc('Toptancı', q * wSell(pl, d.p)); rentOn(pl, q * wSell(pl, d.p)); s.mult[d.p] = clamp(s.mult[d.p] - 0.00002 * impact(d.p) * q, 0.6, 1.5); add(pl, d.p, -q); pl.last = s.t; },
+    list(d) { const pl = plot(+d.plot), q = pl.inv[d.p]; s.mine.push({ id: s.nextId++, p: d.p, qty: q, price: Math.round(price(d.p) * qPrem(d.p) * ui.listMul * 10) / 10, acc: 0 }); add(pl, d.p, -q); pl.last = s.t; },
     unlist(d) { const l = s.mine.find(x => x.id === +d.id), pl = plot(ui.dest) || s.plots.find(p => p.b); if (!pl || !pl.b) return toast('Malı koyacak depon yok'); if (invTotal(pl) + l.qty > cap(pl)) return toast('Hedef depoda yer yok'); addCost(pl, l.p, l.qty, l.price); add(pl, l.p, l.qty); s.mine = s.mine.filter(x => x !== l); },
     move(d) {
       const pl = plot(+d.plot), to = plot(+(ui.sel['mv' + pl.id] || otherPlots(pl)[0]?.id)), q = pl.inv[d.p];
@@ -709,6 +752,8 @@
     listMul(el) { ui.listMul = +el.value; },
     sel(el) { ui.sel[el.dataset.k] = el.value; },
     cur(el) { if (CUR[el.value]) s.cur = el.value; },
+    loanAmt(el) { ui.loanTL = clamp(parseFloat(el.value.replace(',', '.')) || 0, 0, 1e12) * rate(s.cur); },
+    dealAuto(el) { const x = s.deals.active.find(y => y.id === +el.dataset.id); if (x) x.auto = el.checked; },
     coopName(el) { ui.coopName = el.value.slice(0, 28); },
     invAmt(el) { ui.invTL = clamp(parseFloat(el.value.replace(',', '.')) || 0, 0, 1e12) * rate(s.cur); },
   };
@@ -717,7 +762,7 @@
   // Harita için görünüm modeli: her bölgede oyuncunun arsaları ve artırmadaki arsalar
   function mapModel() {
     const regions = {};
-    for (const r in R) regions[r] = { name: R[r].n, plots: [], auctions: s.auctions.filter(a => a.region === r && !a.plot) };
+    for (const r of openR()) regions[r] = { name: R[r].n, plots: [], auctions: s.auctions.filter(a => a.region === r && !a.plot) };
     for (const pl of s.plots) {
       if (pl.part) continue;
       const b = pl.b, m = { id: pl.id, label: 'Arsa ' + pl.id + (b ? ' · ' + B[b.type].n : ' · boş') };
@@ -744,7 +789,7 @@
   let toastT = 0;
   function toast(msg) { const el = document.getElementById('toast'); el.textContent = msg; el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { el.hidden = true; }, 2200); }
   const btn = (label, action, data = {}, cls = '') => `<button type="button" class="btn ${cls}" data-a="${action}" ${Object.entries(data).map(([k, v]) => `data-${k}="${esc(v)}"`).join(' ')}>${label}</button>`;
-  const clock = () => { const d = Math.floor(s.t / 1440) + 1, h = Math.floor(s.t / 60) % 24; return `Gün ${d} · ${String(h).padStart(2, '0')}:00`; };
+  const clock = () => { const d = Math.floor(s.t / 1440) + 1, h = Math.floor(s.t / 60) % 24; return `Gün ${d} · ${curSeason().n} · ${String(h).padStart(2, '0')}:00`; };
   const hoursLeft = a => { const h = (a.end - s.t) / 60; return h <= 1 ? '1 saatten az' : Math.ceil(h) + ' saat'; };
   const trend = k => { const m = s.mult[k]; return m > 1.04 ? `<span class="up">▲ %${Math.round((m - 1) * 100)}</span>` : m < 0.96 ? `<span class="down">▼ %${Math.round((1 - m) * 100)}</span>` : '<span class="muted">olağan</span>'; };
   function spark(k) { const h = s.hist[k]; if (h.length < 2) return ''; const pts = h.map((v, i) => `${(i / (h.length - 1) * 78 + 1).toFixed(1)},${(21 - (v - 0.6) / 0.9 * 20).toFixed(1)}`).join(' '); return `<svg class="spark" viewBox="0 0 80 22" width="80" height="22" aria-hidden="true"><polyline points="${pts}" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>`; }
@@ -789,7 +834,7 @@
       if (b.type === 'dukkan' && P[p].d) h += shopControls(pl, p);
       else if (b.type === 'dukkan') h += '<p class="warn small">Şehir halkı bu ürünü almaz; pazarda sat ya da fabrikaya taşı.</p>';
       else h += outControls(pl, p);
-      if (q > 0) h += `<div class="row wrap">${btn('Toptancıya sat ' + fmt(q * price(p) * W_SELL), 'sellw', { plot: pl.id, p })}${btn('Pazara ilan ver', 'list', { plot: pl.id, p }, 'ghost')}${others.length ? btn('Taşı', 'move', { plot: pl.id, p }, 'ghost') : ''}</div>`;
+      if (q > 0) h += `<div class="row wrap">${btn('Toptancıya sat ' + fmt(q * wSell(pl, p)), 'sellw', { plot: pl.id, p })}${btn('Pazara ilan ver', 'list', { plot: pl.id, p }, 'ghost')}${others.length ? btn('Taşı', 'move', { plot: pl.id, p }, 'ghost') : ''}</div>`;
       h += '</div>';
     }
     if (b.type === 'dukkan') {
@@ -830,7 +875,8 @@
     const out = [];
     const next = GOALS.findIndex((g, i) => !s.goals[i]);
     if (ui.away) out.push(['away', awayCard(ui.away)]);
-    out.push(['goal', next < 0 ? `<div class="goal"><span class="small">Sıradaki unvan</span><b>${RANKS[rankNow() + 1] ? RANKS[rankNow() + 1].n + ' ol: net değer ' + fmt(RANKS[rankNow() + 1].at) : 'En üst unvandasın. Büyümeye devam et'}</b></div>` : `<div class="goal"><span class="small">Sıradaki hedef ${next + 1}/${GOALS.length} · ödül ${fmt(GOALS[next][2])}</span><b>${goalText(next)}</b></div>`]);
+    if (tutOn()) out.push(['tut', tutCard()]);
+    else out.push(['goal', next < 0 ? `<div class="goal"><span class="small">Sıradaki unvan</span><b>${RANKS[rankNow() + 1] ? RANKS[rankNow() + 1].n + ' ol: net değer ' + fmt(RANKS[rankNow() + 1].at) : 'En üst unvandasın. Büyümeye devam et'}</b></div>` : `<div class="goal"><span class="small">Sıradaki hedef ${next + 1}/${GOALS.length} · ödül ${fmt(GOALS[next][2])}</span><b>${goalText(next)}</b></div>`]);
     const hint = '<p class="muted small maphint">Haritada bir binaya dokununca kartına gidersin. Ünlem işareti, binanın ilgilenilmesi gereken bir durumu olduğunu gösterir.</p>';
     // PixiJS haritası kendi tuvallerini yönetir; buradaki kutu sabit kalır ve render() içinde doldurulur
     if (pixiMap()) out.push(['map', '<div class="map" data-pixi></div>' + hint]);
@@ -860,7 +906,7 @@
       let h = `<div class="card"><div class="row head"><h3 class="named">${ic(k, 28)}${P[k].n}</h3><span class="small">${trend(k)}</span></div><p class="muted small">Olağan fiyat ${fmt1(price(k))} / ${P[k].u} · ${WNAME[P[k].w]} yük · 1. seviye ${B[P[k].b].n.toLocaleLowerCase('tr-TR')}: ${qtyTxt(k, 10 * B[P[k].b].scale)} / ${durTxt(P[k].t)}${Object.keys(P[k].in).length ? ' (' + Object.entries(P[k].in).map(([x, q]) => qtyTxt(x, q * B[P[k].b].scale) + ' ' + P[x].n.toLocaleLowerCase('tr-TR')).join(' + ') + ')' : ''}</p><div class="row"><span>Sistem toptancısı</span><span class="num">${fmt1(wU)}</span>${btn('Al', 'buy', { p: k })}</div>`;
       for (const l of s.listings.filter(x => x.p === k)) {
         const u = l.price + trans(1, k, l.region, dst.region);
-        h += `<div class="row"><span>${R[l.region].n} ilanı · ${l.qty} × ${P[k].u} (${qtyTxt(k, l.qty)})</span><span class="num ${u < wU ? 'up' : ''}">${fmt1(u)}</span>${btn('Al', 'buy', { p: k, id: l.id })}</div>`;
+        h += `<div class="row"><span>${esc(l.from || R[l.region].n + ' satıcısı')} · ${R[l.region].n} · ${l.qty} × ${P[k].u} (${qtyTxt(k, l.qty)})${l.hg ? ' <span class="small muted">· pazarlık yapıldı</span>' : ''}</span><span class="num ${u < wU ? 'up' : ''}">${fmt1(u)}</span>${btn('Al', 'buy', { p: k, id: l.id })}</div>${l.hg ? '' : `<div class="row wrap small haggle"><span class="muted">Pazarlık:</span>${btn('%5 indirim iste', 'haggle', { id: l.id, v: 0.05 }, 'ghost')}${btn('%10 indirim iste', 'haggle', { id: l.id, v: 0.1 }, 'ghost')}</div>`}`;
       }
       out.push(['m' + k, h + '</div>']);
     }
@@ -936,7 +982,7 @@
     const out = [], total = s.workers.reduce((a, w) => a + w.wage, 0);
     out.push(['info', `<div class="card"><div class="row"><span>Günlük maaş toplamı</span><b class="num">${fmt(total)}</b></div><p class="muted small">İşçi zorunlu değil. Bina boşta kalırsa işçi maaşını kazandırmaz. İşçi 7 çalışma gününde bir yıldız atlar ve maaşı yükselir.</p></div>`]);
     if (s.workers.length) out.push(['mine', '<div class="card"><h3>Çalışanların</h3>' + s.workers.map(w => { const pl = plot(w.plot); return `<div class="row"><span>${WK[w.type].n} ${esc(w.name)} ${stars(w.star)}<br><span class="small muted">Arsa ${w.plot}${pl ? ' · ' + R[pl.region].n : ''} · ${WK[w.type].desc(WK[w.type].eff[w.star - 1])} · ${w.star < 3 ? 'sonraki yıldıza ' + (7 - (w.xp || 0)) + ' gün' : 'en üst yıldız'}</span></span><span class="num">${fmt(w.wage)}/gün</span>${btn('Bırak', 'fire', { id: w.id }, 'ghost')}</div>`; }).join('') + '</div>']);
-    for (const r in R) {
+    for (const r of openR()) {
       let h = `<div class="card"><h3>${R[r].n}’deki adaylar</h3><p class="muted small">Adaylar her gün yenilenir; yalnızca bu bölgedeki binalarında çalışırlar.</p>`;
       for (const c of s.cands[r]) {
         const el = eligible(c);
@@ -1132,8 +1178,222 @@
     return Math.max(0.05, Math.min(0.9, 0.15 + 0.15 * fit + 0.04 * size + (ratio < 0.5 ? -0.2 : ratio > 2 ? 0.1 : 0)));
   }
 
-  const VIEWS = { compete: viewCompete, invest: viewInvest, crew: viewCrew, plots: viewPlots, market: viewMarket, auction: viewAuction, news: viewNews, report: viewReport };
-  const TABS = [['plots', 'Arsalar'], ['market', 'Pazar'], ['crew', 'İşçiler'], ['invest', 'Yatırım'], ['auction', 'Artırma'], ['compete', 'Rekabet'], ['news', 'Gazete'], ['report', 'Rapor']];
+  // ---------- Mevsimler ve hasat ----------
+  // Bir oyun günü bir hafta: 52 günde bir yıl, her mevsim 13 gün. Oyun ilkbaharda başlar.
+  // y: tarla verimi çarpanı, pm: fiyatın döndüğü mevsimsel seviye (hasatta bol ve ucuz, kışın kıt ve pahalı).
+  const YEAR = 52, QUARTER = 13;
+  const SEASONS = [
+    { n: 'İlkbahar', note: 'Buğday başakta, pamuk yeni ekildi; süt verimi yüksek.', y: { bugday: 0.9, pamuk: 0.7, sut: 1.2 }, pm: { bugday: 1.06, pamuk: 1.04, sut: 0.95 } },
+    { n: 'Yaz', note: 'Buğday hasadı: tarlalar bol buğday verir, buğday ucuzlar.', y: { bugday: 1.7, pamuk: 1.1, sut: 1.0 }, pm: { bugday: 0.88 } },
+    { n: 'Sonbahar', note: 'Pamuk hasadı: pamuk bollaşır ve ucuzlar.', y: { bugday: 1.0, pamuk: 1.7, sut: 0.95 }, pm: { bugday: 0.96, pamuk: 0.88 } },
+    { n: 'Kış', note: 'Tarlada verim düşük; buğday ve pamuk pahalanır, kömür talebi artar. Hasatta depoladığın ürünü şimdi satmanın tam zamanı.', y: { bugday: 0.5, pamuk: 0.4, sut: 0.85 }, pm: { bugday: 1.12, pamuk: 1.1, sut: 1.05, komur: 1.1, un: 1.05 } },
+  ];
+  const dayNo = () => Math.floor(s.t / 1440);
+  const seasonOf = d => SEASONS[Math.floor((d % YEAR) / QUARTER)];
+  const curSeason = () => seasonOf(dayNo());
+  const seasonYield = p => (p && curSeason().y[p]) || 1;
+  const seasonPrice = p => curSeason().pm[p] || 1;
+  const seasonLeft = () => QUARTER - (dayNo() % QUARTER);
+
+  // ---------- Bölgeler ve pazar derinliği ----------
+  // Yeni bölgeler unvanla açılır (R[r].rank). Pazar derinliği: çevrim içi sürümde aktif şirket (oyuncu + sanal) sayısının
+  // karekökü ve sezon içindeki ekonomik büyümeyle artar; talep, ilan satış hızı ve fiyat etkisi buna göre ölçeklenir.
+  const openR = () => Object.keys(R).filter(r => rankNow() >= (R[r].rank || 0));
+  const BASE_FIRMS = 12;
+  const firms = () => 1 + (s.comp ? s.comp.npc.length : NPC.length);
+  const depth = () => Math.sqrt(firms() / BASE_FIRMS) * (1 + 0.006 * (s.comp ? Math.min(SEASON_DAYS, Math.max(0, seasonDay() - 1)) : 0));
+  const sellerOf = p => { const f = NPC.filter(x => x[2].includes(p)); return pick(f.length ? f : NPC)[0]; };
+
+  // ---------- Marka ve kalite ----------
+  // Kalite (1-5) Ar-Ge ile yükselir; her seviye ürünün kabul gören fiyatını %6 artırır. Marka bilinirliği (0-100)
+  // reklamla yükselir, her gün %3 söner; dükkân talebini %50'ye, ilan satış hızını %25'e kadar artırır.
+  const QMAX = 5;
+  const qual = p => (s.qual && s.qual[p]) || 1;
+  const qPrem = p => 1 + 0.06 * (qual(p) - 1);
+  const rdCost = p => Math.round(P[p].ref * 400 * qual(p) ** 2 / 1e4) * 1e4;
+  const brand = () => s.brand || 0;
+  const brandShop = () => 1 + brand() / 200;
+  const brandList = () => 1 + brand() / 400;
+  const npcBrand = c => Math.min(95, 12 * Math.log10(c.nw / 1e6 + 1) * c.skill);
+  const ADS = [
+    { n: 'Yerel gazete ve afiş', c: 250000, g: 4 },
+    { n: 'Bölgesel radyo kampanyası', c: 1500000, g: 12 },
+    { n: 'Ulusal televizyon reklamı', c: 8000000, g: 30 },
+  ];
+  // Toptancıya satış birim fiyatı: liman ihracat primi ve kalite priminin yarısı dahil
+  const wSell = (pl, p) => price(p) * (R[pl.region].wsell || W_SELL) * (1 + (qPrem(p) - 1) / 2);
+
+  // ---------- Banka kredisi ----------
+  // Yıllık ~%45 ticari kredi (2026 tahmini). Limit: teminatsız 1 mn + arsa ve bina değerinin %60'ı.
+  // Taksit her oyun günü (bir hafta) eşit taksitle alınır; üç taksit üst üste ödenmezse banka en değerli arsaya el koyar.
+  const LOAN_RATE = 0.45, LOAN_TERMS = [4, 8, 13], LOAN_BASE = 1e6, LTV = 0.6;
+  const loanDebt = () => (s.loans || []).reduce((a, l) => a + l.left, 0);
+  const collateral = () => landValue() + s.plots.reduce((a, pl) => a + (pl.b ? pl.b.spent * 0.5 : 0), 0);
+  const loanLimit = () => Math.max(0, Math.floor((LOAN_BASE + LTV * collateral() - loanDebt()) / 1e4) * 1e4);
+  const loanRate = () => LOAN_RATE * (0.5 + 0.5 * perk('debt') * coopDebt());
+  const installment = (amt, n, r) => amt * r / (1 - Math.pow(1 + r, -n));
+  function loanDay() {
+    for (const l of s.loans) {
+      const int = l.left * l.r, due = Math.min(l.inst, l.left + int);
+      if (s.money >= due) { exp('Kredi faizi', int); exp('Kredi anapara', due - int); l.left -= due - int; l.k++; l.miss = 0; }
+      else {
+        l.miss++; l.left += int + l.left * 0.01;
+        if (l.miss >= 3) foreclose(l);
+        else news('Kredi taksiti ödenemedi', 'Kasanda ' + fmt(due) + ' taksiti karşılayacak para yoktu. Faiz ve %1 gecikme bedeli borca eklendi. Üst üste ' + (3 - l.miss) + ' taksit daha kaçırırsan banka teminattaki en değerli arsana el koyar.', true);
+      }
+      if (l.left < 1 && !l.seized) news('Kredi kapandı', fmt(l.amt) + ' tutarındaki kredinin bütün taksitleri ödendi.');
+    }
+    s.loans = s.loans.filter(l => l.left >= 1);
+  }
+  function foreclose(l) {
+    const own = s.plots.filter(pl => !pl.rented && !pl.part).sort((a, b) => (b.ref + (b.b ? b.b.spent : 0)) - (a.ref + (a.b ? a.b.spent : 0)));
+    const pl = s.plots.length > 1 ? own[0] : null;
+    if (!pl) { s.money -= l.left; news('Kredi borcu kasana yazıldı', 'El konacak arsan olmadığı için kalan ' + fmt(l.left) + ' borç kasana eksi olarak yazıldı; borç faizi işler.', true); l.left = 0; l.seized = true; return; }
+    const val = pl.ref * 0.7 + (pl.b ? pl.b.spent * 0.3 : 0); l.seized = true;
+    for (const id of (pl.b && pl.b.parts) || []) { const x = plot(id); if (x) x.part = null; }
+    fireCrew(pl, 'arsaya bankaca el konduğu için');
+    s.plots = s.plots.filter(x => x !== pl); spawnAuction({ ...pl, b: null, inv: {} });
+    l.left -= val; if (l.left < 0) { s.money -= l.left; l.left = 0; }
+    if (ui.dest === pl.id) ui.dest = s.plots[0].id;
+    news('Banka arsana el koydu', 'Üç taksit üst üste ödenmediği için Arsa ' + pl.id + ' (' + R[pl.region].n + '), binası ve deposuyla birlikte ' + fmt(val) + ' değerle borca sayıldı ve haciz artırmasına çıktı.', true);
+  }
+
+  // ---------- Sözleşmeler ----------
+  // Sanal şirketler sabit fiyatlı sipariş verir. Süresinde teslim edilmeyen kısım için bedelin %25'i ceza ödenir.
+  // Güvenilirlik (0-100) tamamlanan sözleşmeyle artar, cezayla düşer; teklif fiyatlarını yükseltir.
+  const DEAL_MAX = 3, DEAL_PEN = 0.25;
+  const dealsInit = () => ({ offers: [], active: [], rep: 50, done: 0, failed: 0 });
+  const haveAll = p => s.plots.reduce((a, pl) => a + (pl.inv[p] || 0), 0);
+  const dleft = t => { const h = (t - s.t) / 60; return h < 24 ? Math.max(1, Math.ceil(h)) + ' saat' : Math.ceil(h / 24) + ' gün'; };
+  function genOffer() {
+    const mine = [...new Set(s.plots.flatMap(pl => pl.b && pl.b.lines ? pl.b.lines.map(l => l.r).filter(Boolean) : []))];
+    const p = mine.length && Math.random() < 0.7 ? pick(mine) : pick(PK);
+    const buyers = NPC.filter(x => x[2].some(f => P[f].in[p]));
+    const days = pick([3, 5, 7]), val = clamp(Math.max(netWorth(), START_MONEY) * rnd(0.05, 0.12) * days / 5, 3e5, 8e8);
+    const qty = Math.max(10, Math.round(val / price(p) / 10) * 10);
+    const prem = 1.04 + 0.002 * s.deals.rep + rnd(-0.02, 0.03);
+    return { id: s.nextId++, p, qty, unit: Math.round(price(p) * prem * qPrem(p) * 10) / 10, days, region: pick(openR()), from: pick(buyers.length ? buyers : NPC)[0], exp: (dayNo() + 1) * 1440 };
+  }
+  // Depolardan teslim: taşıma ücreti arsanın bölgesinden teslim bölgesine
+  function deliver(x) {
+    let need = x.qty - x.got, n0 = 0;
+    for (const pl of s.plots) {
+      if (need <= 0) break;
+      const q = Math.min(pl.inv[x.p] || 0, need); if (q <= 0) continue;
+      const tr = trans(q, x.p, pl.region, x.region) * (1 - wEff(pl, 'sofor'));
+      add(pl, x.p, -q); exp('Taşıma', tr); inc('Sözleşme', q * x.unit); sold(x.p, q); pl.last = s.t; need -= q; n0 += q;
+    }
+    x.got += n0;
+    if (n0 && x.got >= x.qty) { const D = s.deals; D.rep = Math.min(100, D.rep + 5); D.done++; news('Sözleşme tamamlandı', x.from + ' siparişi (' + qtyTxt(x.p, x.qty) + ' ' + P[x.p].n.toLocaleLowerCase('tr-TR') + ') teslim edildi. Toplam ' + fmt(x.qty * x.unit) + '. Güvenilirliğin ' + Math.round(D.rep) + ' oldu.', true); }
+    return n0;
+  }
+  function dealsHour() {
+    const D = s.deals; if (!D) return;
+    for (const x of D.active) if (x.auto && x.got < x.qty) deliver(x);
+    for (const x of D.active.filter(x => s.t >= x.due && x.got < x.qty)) {
+      const pen = (x.qty - x.got) * x.unit * DEAL_PEN; exp('Sözleşme cezası', pen); D.rep = Math.max(0, D.rep - 15); D.failed++;
+      news('Sözleşme süresi doldu', x.from + ' siparişinin ' + qtyTxt(x.p, x.qty - x.got) + ' kısmı teslim edilmedi. Ceza: ' + fmt(pen) + '. Güvenilirliğin ' + Math.round(D.rep) + '’e düştü.', true);
+    }
+    D.active = D.active.filter(x => s.t < x.due && x.got < x.qty);
+    D.offers = D.offers.filter(o => s.t < o.exp);
+  }
+
+  // ---------- Vergi ve muhasebe ----------
+  // Kurumlar vergisi %25: her mevsim sonunda (çeyrek, 13 oyun günü) o çeyreğin kârı üzerinden; zarar sonraki çeyreğe devreder.
+  // Gider sayılmayanlar: inşaat (yerine yıllık %10 amortisman), arsa alım-satımı, kredi anaparası, KDV, kooperatif sermayesi.
+  // KDV yalnızca perakende satışta, katma değer (satış − maliyet) üzerinden: temel gıda %1, tekstil %10, diğerleri %20.
+  const CORP_TAX = 0.25, AMORT = 0.10;
+  const NOTAX = new Set(['Arsa satışı', 'İnşaat', 'Kooperatif', 'Kurumlar vergisi', 'Kredi anapara', 'KDV']);
+  const KDV = { bugday: 0.01, sut: 0.01, un: 0.01, ekmek: 0.01, peynir: 0.01, kumas: 0.10, giysi: 0.10 };
+  const kdvRate = p => KDV[p] || 0.20;
+  function kdv(pl, p, n, pr) { const v = (pr - shopCost(pl, p)) * n * kdvRate(p) / (1 + kdvRate(p)); if (v > 0) exp('KDV', v); }
+  const acctNew = carry => ({ inc: 0, exp: 0, am: 0, carry: carry || 0 });
+  const taxBase = () => s.acct.inc - s.acct.exp - s.acct.am - s.acct.carry;
+  function quarterTax() {
+    const base = taxBase();
+    if (base > 0) { const t = base * CORP_TAX; s.acct = acctNew(0); exp('Kurumlar vergisi', t); news('Kurumlar vergisi ödendi', 'Geçen çeyreğin vergiye tabi kârı ' + fmt(base) + '; %25 vergi olarak ' + fmt(t) + ' ödendi.', true); }
+    else { s.acct = acctNew(-base); if (base < 0) news('Zarar devretti', 'Geçen çeyrek ' + fmt(-base) + ' zarar ettin; bu tutar sonraki çeyreklerin kârından düşülecek.'); }
+  }
+  function financeDay(day) {
+    loanDay();
+    s.acct.am += s.plots.reduce((a, pl) => a + (pl.b ? pl.b.spent * AMORT / YEAR : 0), 0);
+    s.brand = brand() * 0.97 + (s.prev.inc['Perakende'] || s.prev.inc['Pazar'] || s.prev.inc['Sözleşme'] ? 0.3 : 0);
+    const D = s.deals; D.offers = D.offers.filter(o => s.t < o.exp); while (D.offers.length < DEAL_MAX) D.offers.push(genOffer());
+    if (day % QUARTER === 0) { quarterTax(); const S = curSeason(); news('Mevsim döndü: ' + S.n, S.note, true); }
+  }
+  // Eski kayıtları ve yeni oyunu yeni alanlarla tamamlar
+  function migrate() {
+    for (const r in R) {
+      if (!s.rivals[r]) { s.rivals[r] = {}; for (const k of PK) if (P[k].d) s.rivals[r][k] = [rnd(0.97, 1.1), rnd(0.97, 1.1)]; }
+      if (!s.cands[r]) s.cands[r] = genCands(r);
+    }
+    if (!s.loans) s.loans = [];
+    if (!s.qual) s.qual = {};
+    if (s.brand == null) s.brand = 0;
+    if (!s.acct) s.acct = acctNew(0);
+    if (s.tut == null) s.tut = 0;
+    if (!s.deals) s.deals = dealsInit();
+    if (!s.deals.offers.length) for (let i = 0; i < DEAL_MAX; i++) s.deals.offers.push(genOffer());
+  }
+
+  // ---------- İlk dakikalar için rehber ----------
+  const TUT = [
+    ['Arsa 1’e bir tarla kur', 'Aşağıdaki Arsa 1 kartında Tarla’ya dokun. Kırsal bölgede tarlalar %25 fazla ürün verir.', () => s.plots.some(p => p.b)],
+    ['Bir ürün seç', 'Kartta Hat 1 için Buğday ya da Süt seç; üretim hemen başlar. Mevsim önemli: buğday yazın bol, kışın az çıkar.', () => s.plots.some(p => p.b && (p.b.type === 'dukkan' || p.b.lines.some(l => l.r)))],
+    ['İlk partiyi bekle', 'Bir parti 30 oyun dakikasında biter (1× hızda ~2 saniye). Üstteki 2× ve 4× düğmeleri zamanı hızlandırır.', () => s.totalIncome > 0 || s.mine.length > 0 || s.plots.some(p => invTotal(p) > 0)],
+    ['İlk satışını yap', 'Ürünün altındaki “Toptancıya sat” hemen nakit verir; “Pazara ilan ver” daha pahalıya ama yavaş satar.', () => s.totalIncome > 0],
+    ['Satışı otomatiğe bağla', 'Ürünün “Üretim çıkınca” menüsünden “Pazara koy: piyasa fiyatı”nı seç. Sen yokken de satış sürer.', () => s.plots.some(p => p.b && Object.values(p.b.out || {}).some(Boolean)) || s.plots.some(p => p.b && p.b.type === 'dukkan')],
+    ['Şirket sekmesine bak', 'Orada şirketlerin sabit fiyatlı siparişleri, banka kredisi, marka ve vergi bilgisi var.', () => ui.tab === 'company' || s.deals.active.length > 0],
+    ['Büyümeyi planla', 'Kendi arsanı Artırma sekmesinden alırsın. Krediyle erken büyüyebilirsin ama taksitleri kaçırma.', () => s.plots.some(p => !p.rented) || s.loans.length > 0],
+  ];
+  const tutOn = () => !s.tutOff && s.tut < TUT.length;
+  function checkTut() {
+    while (tutOn() && TUT[s.tut][2]()) { s.tut++; if (s.tut === TUT.length) news('Rehber tamamlandı', 'Temel döngüyü öğrendin: üret, sat, büyü. Sıradaki hedeflerin ana ekranda.'); }
+  }
+  const tutCard = () => { const [t, d] = TUT[s.tut]; return `<div class="goal tut"><span class="small">Rehber · adım ${s.tut + 1}/${TUT.length}</span><b>${t}</b><span class="small">${d}</span><span>${btn('Rehberi kapat', 'tutOff', {}, 'ghost')}</span></div>`; };
+
+  // ---------- Şirket sekmesi ----------
+  function viewCompany() {
+    const out = [], D = s.deals;
+    // Sözleşmeler
+    let h = `<div class="card"><div class="row head"><h3>Sözleşmeler</h3><span class="tag ${D.rep >= 60 ? 'own' : ''}">güvenilirlik ${Math.round(D.rep)}</span></div><p class="muted small">Şirketler sabit fiyatlı sipariş verir ve piyasanın üstünde öder. Süresinde teslim etmediğin kısmın bedelinin %${DEAL_PEN * 100}’i kadar ceza ödersin. Güvenilirliğin arttıkça teklif fiyatları yükselir. Teslimat depolarından yapılır, taşıma ücreti senden.</p>`;
+    for (const x of D.active) {
+      const f = x.got / x.qty;
+      h += `<div class="item"><div class="row"><span><b>${esc(x.from)}</b> · ${P[x.p].n} ${qtyTxt(x.p, x.qty)}<br><span class="small muted">${R[x.region].n}’ye teslim · birimi ${fmt1(x.unit)} · toplam ${fmt(x.qty * x.unit)} · <span class="${x.due - s.t < 1440 ? 'warn' : ''}">kalan ${dleft(x.due)}</span></span></span><span class="num small">${x.got}/${x.qty}</span></div><div class="bar"><i style="width:${(f * 100).toFixed(1)}%"></i></div>
+        <div class="row wrap small">${btn('Depodan teslim et', 'dealGive', { id: x.id })}<label class="chk"><input type="checkbox" data-c="dealAuto" data-id="${x.id}" ${x.auto ? 'checked' : ''}> Ürün depoya girdikçe otomatik teslim et</label></div><p class="small muted">Depolarında ${haveAll(x.p).toLocaleString('tr-TR')} birim ${P[x.p].n.toLocaleLowerCase('tr-TR')} var.</p></div>`;
+    }
+    h += `<h3 class="small">Teklifler ${D.active.length >= DEAL_MAX ? '<span class="muted">· en fazla ' + DEAL_MAX + ' sözleşme yürütebilirsin</span>' : ''}</h3>`;
+    h += D.offers.map(o => `<div class="row"><span><b>${esc(o.from)}</b> · ${P[o.p].n} ${qtyTxt(o.p, o.qty)} · ${o.days} günde<br><span class="small muted">${R[o.region].n}’ye teslim · birimi ${fmt1(o.unit)} (piyasa ${fmt1(price(o.p))}, <span class="up">+%${Math.round((o.unit / price(o.p) - 1) * 100)}</span>) · toplam ${fmt(o.qty * o.unit)}</span></span>${D.active.length < DEAL_MAX ? btn('Kabul et', 'dealAcc', { id: o.id }) : ''}</div>`).join('');
+    h += `<p class="muted small">Teklifler her gün yenilenir. Tamamlanan ${D.done} · cezalı ${D.failed}</p></div>`;
+    out.push(['deals', h]);
+    // Banka kredisi
+    const lim = loanLimit(), r = loanRate(), amt = Math.min(ui.loanTL, lim);
+    let b = `<div class="card"><h3>Banka kredisi</h3><p class="muted small">Arsaların ve binaların teminat sayılır: limit ${fmt(LOAN_BASE)} + teminatın %${LTV * 100}’ı. Yıllık faiz %${Math.round(r * 100)} (unvan ve kredi kooperatifi indirir). Taksit her oyun günü (bir hafta) kasadan alınır. Üç taksit üst üste ödenmezse banka en değerli arsana el koyar.</p>
+      <div class="row"><span>Kullanılabilir limit</span><b class="num">${fmt(lim)}</b></div><div class="row"><span>Kalan kredi borcu</span><span class="num">${fmt(loanDebt())}</span></div>
+      <div class="row wrap small"><label for="loanAmt">Tutar (${sym()})</label><input id="loanAmt" class="price" inputmode="decimal" data-c="loanAmt" value="${+disp(ui.loanTL).toFixed(s.cur === 'TRY' ? 0 : 2)}"></div>`;
+    b += amt >= 1e5 ? LOAN_TERMS.map(n => { const i = installment(amt, n, r / 52); return `<div class="row small"><span>${fmt(amt)} · ${n} hafta vade<br><span class="muted">taksit ${fmt(i)}/gün · toplam faiz ${fmt(i * n - amt)}</span></span>${btn('Kredi çek', 'loanTake', { v: n })}</div>`; }).join('') : '<p class="small warn">Limitin şu an kredi için yetersiz.</p>';
+    if (s.loans.length) b += '<h3 class="small">Kredilerin</h3>' + s.loans.map(l => `<div class="row small"><span>${fmt(l.amt)} · ${l.k}/${l.n} taksit · kalan ${fmt(l.left)}${l.miss ? ` · <span class="warn">${l.miss} taksit gecikti</span>` : ''}<br><span class="muted">taksit ${fmt(l.inst)}/gün</span></span>${btn('Erken kapat ' + fmt(l.left * 1.01), 'loanPay', { id: l.id }, 'ghost')}</div>`).join('') + '<p class="muted small">Erken kapamada kalan anaparanın %1’i kadar ücret alınır.</p>';
+    out.push(['loan', b + '</div>']);
+    // Marka ve kalite
+    const top = [...(s.comp ? s.comp.npc : [])].map(c => ({ n: c.n, v: npcBrand(c) })).concat([{ n: 'Sen', v: brand(), me: true }]).sort((a, c) => c.v - a.v);
+    const myB = top.findIndex(x => x.me) + 1;
+    let m = `<div class="card"><div class="row head"><h3>Marka</h3><span class="tag ${myB === 1 ? 'own' : ''}">${myB === 1 ? 'En tanınan marka' : myB + '. sırada'}</span></div><div class="row"><span>Bilinirlik</span><b class="num">${brand().toFixed(1)} / 100</b></div><div class="bar"><i style="width:${brand().toFixed(1)}%"></i></div>
+      <p class="muted small">Bilinirlik dükkân talebini %${Math.round((brandShop() - 1) * 100)}, pazar ilanlarının satış hızını %${Math.round((brandList() - 1) * 100)} artırıyor. Her gün %3 söner; satış yaptığın günler biraz yükselir. Bilinirlik arttıkça reklamın getirisi azalır.</p>`;
+    m += ADS.map((a, i) => `<div class="row small"><span>${a.n}<br><span class="muted">+${(a.g * (1 - brand() / 100)).toFixed(1)} bilinirlik</span></span>${btn('Yayınla ' + fmt(a.c), 'ad', { v: i })}</div>`).join('');
+    m += `<p class="muted small">En tanınan markalar: ${top.slice(0, 3).map(x => esc(x.n) + ' ' + x.v.toFixed(0)).join(' · ')}</p></div>`;
+    out.push(['brand', m]);
+    out.push(['qual', `<div class="card"><h3>Kalite ve Ar-Ge</h3><p class="muted small">Her kalite seviyesi ürünün alıcıların kabul ettiği fiyatı %6 artırır: dükkânda ve pazarda aynı fiyata daha hızlı, sözleşmede daha pahalı satarsın. Toptancı primin yarısını öder. Ar-Ge harcaması gider sayılır.</p><div class="scroll"><table class="t">${PK.map(p => `<tr><td>${P[p].n}</td><td>${stars5(qual(p))}</td><td class="num small">+%${Math.round((qPrem(p) - 1) * 100)}</td><td>${qual(p) < QMAX ? btn('Ar-Ge ' + fmt(rdCost(p)), 'rd', { p }, 'ghost') : '<span class="small muted">en üst</span>'}</td></tr>`).join('')}</table></div></div>`]);
+    // Vergi
+    const a = s.acct, base = taxBase();
+    out.push(['tax', `<div class="card"><h3>Vergi ve muhasebe</h3><table class="t"><tr><td>Bu çeyrek ticari gelir</td><td class="up">${fmt(a.inc)}</td></tr><tr><td>Gider (vergiler ve faiz dahil)</td><td class="down">${fmt(-a.exp)}</td></tr><tr><td>Amortisman (binaların %10’u/yıl)</td><td class="down">${fmt(-a.am)}</td></tr>${a.carry ? `<tr><td>Devreden zarar</td><td class="down">${fmt(-a.carry)}</td></tr>` : ''}<tr><th>Vergiye tabi kâr</th><th>${fmt(base)}</th></tr><tr><td>Tahmini kurumlar vergisi (%${CORP_TAX * 100})</td><td>${fmt(Math.max(0, base) * CORP_TAX)}</td></tr></table>
+      <p class="muted small">Ödeme ${seasonLeft()} gün sonra, mevsim dönünce. İnşaat ve arsa alımı gider sayılmaz; bunun yerine binalar yılda %10 amortismanla gider yazılır. Zarar sonraki çeyreğe devreder.</p>
+      <p class="muted small">KDV dükkândaki perakende satışta, satış fiyatıyla maliyet arasındaki fark üzerinden kesilir: temel gıda (buğday, süt, un, ekmek, peynir) %1, kumaş ve giysi %10, diğerleri %20. Şirketler arası satışta KDV indirilerek sıfırlandığı için gösterilmez. Emlak vergisi ayrıca her gün alınır.</p></div>`]);
+    return out;
+  }
+  const stars5 = n => '<span aria-label="' + n + ' / 5">' + '★'.repeat(n) + '<span class="muted">' + '★'.repeat(QMAX - n) + '</span></span>';
+
+  const VIEWS = { company: viewCompany, compete: viewCompete, invest: viewInvest, crew: viewCrew, plots: viewPlots, market: viewMarket, auction: viewAuction, news: viewNews, report: viewReport };
+  const TABS = [['plots', 'Arsalar'], ['market', 'Pazar'], ['company', 'Şirket'], ['crew', 'İşçiler'], ['invest', 'Yatırım'], ['auction', 'Artırma'], ['compete', 'Rekabet'], ['news', 'Gazete'], ['report', 'Rapor']];
   let root, main, hud;
 
   function paint(container, sections) {
@@ -1201,6 +1461,6 @@
 
   window.__tezgah = { get state() { return s; }, away(ms) { catchUp(ms); render(); }, advance(min) { for (let i = 0; i < min; i += 5) step(5); render(); }, reset() { newGame(); render(); },
     // Denge testleri için: oyun içi eylemler ve tablolar (bot simülasyonu)
-    dbg: { A, C, B, P, R, RANKS, netWorth, price, step, compDay, endSeason } };
+    dbg: { A, C, B, P, R, RANKS, netWorth, price, step, compDay, endSeason, loanLimit, loanDebt, depth, curSeason, taxBase, wSell, openR } };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
