@@ -138,6 +138,7 @@
     spawnAuction();
     news('Tezgâh açıldı', 'Kırsal’da kiralık bir arsan ve ' + fmt(START_MONEY) + ' sermayen var. Tarla ya da dükkân kurmaya yeter; fabrika için büyümen gerekecek. İlk iki gün kira ve vergi alınmaz.');
     ui.dest = 1;
+    initComp();
   }
   function save() { s.savedAt = Date.now(); try { localStorage.setItem(SAVE_KEY, JSON.stringify(s)); } catch (e) { /* depolama yoksa oyun yine çalışır */ } }
   // Uygulama kapalıyken ya da arka plandayken geçen gerçek süreyi 1× hızda oynatır ve özetini hazırlar.
@@ -169,7 +170,7 @@
   const activeEvents = () => s.events.filter(e => s.t >= e.start && s.t < e.end);
   function demandMult(region, p) { let m = 1; for (const e of activeEvents()) { const d = EVENTS[e.key].d; if (d && d.ps.includes(p) && (!d.region || d.region === region)) m *= d.m; } return m; }
   function yieldMult(region, b) { let m = R[region].bonus === b ? 1.25 : 1; for (const e of activeEvents()) { const y = EVENTS[e.key].y; if (y && y.b === b && y.region === region) m *= y.m; } return m; }
-  function transMult() { let m = perk('tr'); for (const e of activeEvents()) if (EVENTS[e.key].tr) m *= EVENTS[e.key].tr; return m; }
+  function transMult() { let m = perk('tr') * (s.comp && s.comp.holding ? HOLD_PERK : 1); for (const e of activeEvents()) if (EVENTS[e.key].tr) m *= EVENTS[e.key].tr; return m; }
   // Taşıma: ton başına sabit ücret + bölge adımı başına ücret (yaklaşık 3 TL/ton-km, bir adım ≈ 200 km)
   const trans = (qty, p, from, to) => qty * P[p].kg / 1000 * (TR_FIXED + DIST[from][to] * TR_STEP) * transMult();
   const invTotal = pl => Object.values(pl.inv).reduce((a, b) => a + b, 0);
@@ -431,7 +432,7 @@
           const n = Math.min(Math.floor(pl.b.acc[p]), pl.inv[p]);
           if (n > 0) {
             pl.b.acc[p] -= n; const pr = pl.b.prices[p] || retailRef(p);
-            add(pl, p, -n); inc('Perakende', n * pr); rentOn(pl, n * pr); pl.last = s.t;
+            add(pl, p, -n); sold(p, n); inc('Perakende', n * pr); rentOn(pl, n * pr); pl.last = s.t;
             s.mult[p] = clamp(s.mult[p] + 0.00001 * impact(p) * n, 0.6, 1.5);
           }
         }
@@ -460,7 +461,7 @@
     for (const l of s.mine) {
       l.acc += listRate(l.p) * buySpeed(l.price / price(l.p)) * dt / 60;
       const n = Math.min(Math.floor(l.acc), l.qty);
-      if (n > 0) { l.acc -= n; l.qty -= n; const v = n * l.price; inc('Pazar', v); exp('Komisyon', v * COMM); s.mult[l.p] = clamp(s.mult[l.p] - 0.00002 * impact(l.p) * n, 0.6, 1.5); }
+      if (n > 0) { l.acc -= n; l.qty -= n; const v = n * l.price; sold(l.p, n); inc('Pazar', v); exp('Komisyon', v * COMM); s.mult[l.p] = clamp(s.mult[l.p] - 0.00002 * impact(l.p) * n, 0.6, 1.5); }
     }
     s.mine = s.mine.filter(l => l.qty > 0);
     // Artırmalar
@@ -468,6 +469,8 @@
     s.auctions = s.auctions.filter(a => s.t < a.end);
     while (Math.floor(s.t / 60) > s.lastHour) { s.lastHour++; hourly(s.lastHour); }
     checkRank();
+    if (s.compDue) { s.compDue = false; compDay(); }
+    checkQuests();
     for (let i = 0; i < GOALS.length; i++) if (!s.goals[i] && GOALS[i][1](s)) {
       s.goals[i] = true; reward(GOALS[i][2]);
       news('Hedef tamamlandı: ' + goalText(i), 'Ödül olarak kasana ' + fmt(GOALS[i][2]) + ' eklendi.', true);
@@ -504,6 +507,7 @@
     s.prev = s.today; s.today = emptyStats();
     marketDay();
     landDay();
+    s.compDue = true;
     for (const w of s.workers) {
       const pl = plot(w.plot);
       if (!pl || s.t - pl.last > 1440) continue;
@@ -602,6 +606,8 @@
     focus(d) { ui.tab = 'plots'; ui.focusPlot = +d.plot; },
     tab(d) { ui.tab = d.v; if (d.v === 'news') { s.unread = 0; ui.away = null; } },
     awayOk() { ui.away = null; },
+    joinH(d) { ensureComp(); const h = HOLDINGS.find(x => x.id === d.v); if (!h || s.comp.holding) return; s.comp.holding = h.id; s.comp.week.hTarget = holdingTarget(); news(h.n + '’na katıldın', 'Ortak haftalık gelir hedefine katkı veriyorsun; üyeler %5 ucuz taşır.'); },
+    leaveH() { if (!s.comp || !s.comp.holding) return; const h = HOLDINGS.find(x => x.id === s.comp.holding); s.comp.holding = null; s.comp.week.hTarget = 0; toast(h.n + '’ndan ayrıldın'); },
     trade(d) {
       const tl = d.side === 'sellall' ? Infinity : ui.invTL;
       if (!(tl > 0)) return toast('Önce bir tutar yaz');
@@ -637,7 +643,7 @@
       fireCrew(pl, 'bina yıkıldığı için');
       s.money += pl.b.spent * (s.freeSwap ? 1 : 0.5); s.freeSwap = false; pl.b = null;
     },
-    sellw(d) { const pl = plot(+d.plot), q = pl.inv[d.p]; inc('Toptancı', q * price(d.p) * W_SELL); rentOn(pl, q * price(d.p) * W_SELL); s.mult[d.p] = clamp(s.mult[d.p] - 0.00002 * impact(d.p) * q, 0.6, 1.5); add(pl, d.p, -q); pl.last = s.t; },
+    sellw(d) { const pl = plot(+d.plot), q = pl.inv[d.p]; sold(d.p, q); inc('Toptancı', q * price(d.p) * W_SELL); rentOn(pl, q * price(d.p) * W_SELL); s.mult[d.p] = clamp(s.mult[d.p] - 0.00002 * impact(d.p) * q, 0.6, 1.5); add(pl, d.p, -q); pl.last = s.t; },
     list(d) { const pl = plot(+d.plot), q = pl.inv[d.p]; s.mine.push({ id: s.nextId++, p: d.p, qty: q, price: Math.round(price(d.p) * ui.listMul * 10) / 10, acc: 0 }); add(pl, d.p, -q); pl.last = s.t; },
     unlist(d) { const l = s.mine.find(x => x.id === +d.id), pl = plot(ui.dest) || s.plots.find(p => p.b); if (!pl || !pl.b) return toast('Malı koyacak depon yok'); if (invTotal(pl) + l.qty > cap(pl)) return toast('Hedef depoda yer yok'); addCost(pl, l.p, l.qty, l.price); add(pl, l.p, l.qty); s.mine = s.mine.filter(x => x !== l); },
     move(d) {
@@ -926,8 +932,153 @@
     return out;
   }
 
-  const VIEWS = { invest: viewInvest, crew: viewCrew, plots: viewPlots, market: viewMarket, auction: viewAuction, news: viewNews, report: viewReport };
-  const TABS = [['plots', 'Arsalar'], ['market', 'Pazar'], ['crew', 'İşçiler'], ['invest', 'Yatırım'], ['auction', 'Artırma'], ['news', 'Gazete'], ['report', 'Rapor']];
+  // ---------- Rekabet: sezon, sektör hakimiyeti, haftalık görevler, holdingler ----------
+  // Çevrim içi sürümde rakipler gerçek oyunculardır. Demoda sanal şirketler, bot simülasyonundaki
+  // büyüme eğrisine (₺2,5 mn → ~₺1 mlr, 85 oyun günü; pazar ~₺3 mlr civarında doyar) göre büyür.
+  const SEASON_DAYS = 60, WEEK = 7;
+  const HOLDINGS = [
+    { id: 'anadolu', n: 'Anadolu Birliği', note: 'Tarım ve gıda ağırlıklı' },
+    { id: 'ege', n: 'Ege Ortaklığı', note: 'Tekstil ve ticaret ağırlıklı' },
+    { id: 'karadeniz', n: 'Karadeniz Grubu', note: 'Maden ve sanayi ağırlıklı' },
+  ];
+  const NPC = [
+    ['Çınar Ticaret', 'anadolu', ['bugday', 'un']], ['Bereketli Gıda', 'anadolu', ['sut', 'peynir']], ['Akıncı Un', 'anadolu', ['un', 'ekmek']], ['Sarıkız Süt', 'anadolu', ['sut', 'peynir']],
+    ['Ege Lif', 'ege', ['pamuk', 'kumas']], ['Mavi Kıyı Tekstil', 'ege', ['kumas', 'giysi']], ['Gökçe Pazarlama', 'ege', ['giysi', 'ekmek']],
+    ['Toroslu Maden', 'karadeniz', ['komur', 'demir']], ['Kayalar Çelik', 'karadeniz', ['celik', 'demir']], ['Demirhan Alet', 'karadeniz', ['alet', 'celik']], ['Kuzeyli Sanayi', 'karadeniz', ['komur', 'alet']],
+  ];
+  const KING = { bugday: 'Buğday Ağası', sut: 'Süt Kralı', pamuk: 'Pamuk Ağası', komur: 'Kömür Baronu', demir: 'Demir Baronu', un: 'Un Kralı', kumas: 'Kumaş Kralı', celik: 'Çelik Baronu', ekmek: 'Ekmek Kralı', peynir: 'Peynir Kralı', giysi: 'Moda Kralı', alet: 'Alet Baronu' };
+  const MEDAL = ['Altın', 'Gümüş', 'Bronz'];
+  const HOLD_PERK = 0.95;  // holding üyeleri ortak nakliye anlaşmasıyla %5 ucuz taşır
+
+  function initComp(keep) {
+    const k = keep || {};
+    s.comp = {
+      season: k.season || 1, start: Math.floor(s.t / 1440), badges: k.badges || [], best: k.best || null,
+      holding: k.holding || null, kings: [],
+      npc: NPC.map(([n, h, f]) => ({ n, h, f, nw: START_MONEY * rnd(0.9, 1.1), skill: rnd(0.7, 1.3), vol: {} })),
+      sold: {}, week: null,
+    };
+    for (const p of PK) s.comp.sold[p] = [0];
+    newWeek();
+  }
+  const ensureComp = () => { if (!s.comp) initComp(); };
+  // Satış kaydı: sektör payı ve görevler için (perakende, pazar ilanı, toptancı)
+  function sold(p, n) { if (!s.comp) return; const a = s.comp.sold[p]; a[a.length - 1] += n; if (s.comp.week) s.comp.week.sold[p] = (s.comp.week.sold[p] || 0) + n; }
+  const soldWeek = p => s.comp.sold[p].reduce((a, b) => a + b, 0);
+  // Sanal şirketin bir üründe haftalık satışı: net değerinin ~%30'u kadar günlük ciro, iki odak ürüne bölünür
+  const npcVol = (c, p) => c.f.includes(p) ? c.nw * 0.3 * WEEK * 0.5 / P[p].ref * c.skill : 0;
+  const seasonDay = () => Math.floor(s.t / 1440) - s.comp.start + 1;
+  function board() {
+    const me = { n: 'Sen', me: true, nw: netWorth(), h: s.comp.holding };
+    return [me, ...s.comp.npc].sort((a, b) => b.nw - a.nw);
+  }
+  function holdingBoard() {
+    const all = board();
+    return HOLDINGS.map(h => ({ ...h, members: all.filter(c => c.h === h.id), nw: all.filter(c => c.h === h.id).reduce((a, c) => a + c.nw, 0) })).sort((a, b) => b.nw - a.nw);
+  }
+  function sectorLeaders() {
+    return PK.map(p => {
+      const me = soldWeek(p); let top = { n: 'Sen', v: me, me: true };
+      for (const c of s.comp.npc) { const v = npcVol(c, p); if (v > top.v) top = { n: c.n, v }; }
+      return { p, top, me };
+    });
+  }
+
+  // Haftalık görev zinciri: üç görev; hepsi bitince zincir ödülü. Ödüller net değerle ölçeklenir.
+  function newWeek() {
+    const nw = Math.max(netWorth(), START_MONEY), mine = [...new Set(s.plots.flatMap(pl => pl.b && pl.b.lines ? pl.b.lines.map(l => l.r).filter(Boolean) : []))];
+    const p = mine.length ? mine[Math.floor(Math.random() * mine.length)] : 'bugday';
+    const want = Math.max(50, Math.round((soldWeek(p) || 10 * 24 * 3) * 1.3 / 10) * 10);
+    const pool = [
+      { k: 'sell', p, n: want, t: `${P[p].n} sat: ${qtyTxt(p, want)}` },
+      { k: 'income', amt: Math.round(nw * 0.5 / 1e5) * 1e5, t: `Bu hafta ${fmt(Math.round(nw * 0.5 / 1e5) * 1e5)} ticari gelir elde et` },
+      { k: 'nw', amt: Math.round(nw * 1.25 / 1e5) * 1e5, t: `Net değerini ${fmt(Math.round(nw * 1.25 / 1e5) * 1e5)} yap` },
+      { k: 'upgrade', t: 'Bir binanın kapasitesini artır' },
+      { k: 'hire', t: 'Bir işçi işe al' },
+      { k: 'auction', t: 'Bir arsa artırması kazan' },
+    ];
+    const pick = [pool[0], ...pool.slice(1).sort(() => Math.random() - 0.5).slice(0, 2)];
+    s.comp.week = {
+      n: (s.comp.week ? s.comp.week.n : 0) + 1, end: (Math.floor(s.t / 1440) + WEEK) * 1440, sold: {}, inc0: s.totalIncome,
+      lv0: s.plots.reduce((a, pl) => a + (pl.b ? pl.b.level : 0), 0), wk0: s.workers.length, own0: s.plots.filter(pl => !pl.rented).length,
+      reward: Math.max(150000, Math.round(nw * 0.03 / 1e4) * 1e4), q: pick.map(x => ({ ...x, done: false })), chain: false,
+      hTarget: holdingTarget(),
+    };
+  }
+  function questProgress(q) {
+    const w = s.comp.week;
+    switch (q.k) {
+      case 'sell': return Math.min(1, (w.sold[q.p] || 0) / q.n);
+      case 'income': return Math.min(1, (s.totalIncome - w.inc0) / q.amt);
+      case 'nw': return Math.min(1, netWorth() / q.amt);
+      case 'upgrade': return s.plots.reduce((a, pl) => a + (pl.b ? pl.b.level : 0), 0) > w.lv0 ? 1 : 0;
+      case 'hire': return s.workers.length > w.wk0 ? 1 : 0;
+      case 'auction': return s.plots.filter(pl => !pl.rented).length > w.own0 ? 1 : 0;
+    }
+    return 0;
+  }
+  function checkQuests() {
+    const w = s.comp && s.comp.week; if (!w) return;
+    for (const q of w.q) if (!q.done && questProgress(q) >= 1) { q.done = true; reward(w.reward); news('Görev tamamlandı', q.t + '. Ödül: ' + fmt(w.reward) + '.', true); }
+    if (!w.chain && w.q.every(q => q.done)) { w.chain = true; reward(w.reward * 2); news('Haftalık zincir tamamlandı', 'Bu haftanın üç görevini de bitirdin. Zincir ödülü: ' + fmt(w.reward * 2) + '.', true); }
+  }
+  // Holdingin haftalık ortak hedefi: üyelerin toplam ticari geliri
+  function holdingTarget() { const h = s.comp.holding; if (!h) return 0; return Math.round(s.comp.npc.filter(c => c.h === h).reduce((a, c) => a + c.nw * 0.3 * WEEK, 0) * 1.1 / 1e6) * 1e6 + Math.round(Math.max(netWorth(), START_MONEY) * 0.3 * WEEK / 1e6) * 1e6; }
+  function holdingDone() {
+    const w = s.comp.week, h = s.comp.holding; if (!h || !w.hTarget) return 0;
+    const npcPart = s.comp.npc.filter(c => c.h === h).reduce((a, c) => a + c.nw * 0.3 * Math.min(WEEK, (s.t - (w.end - WEEK * 1440)) / 1440), 0);
+    return npcPart + (s.totalIncome - w.inc0);
+  }
+
+  function compDay() {
+    ensureComp();
+    const c = s.comp;
+    for (const n of c.npc) n.nw *= Math.exp(n.skill * 0.072 * Math.max(0, 1 - n.nw / 3e9) + rnd(-0.03, 0.03));
+    for (const p of PK) { c.sold[p].push(0); if (c.sold[p].length > WEEK) c.sold[p].shift(); }
+    // Sektör liderliği değişimleri
+    const kings = sectorLeaders().filter(x => x.top.me && x.me > 0).map(x => x.p);
+    for (const p of kings) if (!c.kings.includes(p)) news('Yeni unvan: ' + KING[p], 'Son bir haftada en çok ' + P[p].n.toLocaleLowerCase('tr-TR') + ' satan şirket sensin.', true);
+    for (const p of c.kings) if (!kings.includes(p)) news(KING[p] + ' unvanını kaybettin', 'Bir rakip son haftada senden fazla ' + P[p].n.toLocaleLowerCase('tr-TR') + ' sattı.');
+    c.kings = kings;
+    if (s.t >= c.week.end) {
+      if (c.holding && holdingDone() >= c.week.hTarget) { const r = Math.max(200000, Math.round(netWorth() * 0.02 / 1e4) * 1e4); reward(r); news('Holding hedefi tutturuldu', HOLDINGS.find(h => h.id === c.holding).n + ' bu haftanın ortak gelir hedefine ulaştı. Payına düşen: ' + fmt(r) + '.', true); }
+      newWeek();
+    }
+    if (seasonDay() > SEASON_DAYS) endSeason();
+  }
+  function endSeason() {
+    const c = s.comp, b = board(), place = b.findIndex(x => x.me) + 1, nw = netWorth();
+    const badge = { season: c.season, place, of: b.length, nw, rank: RANKS[rankNow()].n, kings: c.kings.map(p => KING[p]) };
+    const badges = [...c.badges, badge], best = !c.best || place < c.best.place || (place === c.best.place && nw > c.best.nw) ? badge : c.best;
+    const keep = { season: c.season + 1, badges, best, holding: c.holding }, cur = s.cur;
+    newGame(); s.cur = cur; s.news = []; initComp(keep);
+    news('Sezon ' + badge.season + ' bitti: ' + place + '. oldun', (place <= 3 ? MEDAL[place - 1] + ' rozet kazandın. ' : '') + 'Net değerin ' + fmt(nw) + ', unvanın ' + badge.rank + ' idi. Yeni sezonda herkes ' + fmt(START_MONEY) + ' ile sıfırdan başlıyor; rozetlerin profilinde kalıyor.', true);
+  }
+
+  function viewCompete() {
+    ensureComp();
+    const c = s.comp, out = [], b = board(), myPlace = b.findIndex(x => x.me) + 1, left = SEASON_DAYS - seasonDay() + 1;
+    out.push(['ss', `<div class="card"><div class="row head"><h3>Sezon ${c.season}</h3><span class="tag own">${myPlace}. / ${b.length}</span></div><p class="muted small">${left} oyun günü kaldı. Sezon sonunda net değere göre sıralanır; ilk üçe altın, gümüş ve bronz rozet verilir. Sonra herkes ${fmt(START_MONEY)} ile sıfırdan başlar, rozetler kalır.</p><div class="bar"><i style="width:${(Math.min(1, seasonDay() / SEASON_DAYS) * 100).toFixed(1)}%"></i></div>
+      <table class="t board">${b.map((x, i) => `<tr class="${x.me ? 'me' : ''}"><td class="num">${i + 1}</td><td>${esc(x.n)}${x.h ? ` <span class="small muted">${HOLDINGS.find(h => h.id === x.h).n}</span>` : ''}</td><td class="num">${fmt(x.nw)}</td></tr>`).join('')}</table></div>`]);
+    // Haftalık görevler
+    const w = c.week, dl = Math.max(0, Math.ceil((w.end - s.t) / 1440));
+    out.push(['wq', `<div class="card"><div class="row head"><h3>Haftalık görevler</h3><span class="small muted">${dl} gün kaldı</span></div><p class="muted small">Her görev ${fmt(w.reward)}; üçü de bitince zincir ödülü ${fmt(w.reward * 2)}.</p>${w.q.map(q => { const f = questProgress(q); return `<div class="quest"><div class="row small"><span class="${q.done ? 'done' : ''}">${esc(q.t)}</span><span class="num muted">${q.done ? '✓' : '%' + Math.floor(f * 100)}</span></div><div class="bar"><i style="width:${(f * 100).toFixed(1)}%"></i></div></div>`; }).join('')}${w.chain ? '<p class="small up">Zincir tamamlandı.</p>' : ''}</div>`]);
+    // Sektör hakimiyeti
+    const L = sectorLeaders();
+    out.push(['sk', `<div class="card"><h3>Sektör hakimiyeti</h3><p class="muted small">Son 7 günde bir üründe en çok satan şirket o sektörün unvanını alır.</p><div class="scroll"><table class="t">${L.map(x => `<tr><td>${KING[x.p]}</td><td class="${x.top.me ? 'up' : ''}">${x.top.me ? 'Sen' : esc(x.top.n)}</td><td class="num small muted">senin payın %${Math.round(x.me / Math.max(1, x.me + c.npc.reduce((a, n) => a + npcVol(n, x.p), 0)) * 100)}</td></tr>`).join('')}</table></div></div>`]);
+    // Holdingler
+    const hb = holdingBoard();
+    let h = `<div class="card"><h3>Holdingler</h3><p class="muted small">Bir holdinge katılırsan ortak haftalık gelir hedefine katkı verirsin; hedef tutunca net değerinin %2'si kadar pay alırsın. Üyeler ortak nakliye anlaşmasıyla %5 ucuz taşır.</p>`;
+    hb.forEach((x, i) => { const mine = c.holding === x.id; h += `<div class="row"><span><b>${i + 1}. ${x.n}</b>${mine ? ' <span class="tag own">üyesin</span>' : ''}<br><span class="small muted">${x.note} · ${x.members.length} üye · toplam ${fmt(x.nw)}</span></span>${mine ? btn('Ayrıl', 'leaveH', {}, 'ghost') : c.holding ? '' : btn('Katıl', 'joinH', { v: x.id })}</div>`; });
+    if (c.holding && w.hTarget) { const f = Math.min(1, holdingDone() / w.hTarget); h += `<p class="small">Bu haftanın ortak hedefi: ${fmt(w.hTarget)} ticari gelir · %${Math.floor(f * 100)}</p><div class="bar"><i style="width:${(f * 100).toFixed(1)}%"></i></div>`; }
+    out.push(['hd', h + '</div>']);
+    // Rozetler
+    if (c.badges.length) out.push(['bd', `<div class="card"><h3>Rozetlerin</h3>${c.badges.map(x => `<div class="row"><span>Sezon ${x.season}: <b>${x.place}.</b> / ${x.of}${x.place <= 3 ? ' · ' + MEDAL[x.place - 1] : ''}<br><span class="small muted">${x.rank}${x.kings.length ? ' · ' + x.kings.join(', ') : ''}</span></span><span class="num small">${fmt(x.nw)}</span></div>`).join('')}</div>`]);
+    return out;
+  }
+
+  const VIEWS = { compete: viewCompete, invest: viewInvest, crew: viewCrew, plots: viewPlots, market: viewMarket, auction: viewAuction, news: viewNews, report: viewReport };
+  const TABS = [['plots', 'Arsalar'], ['market', 'Pazar'], ['crew', 'İşçiler'], ['invest', 'Yatırım'], ['auction', 'Artırma'], ['compete', 'Rekabet'], ['news', 'Gazete'], ['report', 'Rapor']];
   let root, main, hud;
 
   function paint(container, sections) {
@@ -948,9 +1099,10 @@
 
   function rankBar() {
     const r = RANKS[rankNow()], nx = RANKS[rankNow() + 1], nw = netWorth();
-    if (!nx) return `<div class="rank"><div class="row small"><b>${r.n}</b><span class="muted">en üst unvan · net değer ${fmt(nw)}</span></div></div>`;
+    ensureComp(); const sp = `<span class="muted"> · Sezon ${s.comp.season}, ${board().findIndex(x => x.me) + 1}. sıra</span>`;
+    if (!nx) return `<div class="rank"><div class="row small"><b>${r.n}</b><span class="muted">en üst unvan${sp}</span></div></div>`;
     const f = Math.max(0, Math.min(1, (nw - r.at) / (nx.at - r.at)));
-    return `<div class="rank"><div class="row small"><span><b>${r.n}</b> <span class="muted">→ ${nx.n}</span></span><span class="num muted">${fmt(nw)} / ${fmt(nx.at)}</span></div><div class="bar" role="progressbar" aria-label="Sonraki unvana ilerleme" aria-valuenow="${Math.round(f * 100)}" aria-valuemin="0" aria-valuemax="100"><i style="width:${(f * 100).toFixed(1)}%"></i></div></div>`;
+    return `<div class="rank"><div class="row small"><span><b>${r.n}</b> <span class="muted">→ ${nx.n}</span>${sp}</span><span class="num muted">${fmt(nw)} / ${fmt(nx.at)}</span></div><div class="bar" role="progressbar" aria-label="Sonraki unvana ilerleme" aria-valuenow="${Math.round(f * 100)}" aria-valuemin="0" aria-valuemax="100"><i style="width:${(f * 100).toFixed(1)}%"></i></div></div>`;
   }
   function render() {
     const bids = s.auctions.filter(a => a.bidder === 'me').reduce((a, x) => a + x.bid, 0);
@@ -994,6 +1146,6 @@
 
   window.__tezgah = { get state() { return s; }, away(ms) { catchUp(ms); render(); }, advance(min) { for (let i = 0; i < min; i += 5) step(5); render(); }, reset() { newGame(); render(); },
     // Denge testleri için: oyun içi eylemler ve tablolar (bot simülasyonu)
-    dbg: { A, C, B, P, R, RANKS, netWorth, price, step } };
+    dbg: { A, C, B, P, R, RANKS, netWorth, price, step, compDay, endSeason } };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();

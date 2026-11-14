@@ -125,3 +125,5 @@ select.cur { font: inherit; font-size: 13px; padding: 2px 4px; border-radius: 6p
 .right { text-align: right; }
 .rank { display: grid; gap: 4px; padding: 6px 0 2px; }
 .rank .bar i { background: var(--gold, var(--accent)); }
+.board tr.me td { font-weight: 600; color: var(--accent); }
+.quest { display: grid; gap: 4px; margin: 8px 0; }

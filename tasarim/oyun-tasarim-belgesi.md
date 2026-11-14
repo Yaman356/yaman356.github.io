@@ -263,3 +263,27 @@ Tarayıcıda oyunun kendi kuralları üzerinde çalışan basit bir bot (`window
 - Bir oyun günü 1× hızda ~96 gerçek saniye; 85 oyun günü ≈ 2,3 saat kesintisiz oyun (4× hızda ~35 dk). Uygulama kapalıyken en fazla bir oyun günü telafi edildiği için gerçekte günlere yayılır.
 - Bot ~₺2,5 mlr civarında takıldı: ~130 arsa ve ~42 fabrikada bütün ürünlerin fiyatı olağanın %60–70'ine indi (pazar doydu). Bu yüzden son iki eşik ₺2 mlr ve ₺5 mlr seçildi; işçi, dükkân ve yatırımı iyi kullanan bir oyuncu daha yükseğe çıkabilir.
 - Çevrim içi için uyarı: tek oyuncuda bile 1 milyara birkaç saatlik aktif oyunla ulaşılıyor. Ortak pazarda oyuncular aynı talebi paylaşacağı için doyma daha erken gelir; çevrim içi sürümde zaman ölçeği ve pazar talebi oyuncu sayısına göre yeniden ayarlanmalı.
+
+## 10. Çevrim içi amaçlar: Rekabet sekmesi
+
+Oyunun sonu yok ama oyuncuyu taşıyan dört amaç var. Demoda rakipler 11 sanal şirkettir; çevrim içi sürümde gerçek oyuncular olur. Sanal şirketler bot simülasyonundaki büyüme eğrisine göre büyür (yetenek çarpanı 0,7–1,3; ~₺3 mlr'de pazar doyar).
+
+### Sezon ve sıralama
+- Sezon 60 oyun günü sürer (çevrim içi için hedef: 4 gerçek hafta). Sıralama net değere göredir.
+- Sezon sonunda ilk üç altın, gümüş, bronz rozet alır; herkes ₺2,5 mn ile sıfırdan başlar. Rozetler, sezon unvanı ve sektör unvanları profilde kalır.
+- Üst çubukta sezon numarası ve anlık sıra görünür.
+
+### Sektör hakimiyeti
+- Son 7 günde bir üründe en çok satan şirket o sektörün unvanını alır: Buğday Ağası, Süt Kralı, Pamuk Ağası, Kömür Baronu, Demir Baronu, Un Kralı, Kumaş Kralı, Çelik Baronu, Ekmek Kralı, Peynir Kralı, Moda Kralı, Alet Baronu.
+- Perakende, pazar ilanı ve toptancı satışları sayılır. Unvan kazanılınca ve kaybedilince gazetede duyurulur.
+
+### Haftalık görev zinciri
+- Her 7 oyun gününde üç görev: biri kendi ürettiğin bir üründen satış, ikisi havuzdan (ticari gelir, net değer hedefi, kapasite artırma, işçi alma, artırma kazanma).
+- Her görev net değerin %3'ü (en az ₺150 bin); üçü de bitince iki katı zincir ödülü.
+
+### Holdingler
+- Üç holding: Anadolu Birliği (tarım-gıda), Ege Ortaklığı (tekstil-ticaret), Karadeniz Grubu (maden-sanayi). Holding sıralaması üyelerin toplam net değeridir.
+- Üyeler %5 ucuz taşır ve haftalık ortak gelir hedefine katkı verir; hedef tutunca her üye net değerinin %2'si kadar pay alır.
+
+### Test (bot, 60 gün)
+Bot 1. sezonu ₺569 mn net değer ve Fabrikatör unvanıyla 1. bitirdi; en iyi sanal rakip ~₺230 mn idi. Bu yüzden rakiplerin yetenek aralığı 0,65–1,15'ten 0,7–1,3'e çıkarıldı. Sezon sonu sıfırlama ve rozet kaydı çalıştı.
