@@ -1,0 +1,134 @@
+{
+ "perakende kat sayisi 1.6": {
+  "kapsama": 0.905,
+  "roller": {
+   "ham madde": {
+    "isletme": 32.8,
+    "sonradan_kurulan": 19.8,
+    "gunluk_kar": 299,
+    "medyan": 302,
+    "zararli_gun": 0.01
+   },
+   "ara mal": {
+    "isletme": 20.6,
+    "sonradan_kurulan": 12.6,
+    "gunluk_kar": 247,
+    "medyan": 278,
+    "zararli_gun": 0.14
+   },
+   "dükkân": {
+    "isletme": 47.8,
+    "sonradan_kurulan": 34.8,
+    "gunluk_kar": 964,
+    "medyan": 882,
+    "zararli_gun": 0.0
+   },
+   "son ürün": {
+    "isletme": 28.8,
+    "sonradan_kurulan": 12.8,
+    "gunluk_kar": 235,
+    "medyan": 209,
+    "zararli_gun": 0.18
+   }
+  }
+ },
+ "perakende kat sayisi 1.45": {
+  "kapsama": 0.904,
+  "roller": {
+   "ham madde": {
+    "isletme": 34.8,
+    "sonradan_kurulan": 21.8,
+    "gunluk_kar": 253,
+    "medyan": 276,
+    "zararli_gun": 0.01
+   },
+   "ara mal": {
+    "isletme": 20.4,
+    "sonradan_kurulan": 12.4,
+    "gunluk_kar": 209,
+    "medyan": 203,
+    "zararli_gun": 0.17
+   },
+   "dükkân": {
+    "isletme": 45.4,
+    "sonradan_kurulan": 32.4,
+    "gunluk_kar": 846,
+    "medyan": 812,
+    "zararli_gun": 0.0
+   },
+   "son ürün": {
+    "isletme": 29.4,
+    "sonradan_kurulan": 13.4,
+    "gunluk_kar": 197,
+    "medyan": 189,
+    "zararli_gun": 0.15
+   }
+  }
+ },
+ "perakende kat sayisi 1.3": {
+  "kapsama": 0.872,
+  "roller": {
+   "ham madde": {
+    "isletme": 34.8,
+    "sonradan_kurulan": 21.8,
+    "gunluk_kar": 230,
+    "medyan": 241,
+    "zararli_gun": 0.01
+   },
+   "ara mal": {
+    "isletme": 19.4,
+    "sonradan_kurulan": 11.4,
+    "gunluk_kar": 181,
+    "medyan": 178,
+    "zararli_gun": 0.15
+   },
+   "dükkân": {
+    "isletme": 47.2,
+    "sonradan_kurulan": 34.2,
+    "gunluk_kar": 612,
+    "medyan": 503,
+    "zararli_gun": 0.0
+   },
+   "son ürün": {
+    "isletme": 28.4,
+    "sonradan_kurulan": 12.4,
+    "gunluk_kar": 182,
+    "medyan": 164,
+    "zararli_gun": 0.16
+   }
+  }
+ },
+ "perakende kat sayisi 1.2": {
+  "kapsama": 0.867,
+  "roller": {
+   "ham madde": {
+    "isletme": 36.4,
+    "sonradan_kurulan": 23.4,
+    "gunluk_kar": 219,
+    "medyan": 190,
+    "zararli_gun": 0.02
+   },
+   "ara mal": {
+    "isletme": 20.0,
+    "sonradan_kurulan": 12.0,
+    "gunluk_kar": 165,
+    "medyan": 150,
+    "zararli_gun": 0.14
+   },
+   "dükkân": {
+    "isletme": 46.2,
+    "sonradan_kurulan": 33.2,
+    "gunluk_kar": 495,
+    "medyan": 394,
+    "zararli_gun": 0.0
+   },
+   "son ürün": {
+    "isletme": 27.0,
+    "sonradan_kurulan": 11.0,
+    "gunluk_kar": 151,
+    "medyan": 144,
+    "zararli_gun": 0.16
+   }
+  }
+ }
+}

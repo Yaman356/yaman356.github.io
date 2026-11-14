@@ -331,3 +331,20 @@ Her ölçekte yeni oyuncu sorunu sürüyor; büyük sunucuda arsa fiyatları dah
 - Şirketler basit kurallarla karar veriyor: arsanın değerini son üç günün rol kârlarından tahmin ediyor. Spekülatörün ve tekelin stratejileri de basit; gerçek oyuncular daha akıllı davranabilir.
 - Oyuncular arası arsa satışı, kiraya verme ve arsa sayısı çarpanının daha dik hali modelde yok.
 - Tüketici talebi fiyata tepki vermiyor; sanal gündem olayları ve çoklu hesap hâlâ sınanmadı.
+
+## Ek: Sektörler arası denge, çok arsalı modelde
+
+Kod: `sim/sector_balance.py`. Ham sonuçlar: `sim/sector_balance_results.json`. Doküman vergisi, yeni oyuncu yok, beş tohum, 10–40. günler. Kâr, arsa (işletme) başına günlüktür.
+
+| Perakende kat sayısı | Talebin karşılanması | Dükkân | Ham madde | Ara mal | Son ürün | Yeni kurulan 80 arsanın dükkâna giden kısmı |
+|---:|---:|---:|---:|---:|---:|---:|
+| 1,6 (mevcut) | %91 | 964 | 299 | 247 | 235 | 35 |
+| 1,45 | %90 | 846 | 253 | 209 | 197 | 32 |
+| 1,3 | %87 | 612 | 230 | 181 | 182 | 34 |
+| 1,2 | %87 | 495 | 219 | 165 | 151 | 33 |
+
+- Mevcut ayarda dükkân arsası diğer sektörlerin 3–4 katı kazanıyor; yatırımın yarıya yakını dükkâna gidiyor.
+- Zararlı gün oranı: dükkân %0, ham madde %1, ara mal %14, son ürün %18.
+- İkinci turdaki "dükkân sayısı artınca fark kapanır" sonucu yeniden yatırım olmayan, arzın kıt olduğu bir modelden çıkmıştı. Şirketler yatırım yapıp arz bollaşınca fark geri geliyor; o sonuç bu tabloyla düzeltilmiştir.
+- Perakende kat sayısını düşürmek herkesin kârını düşürüyor ama oranı çok az değiştiriyor (3,7 kattan 2,8 kata).
+- Modeldeki dükkânlar raf fiyatını yalnızca stoklarına göre ayarlıyor, rakip dükkânın fiyatının altına inmiyor. Gerçek oyuncular birbirinin fiyatını kırarsa dükkân marjı modeldekinden düşük olabilir; bu, farkın bir kısmını açıklayabilir.
