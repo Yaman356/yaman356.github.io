@@ -52,7 +52,7 @@
     dukkan: { n: 'Dükkân', cost: 1200000, cap: 150, scale: 1, hint: 'Raf, soğutucu, kasa ve ruhsat · mal alır, perakende satar' },
     tarla: { n: 'Tarla', cost: 1600000, cap: 200, scale: 1, hint: 'Traktör, ekipman ve ahır · buğday, süt, pamuk üretir' },
     maden: { n: 'Maden', cost: 4500000, cap: 400, scale: 2, hint: 'Ruhsat, ekskavatör ve kamyon · kömür ve cevher çıkarır' },
-    fabrika: { n: 'Fabrika', cost: 12000000, cap: 1250, scale: 5, hint: 'Bina, üretim hattı ve makineler · ham maddeyi işler' },
+    fabrika: { n: 'Fabrika', cost: 12000000, cap: 1250, scale: 5, hint: 'Bina ve altyapı (~600 m² sanayi yapısı) · makineler ürüne göre ayrıca alınır' },
   };
   const EVENTS = {
     festival: { title: 'Merkez’de hasat festivali', body: 'Festival boyunca Merkez’de ekmek ve peynir talebi %50 artacak.', d: { region: 'merkez', ps: ['ekmek', 'peynir'], m: 1.5 } },
@@ -186,6 +186,13 @@
   const cap = pl => (pl.b ? B[pl.b.type].cap * (pl.b.level + (pl.b.parts || []).length) : 0);
   // Üretim binasında seviye partiyi büyütür: 1. seviye 10, 2. seviye 15, 3. seviye 20 birim (girdi ve gider de aynı oranda)
   const batch = pl => pl.b.type === 'dukkan' ? 1 : B[pl.b.type].scale * (1 + 0.5 * (pl.b.level - 1));
+  // Fabrika makineleri bina fiyatına dahil değildir: bir hatta tarif seçilince o ürünün makineleri alınır.
+  // Tutarlar 1. seviye kapasite içindir; her kapasite artışı makine bedelinin yarısını ekler. Tarif değişince eski makineler
+  // yarı fiyatına satılır. Tarla ve madenin ekipmanı (traktör, ekskavatör) bina fiyatına dahildir.
+  // Dayanak ve oyun için yapılan kısaltmalar: tasarım belgesi bölüm 8 (Fabrika makineleri).
+  const MACH = { un: 6e6, giysi: 20e6, alet: 30e6, kumas: 40e6, ekmek: 60e6, peynir: 120e6, celik: 250e6 };
+  const machCost = (pl, p) => (MACH[p] || 0) * (1 + 0.5 * (pl.b.level - 1));
+  const upgCost = pl => B[pl.b.type].cost * pl.b.level + (pl.b.lines || []).reduce((a, ln) => a + (ln.r ? (MACH[ln.r] || 0) * 0.5 : 0), 0);
   // n birimi gerçek miktar olarak yazar: 48 × 100 kg → "4,8 ton", 12 × 1.000 adet → "12.000 adet"
   function qtyTxt(p, n) {
     const m = P[p].u.match(/^([\d.]+) (.+)$/), base = m ? +m[1].replace(/\./g, '') : 1, word = m ? m[2] : P[p].u;
@@ -683,9 +690,10 @@
       pl.b = { type: d.v, level: 1, spent: bt.cost, lines: d.v === 'dukkan' ? [] : [{ r: null, prog: 0, busy: false, st: 'Tarif seç', auto: 0 }], prices: {}, acc: {}, rule: {}, auto: {}, cost: {}, out: {} };
     },
     upgrade(d) {
-      const pl = plot(+d.plot), c = B[pl.b.type].cost * pl.b.level;
-      if (pl.b.level >= 3) return; if (s.money < c) return toast('Para yetersiz');
-      exp('İnşaat', c); pl.b.level++; pl.b.spent += c;
+      const pl = plot(+d.plot); if (pl.b.level >= 3) return;
+      const bc = B[pl.b.type].cost * pl.b.level, c = upgCost(pl); if (s.money < c) return toast('Para yetersiz');
+      exp('İnşaat', bc); if (c > bc) exp('Makine', c - bc); pl.b.level++; pl.b.spent += c;
+      for (const ln of pl.b.lines || []) if (ln.r && MACH[ln.r]) ln.mach = (ln.mach || 0) + MACH[ln.r] * 0.5;
     },
     expand(d) {
       const pl = plot(+d.plot), tgt = plot(+(ui.sel['ex' + pl.id] || freePlots(pl)[0]?.id));
@@ -740,7 +748,14 @@
     },
   };
   const C = {
-    recipe(el) { const ln = plot(+el.dataset.plot).b.lines[+el.dataset.i]; ln.r = el.value || null; ln.busy = false; ln.prog = 0; },
+    recipe(el) {
+      const pl = plot(+el.dataset.plot), ln = pl.b.lines[+el.dataset.i], p = el.value || null; if (p === ln.r) return;
+      const c = p ? machCost(pl, p) : 0, back = (ln.mach || 0) * 0.5;
+      if (s.money + back < c) { el.value = ln.r || ''; return toast(P[p].n + ' makineleri için ' + fmt(c) + ' gerekiyor'); }
+      if (ln.mach) { finInc('Makine satışı', back); pl.b.spent -= ln.mach; }
+      ln.mach = c; if (c) { exp('Makine', c); pl.b.spent += c; toast(P[p].n + ' makineleri kuruldu: ' + fmt(c)); }
+      ln.r = p; ln.busy = false; ln.prog = 0;
+    },
     price(el) { const v = parseFloat(el.value.replace(',', '.')) * rate(s.cur), pl = plot(+el.dataset.plot); if (v > 0) { pl.b.prices[el.dataset.p] = v; if (pl.b.rule[el.dataset.p]) pl.b.rule[el.dataset.p].mode = 'elle'; } },
     rule(el) { const pl = plot(+el.dataset.plot), p = el.dataset.p, r = pl.b.rule[p] || { mode: 'elle', margin: 0.1 }; r[el.dataset.f] = el.dataset.f === 'mode' ? el.value : +el.value; pl.b.rule[p] = r; applyRule(pl, p); },
     auto(el) { const pl = plot(+el.dataset.plot); pl.b.auto[el.dataset.p] = +el.value; autoRestock(pl, el.dataset.p); },
@@ -813,7 +828,7 @@
     h += `<p class="small"><span class="muted">Çalışanlar ${cw.length}/${slots(pl)}:</span> ${cw.length ? cw.map(w => WK[w.type].n + ' ' + esc(w.name) + ' ' + stars(w.star)).join(' · ') : '<span class="muted">yok · İşçiler sekmesinden alabilirsin</span>'}</p>`;
     if (prod) h += `<p class="muted small">Parti ${10 * k} birim · ${b.lines.length} hat · usta parti süresini kısaltır${parts.length ? ' · ' + (parts.length + 1) + ' arsaya yayılıyor' : ''}</p>`;
     h += '<div class="row wrap">';
-    if (b.level < 3) h += btn(prod ? `Kapasiteyi artır: parti ${10 * (k + 0.5 * B[b.type].scale)} birim · ${fmt(bt.cost * b.level)}` : `Yükselt ${fmt(bt.cost * b.level)}`, 'upgrade', { plot: pl.id });
+    if (b.level < 3) h += btn(prod ? `Kapasiteyi artır: parti ${10 * (k + 0.5 * B[b.type].scale)} birim · ${fmt(upgCost(pl))}` : `Yükselt ${fmt(upgCost(pl))}`, 'upgrade', { plot: pl.id });
     h += btn(`Yık (iade ${fmt(b.spent * (s.freeSwap ? 1 : 0.5))})`, 'demolish', { plot: pl.id }, 'ghost') + '</div>';
     if (prod && b.level >= 3 && b.lines.length < 3) {
       const free = freePlots(pl);
@@ -821,7 +836,7 @@
         : `<p class="muted small">Yeni hat için ${R[pl.region].n} bölgesinde boş bir arsan olmalı.</p>`;
     } else if (prod && b.level < 3) h += '<p class="muted small">3. seviyeden sonra bina, aynı bölgedeki boş bir arsaya genişleyerek yeni hat açabilir.</p>';
     b.lines.forEach((ln, i) => {
-      const opts = PK.filter(k => P[k].b === b.type).map(k => `<option value="${k}" ${ln.r === k ? 'selected' : ''}>${P[k].n}${Object.keys(P[k].in).length ? ' ← ' + Object.entries(P[k].in).map(([x, q]) => qtyTxt(x, q * batch(pl)) + ' ' + P[x].n.toLocaleLowerCase('tr-TR')).join(', ') : ''}</option>`).join('');
+      const opts = PK.filter(k => P[k].b === b.type).map(k => `<option value="${k}" ${ln.r === k ? 'selected' : ''}>${P[k].n}${Object.keys(P[k].in).length ? ' ← ' + Object.entries(P[k].in).map(([x, q]) => qtyTxt(x, q * batch(pl)) + ' ' + P[x].n.toLocaleLowerCase('tr-TR')).join(', ') : ''}${MACH[k] ? ' · makineler ' + fmt(machCost(pl, k)) : ''}</option>`).join('');
       h += `<div class="line"><label class="small muted" for="rc${pl.id}_${i}">Hat ${i + 1}</label><select id="rc${pl.id}_${i}" data-c="recipe" data-plot="${pl.id}" data-i="${i}"><option value="">Tarif seç</option>${opts}</select><div class="bar"><i data-prog="${pl.id}:${i}"></i></div>${ln.r ? `<span class="small muted">${lineInfo(pl, ln.r)}</span>` : ''}<span class="small ${ln.busy ? 'muted' : 'warn'}">${ln.busy ? 'Üretiyor · parti gideri ' + fmt(P[ln.r].op * batch(pl)) : esc(ln.st || '') + (ln.auto && ln.st && ln.st.startsWith('Girdi') ? ' · bu fiyata uygun satıcı yok' : '')}</span>${ln.r && Object.keys(P[ln.r].in).length ? `<label class="small muted" for="la${pl.id}_${i}">Girdi bitince</label><select id="la${pl.id}_${i}" data-c="lineAuto" data-plot="${pl.id}" data-i="${i}">${[[0, 'Elle alırım'], [1, 'Olağan fiyata kadar al'], [1.1, 'Olağanın %10 fazlasına kadar al'], [1.35, 'Toptancı dahil al (%35 fazlası)']].map(([v, l]) => `<option value="${v}" ${(ln.auto || 0) === v ? 'selected' : ''}>${l}</option>`).join('')}</select>` : ''}</div>`;
     });
     const items = b.type === 'dukkan' ? shelf(pl) : [...new Set([...b.lines.filter(l => l.r).map(l => l.r), ...Object.keys(pl.inv), ...Object.keys(b.out || {}).filter(p => b.out[p])])];
@@ -903,7 +918,7 @@
     if (s.mine.length) out.push(['mine', '<div class="card"><h3>İlanlarım</h3>' + s.mine.map(l => `<div class="row"><span>${P[l.p].n} · ${l.qty} × ${P[l.p].u} · ${fmt1(l.price)}${l.auto ? ' · otomatik' : ''}<br><span class="small">${speedNote(l.price / price(l.p))}</span></span>${btn('Geri çek', 'unlist', { id: l.id }, 'ghost')}</div>`).join('') + '<p class="muted small">Satışlardan %3 komisyon kesilir.</p></div>']);
     for (const k of PK) {
       const wU = price(k) * wBuy() + trans(1, k, dst.region, dst.region);
-      let h = `<div class="card"><div class="row head"><h3 class="named">${ic(k, 28)}${P[k].n}</h3><span class="small">${trend(k)}</span></div><p class="muted small">Olağan fiyat ${fmt1(price(k))} / ${P[k].u} · ${WNAME[P[k].w]} yük · 1. seviye ${B[P[k].b].n.toLocaleLowerCase('tr-TR')}: ${qtyTxt(k, 10 * B[P[k].b].scale)} / ${durTxt(P[k].t)}${Object.keys(P[k].in).length ? ' (' + Object.entries(P[k].in).map(([x, q]) => qtyTxt(x, q * B[P[k].b].scale) + ' ' + P[x].n.toLocaleLowerCase('tr-TR')).join(' + ') + ')' : ''}</p><div class="row"><span>Sistem toptancısı</span><span class="num">${fmt1(wU)}</span>${btn('Al', 'buy', { p: k })}</div>`;
+      let h = `<div class="card"><div class="row head"><h3 class="named">${ic(k, 28)}${P[k].n}</h3><span class="small">${trend(k)}</span></div><p class="muted small">Olağan fiyat ${fmt1(price(k))} / ${P[k].u} · ${WNAME[P[k].w]} yük · 1. seviye ${B[P[k].b].n.toLocaleLowerCase('tr-TR')}: ${qtyTxt(k, 10 * B[P[k].b].scale)} / ${durTxt(P[k].t)}${Object.keys(P[k].in).length ? ' (' + Object.entries(P[k].in).map(([x, q]) => qtyTxt(x, q * B[P[k].b].scale) + ' ' + P[x].n.toLocaleLowerCase('tr-TR')).join(' + ') + ')' : ''}${MACH[k] ? ' · makineler ' + fmt(MACH[k]) + ' (bina ' + fmt(B.fabrika.cost) + ' ayrı)' : ''}</p><div class="row"><span>Sistem toptancısı</span><span class="num">${fmt1(wU)}</span>${btn('Al', 'buy', { p: k })}</div>`;
       for (const l of s.listings.filter(x => x.p === k)) {
         const u = l.price + trans(1, k, l.region, dst.region);
         h += `<div class="row"><span>${esc(l.from || R[l.region].n + ' satıcısı')} · ${R[l.region].n} · ${l.qty} × ${P[k].u} (${qtyTxt(k, l.qty)})${l.hg ? ' <span class="small muted">· pazarlık yapıldı</span>' : ''}</span><span class="num ${u < wU ? 'up' : ''}">${fmt1(u)}</span>${btn('Al', 'buy', { p: k, id: l.id })}</div>${l.hg ? '' : `<div class="row wrap small haggle"><span class="muted">Pazarlık:</span>${btn('%5 indirim iste', 'haggle', { id: l.id, v: 0.05 }, 'ghost')}${btn('%10 indirim iste', 'haggle', { id: l.id, v: 0.1 }, 'ghost')}</div>`}`;
@@ -1303,7 +1318,7 @@
   // Gider sayılmayanlar: inşaat (yerine yıllık %10 amortisman), arsa alım-satımı, kredi anaparası, KDV, kooperatif sermayesi.
   // KDV yalnızca perakende satışta, katma değer (satış − maliyet) üzerinden: temel gıda %1, tekstil %10, diğerleri %20.
   const CORP_TAX = 0.25, AMORT = 0.10;
-  const NOTAX = new Set(['Arsa satışı', 'İnşaat', 'Kooperatif', 'Kurumlar vergisi', 'Kredi anapara', 'KDV']);
+  const NOTAX = new Set(['Arsa satışı', 'İnşaat', 'Makine', 'Kooperatif', 'Kurumlar vergisi', 'Kredi anapara', 'KDV']);
   const KDV = { bugday: 0.01, sut: 0.01, un: 0.01, ekmek: 0.01, peynir: 0.01, kumas: 0.10, giysi: 0.10 };
   const kdvRate = p => KDV[p] || 0.20;
   function kdv(pl, p, n, pr) { const v = (pr - shopCost(pl, p)) * n * kdvRate(p) / (1 + kdvRate(p)); if (v > 0) exp('KDV', v); }

@@ -22,7 +22,7 @@ Bu belge, sohbette alınan tasarım kararlarını tek yerde toplar. Bütün oran
 |---|---|
 | Sermaye | ₺2,5 mn |
 | Başlangıç arsası | Kırsal'da 10 dönüm **kiralık** arsa; satılamaz, vergi çarpanına girmez |
-| Kurulabilen binalar | Dört bina da seçenekte görünür; sermaye yalnızca **dükkân (₺1,2 mn) ya da tarlaya (₺1,6 mn)** yeter. Maden ₺4,5 mn, fabrika ₺12 mn |
+| Kurulabilen binalar | Dört bina da seçenekte görünür; sermaye yalnızca **dükkân (₺1,2 mn) ya da tarlaya (₺1,6 mn)** yeter. Maden ₺4,5 mn, fabrika binası ₺12 mn + ürüne göre makineler (₺6–250 mn, bölüm 8) |
 | İlk bina değişikliği | İlk yıkımda harcamanın **tamamı** iade edilir, sonrakilerde yarısı |
 
 ### Arsa, kira, vergi ve harçlar
@@ -254,6 +254,27 @@ Tutarlar Kasım 2026 Türkiye fiyatlarına dayanır; kaynaklar ve hangi rakamın
 - **Ürünler gerçek birimlerle:** buğday 100 kg 1.650 TL (TMO), süt 100 L 2.430 TL (USK), çelik ton 29.700 TL, ekmek 1.000 adet 13.000 TL toptan (rafta 17,5 TL), peynir 100 kg 28.000 TL. Perakende kâr payı %35, sistem toptancısı %12 üstünden satar, %15 altından alır.
 - **Tarifler gerçek dönüşüm oranlarıyla:** 100 kg buğday ≈ 72 kg un, 1 kg peynir ≈ 5 L süt, 1 kg pamuk lifi ≈ 2,3 kg kütlü, 1 t çelik ≈ 1,6 t cevher + 0,6 t kömür.
 - **Fabrika ölçeği:** fabrika partisi tarlanın 5 katı, madeninki 2 katıdır. Büyük ölçekli alım-satım ulusal fiyatı daha az oynatır ve pazarda daha hızlı alıcı bulur.
+
+### Fabrika makineleri
+
+Fabrika binası ₺12 mn'dir ve yalnızca bina ile altyapıyı karşılar. 2026 yapı yaklaşık birim maliyetlerine göre sanayi tesisi 15.100–21.050 TL/m² (Ocak 2026, KDV ve arsa hariç; [tebliğ](https://www.hukukihaber.net/mimarlik-ve-muhendislik-hizmet-bedellerinin-hesabinda-kullanilacak-2026-yili-yapi-yaklasik-birim-maliyetleri-hakkinda-teblig)), yani ₺12 mn yaklaşık 600 m² eder. Makineler bir hatta tarif seçilince ayrıca alınır:
+
+| Hat | Makineler (1. seviye) | Oyundaki kapasite (gerçek gün) | Gerçek karşılığın dayanağı | Geri dönüş (oyun günü, bina dahil, vergi öncesi) |
+|---|---|---|---|---|
+| Un | ₺6 mn | ~17 t un | 90 t/gün değirmen ~700 bin $ (Ukrayna), kapasiteyle orantılandı | ~12 |
+| Giysi | ₺20 mn | ~5.700 adet | 10 makineli atölye ₺1–2 mn, ~400 adet/gün (tahmin) | ~9 |
+| Alet | ₺30 mn | ~4.300 adet | Kaynak yok, tahmin | ~16 |
+| Kumaş | ₺40 mn | ~8.600 m | Kaynak yok, tahmin | ~24 |
+| Ekmek | ₺60 mn | ~171 bin somun | Fırın ₺4–8 mn / 8.000 somun/gün → ₺85–170 mn eşdeğer; sanayi hattı daha ucuz | ~20 |
+| Peynir | ₺120 mn | ~29 t süt | Mandıra 2 t/gün ~₺35 mn, 50 t/gün ~₺275 mn (YDO fizibiliteleri) → ~₺150 mn | ~34 |
+| Çelik | ₺250 mn | ~86 t | Küçük ark ocaklı tesis ~₺600 mn (hafızadan, yaklaşık) | ~49 |
+
+- Her kapasite artışı makine bedelinin yarısını ekler (2. seviye: bina ₺12 mn + makinenin %50'si).
+- Tarif değişince eski makineler yarı fiyatına satılır; tarif değiştirmek artık bedava değil.
+- Makine harcaması kurumlar vergisinde gider sayılmaz; binayla birlikte yılda %10 amortismana girer. Net değere ve kredi teminatına yarısıyla girer.
+- Gerçekte bir fabrika yatırımı yıllarda geri döner; oyunda bir sezon 60 gün olduğu için geri dönüş birkaç haftaya kısaltıldı. Peynir ve çelik bilerek geç oyun hedefidir; çelik gerçeğin yarısından ucuz tutuldu.
+- Tarla ve madende ekipman (traktör, ekskavatör) bina fiyatına dahildir.
+- Bölüm 9'daki bot süreleri makine bedelinden önceye aittir; fabrikaya dayanan büyüme artık daha yavaş olmalı, yeniden ölçülmeli.
 - **Taşıma:** ton başına 150 TL sabit + bölge adımı başına 600 TL (≈ 3 TL/ton-km). Ağır ham madde uzağa taşınmaya değmez.
 - **Maaşlar (haftalık):** satış görevlisi 8.200, müdür 12.500, usta 16.500, şoför 15.700 TL (1 yıldız); yıldız arttıkça yükselir.
 - **Borç faizi:** günde %0,8 (ticari kredi yılda ~%40).
