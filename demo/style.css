@@ -43,7 +43,7 @@ p { margin: 0; }
 .speed button { padding: 6px 10px; font-size: 13px; }
 .speed button.on { background: var(--accent); color: var(--on-accent); }
 .tabs { gap: 2px; overflow-x: auto; }
-.tabs button { padding: 10px 10px; border-bottom: 3px solid transparent; font-weight: 500; white-space: nowrap; flex: 1; }
+.tabs button { padding: 10px 4px; font-size: 14px; border-bottom: 3px solid transparent; font-weight: 500; white-space: nowrap; flex: 1; }
 .tabs button.on { color: var(--fg); border-bottom-color: var(--accent); }
 
 #main { display: flex; flex-direction: column; gap: 12px; padding-top: 14px; }

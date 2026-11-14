@@ -44,6 +44,15 @@
     damar: { title: 'Dağ’da yeni damar bulundu', body: 'Dağ’daki madenlerin verimi %30 artacak.', y: { region: 'dag', b: 'maden', m: 1.3 } },
     yol: { title: 'Dağ yolunda bakım çalışması', body: 'Çalışma süresince tüm taşıma ücretleri %80 artacak.', tr: 1.8 },
   };
+  // İşçiler: zorunlu değil; binayı bir konuda iyileştirir, günlük maaş alır
+  const WK = {
+    usta: { n: 'Usta', b: ['tarla', 'maden', 'fabrika'], eff: [0.05, 0.10, 0.15], wage: [25, 50, 75], desc: e => `parti süresi %${e * 100} kısalır` },
+    mudur: { n: 'Müdür', b: ['tarla', 'maden', 'fabrika', 'dukkan'], eff: [0.05, 0.10, 0.15], wage: [25, 50, 75], desc: e => `işletme gideri ve toptancıdan alış %${e * 100} ucuzlar` },
+    satis: { n: 'Satış görevlisi', b: ['dukkan'], eff: [1, 2, 3], wage: [20, 40, 60], desc: e => `rafa ${e} ek ürün` },
+    sofor: { n: 'Şoför', b: ['tarla', 'maden', 'fabrika', 'dukkan'], eff: [0.10, 0.20, 0.30], wage: [15, 30, 45], desc: e => `taşıma ücreti %${e * 100} azalır` },
+  };
+  const REG_WK = { merkez: { mudur: 3, satis: 3, usta: 1, sofor: 1 }, kirsal: { usta: 3, sofor: 2, mudur: 1, satis: 1 }, dag: { usta: 3, sofor: 3, mudur: 1, satis: 1 } };
+  const NAMES = ['Ayşe', 'Mehmet', 'Zeynep', 'Can', 'Elif', 'Mert', 'Deniz', 'Selin', 'Burak', 'Ece', 'Emre', 'Derya', 'Kerem', 'Nil', 'Onur', 'Sena', 'Tuna', 'Melis'];
   const RETAIL = 1.6, W_BUY = 1.3, W_SELL = 0.75, RENT = 0.05, COMM = 0.03, FREE_UNTIL = 2 * 1440;
   const GOALS = [
     ['Arsana bir bina kur', s => s.plots.some(p => p.b)],
@@ -79,11 +88,12 @@
     s = {
       v: 2, money: 5000, t: 8 * 60, lastHour: 8, speed: 1, nextId: 100, nextPlot: 2, totalIncome: 0,
       plots: [{ id: 1, region: 'kirsal', rented: true, ref: R.kirsal.land, b: null, inv: {}, last: -1e9, paid: 0 }],
-      mult: {}, hist: {}, rivals: {}, unread: 0, listings: [], mine: [], auctions: [], events: [], news: [],
+      mult: {}, hist: {}, rivals: {}, unread: 0, workers: [], cands: {}, listings: [], mine: [], auctions: [], events: [], news: [],
       today: emptyStats(), prev: emptyStats(), goals: [], freeSwap: true, lastEvent: '', nextListAt: 0,
     };
     for (const k of PK) { s.mult[k] = 1; s.hist[k] = [1]; }
     for (const r in R) { s.rivals[r] = {}; for (const k of PK) if (P[k].d) s.rivals[r][k] = [rnd(0.97, 1.1), rnd(0.97, 1.1)]; }
+    for (const r in R) s.cands[r] = genCands(r);
     genListings();
     spawnAuction();
     news('Tezgâh açıldı', 'Kırsal’da kiralık bir arsan ve ₺5.000 sermayen var. İlk iki gün kira ve vergi alınmaz.');
@@ -91,7 +101,7 @@
   }
   function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(s)); } catch (e) { /* depolama yoksa oyun yine çalışır */ } }
   function load() {
-    try { const d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (d && d.v === 2 && Array.isArray(d.plots)) { s = d; for (const pl of s.plots) if (pl.b && !pl.b.out) pl.b.out = {}; return true; } } catch (e) { /* yoksay */ }
+    try { const d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (d && d.v === 2 && Array.isArray(d.plots)) { s = d; for (const pl of s.plots) if (pl.b && !pl.b.out) pl.b.out = {}; if (!s.workers) { s.workers = []; s.cands = {}; for (const r in R) s.cands[r] = genCands(r); } return true; } } catch (e) { /* yoksay */ }
     return false;
   }
 
@@ -147,9 +157,22 @@
     src.push({ l: null, unit: price(p) * W_BUY + trans(1, p, region, region) });
     return src.sort((a, b) => a.unit - b.unit);
   }
+  const crew = pl => s.workers.filter(w => w.plot === pl.id);
+  const slots = pl => (pl.b ? pl.b.level : 0);
+  const wEff = (pl, type) => pl && pl.b ? Math.min(type === 'satis' ? 9 : 0.3, crew(pl).filter(w => w.type === type).reduce((a, w) => a + WK[type].eff[w.star - 1], 0)) : 0;
+  const shelfMax = pl => 3 * pl.b.level + wEff(pl, 'satis');
+  const stars = n => '★'.repeat(n) + '<span class="muted">' + '★'.repeat(3 - n) + '</span>';
+  function genCands(region) {
+    const w = REG_WK[region], types = Object.keys(w).flatMap(k => Array(w[k]).fill(k));
+    return Array.from({ length: 4 }, () => {
+      const type = pick(types), r = Math.random(), star = r < 0.6 ? 1 : r < 0.9 ? 2 : 3;
+      return { id: s.nextId++, name: pick(NAMES), type, star, wage: Math.round(WK[type].wage[star - 1] * rnd(0.85, 1.15)) };
+    });
+  }
+  function fireCrew(pl, why) { const c = crew(pl); if (c.length) { s.workers = s.workers.filter(w => w.plot !== pl.id); news('İşçiler ayrıldı', c.map(w => w.name).join(', ') + ' ' + why + ' işten ayrıldı.'); } }
   function addCost(pl, p, q, unit) { if (!pl.b || pl.b.type !== 'dukkan') return; const old = pl.inv[p] || 0; pl.b.cost[p] = (old * (pl.b.cost[p] || unit) + q * unit) / (old + q); }
   function purchase(to, p, q, l) {
-    const unit = l ? l.price : price(p) * W_BUY, tu = trans(1, p, l ? l.region : to.region, to.region);
+    const unit = (l ? l.price : price(p) * W_BUY * (1 - wEff(to, 'mudur'))), tu = trans(1, p, l ? l.region : to.region, to.region) * (1 - wEff(to, 'sofor'));
     q = Math.min(q, l ? l.qty : Infinity, cap(to) - invTotal(to), Math.floor(s.money / (unit + tu)));
     if (q <= 0) return 0;
     exp('Mal alımı', unit * q); exp('Taşıma', tu * q); addCost(to, p, q, unit + tu); add(to, p, q);
@@ -178,7 +201,7 @@
         const to = plot(+rule.slice(5));
         if (q < 10 || !to || !to.b) continue;
         const n = Math.min(q, cap(to) - invTotal(to)); if (n <= 0) continue;
-        const c = trans(n, p, pl.region, to.region); if (s.money < c) continue;
+        const c = trans(n, p, pl.region, to.region) * (1 - Math.max(wEff(pl, 'sofor'), wEff(to, 'sofor'))); if (s.money < c) continue;
         exp('Taşıma', c); add(pl, p, -n); addCost(to, p, n, price(p) + c / n); add(to, p, n);
       } else if (rule.startsWith('list:')) {
         let l = s.mine.find(x => x.auto && x.plot === pl.id && x.p === p);
@@ -235,16 +258,18 @@
         if (!ln.r) { ln.st = 'Tarif seç'; continue; }
         const rc = P[ln.r];
         if (ln.busy) {
-          ln.prog += dt;
-          if (ln.prog >= rc.t) { add(pl, ln.r, Math.round(10 * k * yieldMult(pl.region, pl.b.type))); ln.busy = false; ln.prog = 0; pl.last = s.t; }
-          continue;
+          ln.prog += dt * (1 + wEff(pl, 'usta'));
+          if (ln.prog < rc.t) continue;
+          // parti bitti: artan süre bir sonraki partiye devreder, yeni parti aynı adımda başlar
+          add(pl, ln.r, Math.round(10 * k * yieldMult(pl.region, pl.b.type))); ln.busy = false; ln.carry = ln.prog - rc.t; ln.prog = 0; pl.last = s.t;
         }
         const need = Object.entries(rc.in).find(([x, q]) => (pl.inv[x] || 0) < q * k);
         if (need) { ln.st = 'Girdi yok: ' + need[1] * k + ' ' + P[need[0]].n; continue; }
         if (invTotal(pl) + 13 * k > cap(pl) + Object.values(rc.in).reduce((a, b) => a + b, 0) * k) { ln.st = 'Depo dolu'; continue; }
-        if (s.money < rc.op * k) { ln.st = 'Para yetersiz'; continue; }
+        const opc = rc.op * k * (1 - wEff(pl, 'mudur'));
+        if (s.money < opc) { ln.st = 'Para yetersiz'; continue; }
         for (const x in rc.in) add(pl, x, -rc.in[x] * k);
-        exp('Üretim', rc.op * k); ln.busy = true; ln.prog = 0; ln.st = '';
+        exp('Üretim', opc); ln.busy = true; ln.prog = Math.min(ln.carry || 0, rc.t * 0.99); ln.carry = 0; ln.st = '';
       }
     }
     // Pazardaki ilanlarım
@@ -276,6 +301,7 @@
     }
     if (s.t >= s.nextListAt) genListings();
     rivalsMove();
+    for (const w of s.workers) exp('Maaş', w.wage / 24);
     for (const pl of s.plots) {
       if (!pl.b) continue;
       if (pl.b.type === 'dukkan') { for (const p of shelf(pl)) { autoRestock(pl, p); applyRule(pl, p); } }
@@ -287,6 +313,16 @@
   function daily(day) {
     if (s.t >= FREE_UNTIL) for (const pl of s.plots) { const tx = dailyTax(pl); if (tx > 0) exp('Vergi', tx); }
     s.prev = s.today; s.today = emptyStats();
+    for (const w of s.workers) {
+      const pl = plot(w.plot);
+      if (!pl || s.t - pl.last > 1440) continue;
+      w.xp = (w.xp || 0) + 1;
+      if (w.xp >= 7 && w.star < 3) {
+        const ratio = w.wage / WK[w.type].wage[w.star - 1]; w.star++; w.xp = 0; w.wage = Math.round(WK[w.type].wage[w.star - 1] * ratio);
+        news(w.name + ' ' + w.star + ' yıldıza çıktı', WK[w.type].n + ' ' + w.name + ' artık ' + WK[w.type].desc(WK[w.type].eff[w.star - 1]) + '. Maaşı günde ' + fmt(w.wage) + ' oldu; istersen İşçiler sekmesinden işten çıkarabilirsin.', true);
+      }
+    }
+    for (const r in R) s.cands[r] = genCands(r);
     s.events = s.events.filter(e => s.t < e.end);
     let top = PK[0]; for (const k of PK) if (Math.abs(s.mult[k] - 1) > Math.abs(s.mult[top] - 1)) top = k;
     if (Math.abs(s.mult[top] - 1) > 0.08) news('Piyasa: ' + P[top].n + (s.mult[top] > 1 ? ' pahalandı' : ' ucuzladı'), P[top].n + ' fiyatı olağan seviyesinin %' + Math.round(Math.abs(s.mult[top] - 1) * 100) + (s.mult[top] > 1 ? ' üstünde.' : ' altında.'));
@@ -349,6 +385,15 @@
 
   // ---------- Oyuncu eylemleri ----------
   const A = {
+    hire(d) {
+      const c = Object.values(s.cands).flat().find(x => x.id === +d.id); if (!c) return;
+      const pl = plot(+(ui.sel['hp' + c.id] || eligible(c)[0]?.id));
+      if (!pl || !eligible(c).includes(pl)) return toast('Bu bölgede uygun boş yuvan yok');
+      s.workers.push({ ...c, plot: pl.id, xp: 0 });
+      for (const r in s.cands) s.cands[r] = s.cands[r].filter(x => x !== c);
+      toast(c.name + ' işe başladı');
+    },
+    fire(d) { const w = s.workers.find(x => x.id === +d.id); if (!w) return; s.workers = s.workers.filter(x => x !== w); toast(w.name + ' işten çıkarıldı'); },
     tab(d) { ui.tab = d.v; if (d.v === 'news') s.unread = 0; },
     speed(d) { s.speed = +d.v; },
     reset() { if (ui.confirmReset) { newGame(); ui.confirmReset = false; ui.tab = 'plots'; } else { ui.confirmReset = true; setTimeout(() => { ui.confirmReset = false; }, 4000); } },
@@ -375,6 +420,7 @@
       const pl = plot(+d.plot);
       if (invTotal(pl) > 0) return toast('Önce depoyu boşalt');
       for (const id of pl.b.parts || []) { const x = plot(id); if (x) x.part = null; }
+      fireCrew(pl, 'bina yıkıldığı için');
       s.money += pl.b.spent * (s.freeSwap ? 1 : 0.5); s.freeSwap = false; pl.b = null;
     },
     sellw(d) { const pl = plot(+d.plot), q = pl.inv[d.p]; inc('Toptancı', q * price(d.p) * W_SELL); rentOn(pl, q * price(d.p) * W_SELL); s.mult[d.p] = clamp(s.mult[d.p] - 0.00002 * P[d.p].ref * q, 0.6, 1.5); add(pl, d.p, -q); pl.last = s.t; },
@@ -384,7 +430,7 @@
       const pl = plot(+d.plot), to = plot(+(ui.sel['mv' + pl.id] || otherPlots(pl)[0]?.id)), q = pl.inv[d.p];
       if (!to || !to.b) return toast('Hedef arsada bina yok');
       if (invTotal(to) + q > cap(to)) return toast('Hedef depoda yer yok');
-      const c = trans(q, d.p, pl.region, to.region); if (s.money < c) return toast('Para yetersiz');
+      const c = trans(q, d.p, pl.region, to.region) * (1 - Math.max(wEff(pl, 'sofor'), wEff(to, 'sofor'))); if (s.money < c) return toast('Para yetersiz');
       exp('Taşıma', c); add(pl, d.p, -q); addCost(to, d.p, q, price(d.p) + c / q); add(to, d.p, q);
     },
     buy(d) {
@@ -403,7 +449,7 @@
       if (!q.fits) return toast('Hedef depoda yer yok');
       if (mv) { const dst = plot(mv); for (const p in pl.inv) add(dst, p, pl.inv[p]); exp('Taşıma', q.tr); }
       inc('Arsa satışı', q.land + q.bld + q.goods);
-      s.plots = s.plots.filter(x => x !== pl); spawnAuction(pl);
+      fireCrew(pl, 'arsa satıldığı için'); s.plots = s.plots.filter(x => x !== pl); spawnAuction(pl);
       news('Arsanı sisteme sattın', R[pl.region].n + ' arsası için ' + fmt(q.total) + ' aldın. Arsa artırmaya çıkarıldı.');
       if (ui.dest === pl.id) ui.dest = s.plots[0].id;
     },
@@ -421,12 +467,13 @@
     auto(el) { const pl = plot(+el.dataset.plot); pl.b.auto[el.dataset.p] = +el.value; autoRestock(pl, el.dataset.p); },
     lineAuto(el) { const pl = plot(+el.dataset.plot), ln = pl.b.lines[+el.dataset.i]; ln.auto = +el.value; if (ln.auto && ln.r) autoInputs(pl, ln); },
     out(el) { const pl = plot(+el.dataset.plot); pl.b.out[el.dataset.p] = el.value; if (el.value) autoOut(pl); },
-    addShelf(el) { if (!el.value) return; const pl = plot(+el.dataset.plot), p = el.value; pl.b.auto[p] = pl.b.auto[p] || 1.1; pl.b.rule[p] = pl.b.rule[p] || { mode: 'ucuz', margin: 0.1 }; autoRestock(pl, p); applyRule(pl, p); },
+    addShelf(el) { if (!el.value) return; const pl = plot(+el.dataset.plot), p = el.value; if (shelf(pl).length >= shelfMax(pl)) { el.value = ''; return toast('Raf dolu: dükkânı yükselt ya da satış görevlisi al'); } pl.b.auto[p] = pl.b.auto[p] || 1.1; pl.b.rule[p] = pl.b.rule[p] || { mode: 'ucuz', margin: 0.1 }; autoRestock(pl, p); applyRule(pl, p); },
     qty(el) { ui.qty = clamp(parseInt(el.value, 10) || 1, 1, 500); },
     dest(el) { ui.dest = +el.value; },
     listMul(el) { ui.listMul = +el.value; },
     sel(el) { ui.sel[el.dataset.k] = el.value; },
   };
+  const eligible = c => s.plots.filter(pl => pl.b && pl.region === Object.keys(s.cands).find(r => s.cands[r].includes(c)) && WK[c.type].b.includes(pl.b.type) && crew(pl).length < slots(pl));
   const otherPlots = pl => s.plots.filter(x => x !== pl && x.b);
 
   // ---------- Görünüm ----------
@@ -453,6 +500,8 @@
     const b = pl.b, bt = B[b.type];
     const k = batch(pl), parts = b.parts || [], prod = b.type !== 'dukkan';
     h += `<div class="row"><b>${bt.n} · seviye ${b.level}</b><span class="muted small">Depo ${invTotal(pl)}/${cap(pl)}</span></div>`;
+    const cw = crew(pl);
+    h += `<p class="small"><span class="muted">Çalışanlar ${cw.length}/${slots(pl)}:</span> ${cw.length ? cw.map(w => WK[w.type].n + ' ' + esc(w.name) + ' ' + stars(w.star)).join(' · ') : '<span class="muted">yok · İşçiler sekmesinden alabilirsin</span>'}</p>`;
     if (prod) h += `<p class="muted small">Parti ${10 * k} birim · ${b.lines.length} hat${parts.length ? ' · ' + (parts.length + 1) + ' arsaya yayılıyor' : ''}</p>`;
     h += '<div class="row wrap">';
     if (b.level < 3) h += btn(prod ? `Kapasiteyi artır: parti ${10 * (k + 0.5)} birim · ${fmt(bt.cost * b.level)}` : `Yükselt ${fmt(bt.cost * b.level)}`, 'upgrade', { plot: pl.id });
@@ -481,6 +530,7 @@
     }
     if (b.type === 'dukkan') {
       const rest = PK.filter(p => P[p].d && !items.includes(p));
+      h += `<p class="muted small">Raf: ${items.filter(p => P[p].d).length}/${shelfMax(pl)} ürün çeşidi</p>`;
       if (rest.length) h += `<div class="row small"><label for="as${pl.id}">Rafa ürün ekle</label><select id="as${pl.id}" data-c="addShelf" data-plot="${pl.id}"><option value="">Ürün seç</option>${rest.map(p => `<option value="${p}">${P[p].n}</option>`).join('')}</select></div><p class="muted small">Eklenen ürün otomatik alınır ve en ucuz rakibin biraz altında satılır; ayarları sonra değiştirebilirsin.</p>`;
     }
     return h + '</div>';
@@ -579,8 +629,25 @@
     return out;
   }
 
-  const VIEWS = { plots: viewPlots, market: viewMarket, auction: viewAuction, news: viewNews, report: viewReport };
-  const TABS = [['plots', 'Arsalar'], ['market', 'Pazar'], ['auction', 'Artırma'], ['news', 'Gazete'], ['report', 'Rapor']];
+  function viewCrew() {
+    const out = [], total = s.workers.reduce((a, w) => a + w.wage, 0);
+    out.push(['info', `<div class="card"><div class="row"><span>Günlük maaş toplamı</span><b class="num">${fmt(total)}</b></div><p class="muted small">İşçi zorunlu değil. Bina boşta kalırsa işçi maaşını kazandırmaz. İşçi 7 çalışma gününde bir yıldız atlar ve maaşı yükselir.</p></div>`]);
+    if (s.workers.length) out.push(['mine', '<div class="card"><h3>Çalışanların</h3>' + s.workers.map(w => { const pl = plot(w.plot); return `<div class="row"><span>${WK[w.type].n} ${esc(w.name)} ${stars(w.star)}<br><span class="small muted">Arsa ${w.plot}${pl ? ' · ' + R[pl.region].n : ''} · ${WK[w.type].desc(WK[w.type].eff[w.star - 1])} · ${w.star < 3 ? 'sonraki yıldıza ' + (7 - (w.xp || 0)) + ' gün' : 'en üst yıldız'}</span></span><span class="num">${fmt(w.wage)}/gün</span>${btn('Bırak', 'fire', { id: w.id }, 'ghost')}</div>`; }).join('') + '</div>']);
+    for (const r in R) {
+      let h = `<div class="card"><h3>${R[r].n}’deki adaylar</h3><p class="muted small">Adaylar her gün yenilenir; yalnızca bu bölgedeki binalarında çalışırlar.</p>`;
+      for (const c of s.cands[r]) {
+        const el = eligible(c);
+        h += `<div class="item"><div class="row"><span>${WK[c.type].n} ${esc(c.name)} ${stars(c.star)}<br><span class="small muted">${WK[c.type].desc(WK[c.type].eff[c.star - 1])}</span></span><span class="num">${fmt(c.wage)}/gün</span></div>`;
+        h += el.length ? `<div class="row wrap small"><label for="hp${c.id}">Çalışacağı arsa</label><select id="hp${c.id}" data-c="sel" data-k="hp${c.id}">${el.map(pl => `<option value="${pl.id}" ${ui.sel['hp' + c.id] == pl.id ? 'selected' : ''}>Arsa ${pl.id} · ${B[pl.b.type].n}</option>`).join('')}</select>${btn('İşe al', 'hire', { id: c.id })}</div>` : `<p class="muted small">${R[r].n}’de bu işçiye uygun boş yuvan yok.</p>`;
+        h += '</div>';
+      }
+      out.push(['c' + r, h + '</div>']);
+    }
+    return out;
+  }
+
+  const VIEWS = { crew: viewCrew, plots: viewPlots, market: viewMarket, auction: viewAuction, news: viewNews, report: viewReport };
+  const TABS = [['plots', 'Arsalar'], ['market', 'Pazar'], ['crew', 'İşçiler'], ['auction', 'Artırma'], ['news', 'Gazete'], ['report', 'Rapor']];
   let root, main, hud;
 
   function paint(container, sections) {

@@ -1,0 +1,86 @@
+{
+ "işçi yok": {
+  "rol_gunluk_kar": {
+   "ara mal": 149,
+   "ara mal (işçili)": 276,
+   "dükkân": 210,
+   "ham madde": 307,
+   "ham madde (işçili)": 298,
+   "son ürün": 231,
+   "son ürün (işçili)": 242
+  },
+  "kapsama": 1.338
+ },
+ "usta 2 yıldız (+%10 hız), maaşsız": {
+  "rol_gunluk_kar": {
+   "ara mal": 89,
+   "ara mal (işçili)": 298,
+   "dükkân": 211,
+   "ham madde": 306,
+   "ham madde (işçili)": 273,
+   "son ürün": 143,
+   "son ürün (işçili)": 239
+  },
+  "kapsama": 1.326
+ },
+ "müdür 2 yıldız (−%10 gider), maaşsız": {
+  "rol_gunluk_kar": {
+   "ara mal": 140,
+   "ara mal (işçili)": 327,
+   "dükkân": 193,
+   "ham madde": 353,
+   "ham madde (işçili)": 362,
+   "son ürün": 216,
+   "son ürün (işçili)": 261
+  },
+  "kapsama": 1.339
+ },
+ "usta + müdür, maaşsız": {
+  "rol_gunluk_kar": {
+   "ara mal": 145,
+   "ara mal (işçili)": 335,
+   "dükkân": 186,
+   "ham madde": 285,
+   "ham madde (işçili)": 319,
+   "son ürün": 179,
+   "son ürün (işçili)": 277
+  },
+  "kapsama": 1.309
+ },
+ "usta + müdür, günlük maaş 40": {
+  "rol_gunluk_kar": {
+   "ara mal": 127,
+   "ara mal (işçili)": 264,
+   "dükkân": 204,
+   "ham madde": 305,
+   "ham madde (işçili)": 285,
+   "son ürün": 123,
+   "son ürün (işçili)": 295
+  },
+  "kapsama": 1.337
+ },
+ "usta + müdür, günlük maaş 80": {
+  "rol_gunluk_kar": {
+   "ara mal": 112,
+   "ara mal (işçili)": 232,
+   "dükkân": 204,
+   "ham madde": 314,
+   "ham madde (işçili)": 267,
+   "son ürün": 164,
+   "son ürün (işçili)": 204
+  },
+  "kapsama": 1.343
+ },
+ "üreticilerin yarısı usta + müdür, maaş 40": {
+  "rol_gunluk_kar": {
+   "ara mal": 155,
+   "ara mal (işçili)": 302,
+   "dükkân": 206,
+   "ham madde": 280,
+   "ham madde (işçili)": 273,
+   "son ürün": 196,
+   "son ürün (işçili)": 260
+  },
+  "kapsama": 1.282
+ }
+}

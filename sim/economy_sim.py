@@ -75,7 +75,8 @@ class Firm:
         s.busy = 0.0; s.down_until = 0; s.last_switch = -99
         s.incost = {p: float(P[p]['ref']) for p in PK}
         s.rd = 0; s.outq = 10.0
-        s.m = 1.0; s.capmul = 1.0; s.level = 1; s.lines = 1  # üretim ölçeği: parti büyüklüğü x hat sayısı  # girdiye ödenen teslim fiyatı (üstel ortalama)
+        s.m = 1.0; s.capmul = 1.0; s.level = 1; s.lines = 1
+        s.spd = 1.0; s.opm = 1.0; s.wage = 0.0  # işçiler: usta hızı, müdür işletme giderini değiştirir; maaş saatlik ödenir  # üretim ölçeği: parti büyüklüğü x hat sayısı  # girdiye ödenen teslim fiyatı (üstel ortalama)
         s.offered = defaultdict(float); s.sold = defaultdict(float)
         s.wealth0 = s.cash; s.hist = []; s.capital = []; s.made = 0.0
         s.hours = 0; s.halt_in = 0.0; s.halt_cash = 0.0
@@ -215,6 +216,7 @@ class Sim:
 
     # ---- saatlik adım ----
     def produce(s, f):
+        if f.wage: f.cash -= f.wage / 24; s.money['uretim'] += f.wage / 24
         if f.prod is None or s.t < f.down_until: return
         rc = P[f.prod]; minutes = 60.0
         if f.btype == 'fabrika': f.hours += 1
@@ -228,11 +230,11 @@ class Sim:
             m = f.m
             if any(f.inv[k] < q * m - 1e-9 for k, q in rc['inp'].items()):
                 f.halt_in += minutes / 60; s.day['halt_in'] += minutes / 60 if f.btype == 'fabrika' else 0; break
-            if f.cash < rc['op'] * m:
+            if f.cash < rc['op'] * m * f.opm:
                 f.halt_cash += minutes / 60; s.day['halt_cash'] += minutes / 60; break
             if f.stock() + 13 * m > CAP[f.btype] * f.capmul + sum(rc['inp'].values()) * m: break
             for k, q in rc['inp'].items(): f.inv[k] -= q * m; s.goods[k]['recete'] += q * m
-            f.cash -= rc['op'] * m; s.money['uretim'] += rc['op'] * m; f.busy = rc['t'] / (1 + VERIM[f.rd])
+            f.cash -= rc['op'] * m * f.opm; s.money['uretim'] += rc['op'] * m * f.opm; f.busy = rc['t'] / (1 + VERIM[f.rd]) / f.spd
         if f.btype == 'fabrika': s.day['fab_hours'] += 1
 
     def hour(s):

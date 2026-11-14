@@ -414,3 +414,18 @@ Kod: `sim/land_floor_test.py`. Ham sonuçlar: `sim/land_floor_results.json`. Gü
 - Karma taban sarmalı başlangıç değerinin yaklaşık yarısında durduruyor. Yeni oyuncu destekleriyle (sunucu yaşına göre başlangıç parası ve yenilere kiralık arsa havuzu) birlikte yeni oyuncuların arsaya erişimi en yüksek çıkıyor (%46).
 - Karar: karma taban + yeni oyuncu destekleri. Tasarım dokümanına ve demoya işlendi.
 - Fiyat duyarlı talep eklenince dükkânlar piyasanın altında sattığı için şehir halkı temel talepten %30 kadar fazla alıyor; bu turda "talebin karşılanması" oranı bu yüzden 1'in üstünde (1,29–1,35) ve önceki turlarla karşılaştırılamaz.
+
+## Ek: İşçiler
+
+Kod: `sim/worker_test.py`. Ham sonuçlar: `sim/worker_results.json`. Güncel tasarımın tamamıyla, 40 gün, beş tohum. Başlangıçtaki üretim işletmelerine 2 yıldızlı usta (parti süresi %10 kısa) ve müdür (işletme gideri %10 az) verildi; kâr arsa başına günlüktür.
+
+| Senaryo | Ham madde | Ara mal | Son ürün |
+|---|---:|---:|---:|
+| İşçi yok | 298 | 276 | 242 |
+| Usta + müdür, maaşsız | 319 | 335 | 277 |
+| Usta + müdür, ikisine günde 40 maaş | 285 | 264 | 295 |
+| Usta + müdür, ikisine günde 80 maaş | 267 | 232 | 204 |
+
+- İki işçi üretim kârını %10–20 artırıyor (günde 20–60). Günde 40 maaşta kazanç ortalamada sıfırlanıyor, 80'de zarara dönüyor.
+- Usta tek başına kullanıldığında arzı artırdığı için işçisi olmayan rakip üreticilerin kârı düşüyor; etkisinin bir kısmı rakipten pay almak.
+- Öneri: 2 yıldızlı bir işçinin günlük maaşı binanın günlük kârının yaklaşık %5'i olsun. Farklar gürültülü; oranlar başlangıç ayarıdır.
