@@ -348,3 +348,22 @@ Kod: `sim/sector_balance.py`. Ham sonuçlar: `sim/sector_balance_results.json`. 
 - İkinci turdaki "dükkân sayısı artınca fark kapanır" sonucu yeniden yatırım olmayan, arzın kıt olduğu bir modelden çıkmıştı. Şirketler yatırım yapıp arz bollaşınca fark geri geliyor; o sonuç bu tabloyla düzeltilmiştir.
 - Perakende kat sayısını düşürmek herkesin kârını düşürüyor ama oranı çok az değiştiriyor (3,7 kattan 2,8 kata).
 - Modeldeki dükkânlar raf fiyatını yalnızca stoklarına göre ayarlıyor, rakip dükkânın fiyatının altına inmiyor. Gerçek oyuncular birbirinin fiyatını kırarsa dükkân marjı modeldekinden düşük olabilir; bu, farkın bir kısmını açıklayabilir.
+
+## Ek: Dükkân fiyat rekabeti, dükkân gideri ve ara mal ayarı
+
+Aynı çok arsalı modelde, `sim/sector_balance.py` ile. Dükkân fiyat rekabeti: stoku biriken dükkân, bölgedeki en ucuz rakibin %1 altına iner; alış maliyetinin altına inmez. Kâr arsa başına günlüktür.
+
+| Senaryo | Talebin karşılanması | Dükkân | Ham madde | Ara mal | Son ürün | Yeni arsaların dükkâna gideni |
+|---|---:|---:|---:|---:|---:|---:|
+| Mevcut ayar | %91 | 964 | 299 | 247 | 235 | 35 |
+| Dükkânlar fiyat kırar | %86 | 187 | 142 | 108 | 137 | 8 |
+| Dükkân gideri 25/saat | %91 | 514 | 270 | 194 | 190 | 29 |
+| Fiyat kırma + gider 10/saat | %85 | −12 | 140 | 120 | 131 | 0 |
+| Fiyat kırma + gider 25/saat | %75 | −307 | 121 | 116 | 103 | 0 |
+| **Fiyat kırma + ara mal işletme gideri yarıya** | **%85** | **213** | **160** | **154** | **174** | **3** |
+
+- Dükkânlar arası fiyat rekabeti, dükkân üstünlüğünün asıl çözümü. Tek başına farkı 3,7 kattan 1,7 kata indiriyor; kazanç tüketiciye geçtiği için herkesin kârı düşüyor.
+- Dükkân işletme gideri tek başına yetmiyor; fiyat rekabetiyle birlikte ise dükkânları zarara sokuyor. Gereksiz.
+- Ara mal işletme giderini yarıya indirmek ara mal üreticisini en alt sıradan kurtarıyor. İkisi birlikte dört sektörü 154–213 aralığında, yani en fazla 1,4 kat farkla dengeliyor; yatırım da sektörlere yayılıyor.
+- Bedeli: daha düşük fiyatlar ekonomiye daha az para sokuyor ve talebin karşılanması %91'den %85'e iniyor.
+- Fiyat rekabetinin oyunda gerçekleşmesi için oyuncunun bölgedeki rakip raf fiyatlarını görebilmesi gerekiyor.

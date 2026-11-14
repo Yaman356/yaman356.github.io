@@ -124,13 +124,14 @@ class Wholesaler:
 class Sim:
     def __init__(s, n=50, seed=1, wmode='A', alloc='dengeli', followers=0.5, info_pending=False,
                  switch_delay=0, tax=None, days=30, hook=None, hoarder=False, fire=False, rd=None, retail_follow=False,
-                 qf=0.15, bf=0.10, switch_fee=0.0, shop_w=None):
+                 qf=0.15, bf=0.10, switch_fee=0.0, shop_w=None, shop_comp=False, shop_op=0.0):
         s.rng = random.Random(seed)
         s.n, s.days, s.hook, s.tax = n, days, hook, tax
         s.info_pending, s.switch_delay = info_pending, switch_delay
         s.scale = n / sum(WEIGHT.values())
         s.dmult = 1.0
         s.W = Wholesaler(wmode, s.scale, qf, bf); s.switch_fee = switch_fee
+        s.shop_comp, s.shop_op = shop_comp, shop_op  # dükkânlar arası fiyat kırma; dükkânın saatlik işletme gideri
         s.ema = {p: float(P[p]['ref']) for p in PK}
         s.money = defaultdict(float); s.goods = {p: defaultdict(float) for p in PK}
         s.firms = []
@@ -262,6 +263,9 @@ class Sim:
                     want = min(target - f.inv[p], CAP['dukkan'] - f.stock())
                     if want > 1: s.buy(f, p, want, f.rp[p] * (1 - RENT) * 0.9)
         # tüketici satışları
+        if s.shop_op:
+            for f in s.firms:
+                if f.btype == 'dukkan': f.cash -= s.shop_op; s.money['uretim'] += s.shop_op
         for reg in DM:
             shops = [f for f in s.firms if f.btype == 'dukkan' and f.region == reg]
             for p in PK:
@@ -275,9 +279,15 @@ class Sim:
                     q = min(D * a / tot, f.inv[p]); v = q * f.rp[p]
                     f.inv[p] -= q; s.goods[p]['tuketici'] += q; s.money['tuketici'] += v; s.pay_seller(f, v, False)
                     f.rate[p] = 0.9 * f.rate[p] + 0.1 * q; s.day['S_' + p] += q
+                lo = min((g.rp[p] for g in shops if g.inv[p] > 1e-9), default=None) if s.shop_comp else None
                 for f in shops:
                     if f.inv[p] < max(1.0, f.rate[p]): f.rp[p] = min(rr * 1.5, f.rp[p] * 1.02)
-                    elif f.inv[p] > 9 * max(1.0, f.rate[p]): f.rp[p] = max(rr * 0.75, f.rp[p] * 0.98)
+                    elif not s.shop_comp:
+                        if f.inv[p] > 9 * max(1.0, f.rate[p]): f.rp[p] = max(rr * 0.75, f.rp[p] * 0.98)
+                    elif f.inv[p] > 4 * max(1.0, f.rate[p]):
+                        # stok birikiyorsa bölgedeki en ucuz rakibin biraz altına iner; maliyetin altına inmez
+                        floor = f.incost[p] * 1.05 / (1 - (0 if f.owned else RENT))
+                        f.rp[p] = max(floor, min(f.rp[p] * 0.98, lo * 0.99 if lo and lo < f.rp[p] else f.rp[p]))
         # fiyat ayarı (stok hedefi, maliyet ve toptancı alım tabanı) ve toptancıya boşaltma
         for f in s.firms:
             if f.btype == 'dukkan': continue

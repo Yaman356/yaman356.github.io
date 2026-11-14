@@ -130,5 +130,203 @@
     "zararli_gun": 0.16
    }
   }
+ },
+ "dukkanlar fiyat kirar": {
+  "kapsama": 0.857,
+  "roller": {
+   "ham madde": {
+    "isletme": 50.6,
+    "sonradan_kurulan": 37.6,
+    "gunluk_kar": 142,
+    "medyan": 107,
+    "zararli_gun": 0.02
+   },
+   "ara mal": {
+    "isletme": 21.6,
+    "sonradan_kurulan": 13.6,
+    "gunluk_kar": 108,
+    "medyan": 109,
+    "zararli_gun": 0.15
+   },
+   "dükkân": {
+    "isletme": 20.8,
+    "sonradan_kurulan": 7.8,
+    "gunluk_kar": 187,
+    "medyan": 169,
+    "zararli_gun": 0.05
+   },
+   "son ürün": {
+    "isletme": 28.2,
+    "sonradan_kurulan": 12.2,
+    "gunluk_kar": 137,
+    "medyan": 141,
+    "zararli_gun": 0.15
+   }
+  }
+ },
+ "dukkan gideri 25/saat": {
+  "kapsama": 0.907,
+  "roller": {
+   "ham madde": {
+    "isletme": 39.6,
+    "sonradan_kurulan": 26.6,
+    "gunluk_kar": 270,
+    "medyan": 244,
+    "zararli_gun": 0.01
+   },
+   "ara mal": {
+    "isletme": 20.4,
+    "sonradan_kurulan": 12.4,
+    "gunluk_kar": 194,
+    "medyan": 182,
+    "zararli_gun": 0.17
+   },
+   "dükkân": {
+    "isletme": 41.6,
+    "sonradan_kurulan": 28.6,
+    "gunluk_kar": 514,
+    "medyan": 370,
+    "zararli_gun": 0.09
+   },
+   "son ürün": {
+    "isletme": 27.8,
+    "sonradan_kurulan": 11.8,
+    "gunluk_kar": 190,
+    "medyan": 174,
+    "zararli_gun": 0.16
+   }
+  }
+ },
+ "fiyat kirma + gider 25/saat": {
+  "kapsama": 0.746,
+  "roller": {
+   "ham madde": {
+    "isletme": 50.0,
+    "sonradan_kurulan": 37.0,
+    "gunluk_kar": 121,
+    "medyan": 87,
+    "zararli_gun": 0.03
+   },
+   "ara mal": {
+    "isletme": 22.4,
+    "sonradan_kurulan": 14.4,
+    "gunluk_kar": 116,
+    "medyan": 112,
+    "zararli_gun": 0.18
+   },
+   "dükkân": {
+    "isletme": 13.0,
+    "sonradan_kurulan": 0.0,
+    "gunluk_kar": -307,
+    "medyan": -564,
+    "zararli_gun": 0.79
+   },
+   "son ürün": {
+    "isletme": 26.8,
+    "sonradan_kurulan": 10.8,
+    "gunluk_kar": 103,
+    "medyan": 108,
+    "zararli_gun": 0.19
+   }
+  }
+ },
+ "fiyat kirma + gider 40/saat": {
+  "kapsama": 0.598,
+  "roller": {
+   "ham madde": {
+    "isletme": 46.2,
+    "sonradan_kurulan": 33.2,
+    "gunluk_kar": 125,
+    "medyan": 96,
+    "zararli_gun": 0.04
+   },
+   "ara mal": {
+    "isletme": 23.4,
+    "sonradan_kurulan": 15.4,
+    "gunluk_kar": 84,
+    "medyan": 80,
+    "zararli_gun": 0.18
+   },
+   "dükkân": {
+    "isletme": 13.0,
+    "sonradan_kurulan": 0.0,
+    "gunluk_kar": -580,
+    "medyan": -960,
+    "zararli_gun": 0.87
+   },
+   "son ürün": {
+    "isletme": 24.6,
+    "sonradan_kurulan": 8.6,
+    "gunluk_kar": 93,
+    "medyan": 94,
+    "zararli_gun": 0.21
+   }
+  }
+ },
+ "fiyat kirma + gider 10/saat": {
+  "kapsama": 0.849,
+  "roller": {
+   "ham madde": {
+    "isletme": 56.4,
+    "sonradan_kurulan": 43.4,
+    "gunluk_kar": 140,
+    "medyan": 105,
+    "zararli_gun": 0.03
+   },
+   "ara mal": {
+    "isletme": 21.8,
+    "sonradan_kurulan": 13.8,
+    "gunluk_kar": 120,
+    "medyan": 126,
+    "zararli_gun": 0.15
+   },
+   "dükkân": {
+    "isletme": 13.0,
+    "sonradan_kurulan": 0.0,
+    "gunluk_kar": -12,
+    "medyan": -43,
+    "zararli_gun": 0.61
+   },
+   "son ürün": {
+    "isletme": 29.2,
+    "sonradan_kurulan": 13.2,
+    "gunluk_kar": 131,
+    "medyan": 133,
+    "zararli_gun": 0.16
+   }
+  }
+ },
+ "fiyat kirma + ara mal gideri yari": {
+  "kapsama": 0.846,
+  "roller": {
+   "ham madde": {
+    "isletme": 42.2,
+    "sonradan_kurulan": 29.2,
+    "gunluk_kar": 160,
+    "medyan": 138,
+    "zararli_gun": 0.04
+   },
+   "ara mal": {
+    "isletme": 29.0,
+    "sonradan_kurulan": 21.0,
+    "gunluk_kar": 154,
+    "medyan": 152,
+    "zararli_gun": 0.17
+   },
+   "dükkân": {
+    "isletme": 16.0,
+    "sonradan_kurulan": 3.0,
+    "gunluk_kar": 213,
+    "medyan": 191,
+    "zararli_gun": 0.02
+   },
+   "son ürün": {
+    "isletme": 42.6,
+    "sonradan_kurulan": 26.6,
+    "gunluk_kar": 174,
+    "medyan": 188,
+    "zararli_gun": 0.15
+   }
+  }
  }
 }
