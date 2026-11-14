@@ -54,19 +54,23 @@
   const REG_WK = { merkez: { mudur: 3, satis: 3, usta: 1, sofor: 1 }, kirsal: { usta: 3, sofor: 2, mudur: 1, satis: 1 }, dag: { usta: 3, sofor: 3, mudur: 1, satis: 1 } };
   const NAMES = ['Ayşe', 'Mehmet', 'Zeynep', 'Can', 'Elif', 'Mert', 'Deniz', 'Selin', 'Burak', 'Ece', 'Emre', 'Derya', 'Kerem', 'Nil', 'Onur', 'Sena', 'Tuna', 'Melis'];
   const RETAIL = 1.6, W_BUY = 1.3, W_SELL = 0.75, RENT = 0.05, COMM = 0.03, FREE_UNTIL = 2 * 1440;
+  // Hedefler: [metin, koşul, ödül]. Ödül hedef tamamlanınca kasaya eklenir.
   const GOALS = [
-    ['Arsana bir bina kur', s => s.plots.some(p => p.b)],
-    ['İlk satışını yap', s => s.totalIncome > 0],
-    ['Bir ürüne otomatik fiyat kuralı koy', s => s.plots.some(p => p.b && Object.values(p.b.rule || {}).some(r => r.mode !== 'elle'))],
-    ['Kasanda ₺10.000 biriktir', s => s.money >= 10000],
-    ['Bir arsa artırması kazan', s => s.plots.some(p => !p.rented)],
-    ['Üç arsaya ulaş', s => s.plots.length >= 3],
-    ['Net değerini ₺50.000 yap', s => netWorth() >= 50000],
+    ['Arsana bir bina kur', s => s.plots.some(p => p.b), 500],
+    ['İlk satışını yap', s => s.totalIncome > 0, 750],
+    ['Bir ürüne otomatik fiyat kuralı koy', s => s.plots.some(p => p.b && Object.values(p.b.rule || {}).some(r => r.mode !== 'elle')), 750],
+    ['Kasanda ₺10.000 biriktir', s => s.money >= 10000, 1500],
+    ['Bir arsa artırması kazan', s => s.plots.some(p => !p.rented), 2500],
+    ['Üç arsaya ulaş', s => s.plots.length >= 3, 3000],
+    ['Net değerini ₺50.000 yap', s => netWorth() >= 50000, 5000],
   ];
+  // Uygulama kapalıyken geçen süre: gerçek 1 saniye = 1× hızda 15 oyun dakikası; en fazla bir oyun günü telafi edilir.
+  const AWAY_RATE = 15 / 1000, AWAY_MAX = 1440, AWAY_MIN = 30, DEBT_RATE = 0.02;
   const SAVE_KEY = 'tezgah-demo-v2';
 
   // ---------- Durum ----------
   let s, ui = { tab: 'plots', dest: 1, qty: 20, listMul: 1, sel: {} };
+  let awayLog = null;  // çevrimdışı telafi sırasında gelir ve giderleri toplar
   const rnd = (a, b) => a + Math.random() * (b - a);
   const pick = a => a[Math.floor(Math.random() * a.length)];
   const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
@@ -99,7 +103,20 @@
     news('Tezgâh açıldı', 'Kırsal’da kiralık bir arsan ve ₺5.000 sermayen var. İlk iki gün kira ve vergi alınmaz.');
     ui.dest = 1;
   }
-  function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(s)); } catch (e) { /* depolama yoksa oyun yine çalışır */ } }
+  function save() { s.savedAt = Date.now(); try { localStorage.setItem(SAVE_KEY, JSON.stringify(s)); } catch (e) { /* depolama yoksa oyun yine çalışır */ } }
+  // Uygulama kapalıyken ya da arka plandayken geçen gerçek süreyi 1× hızda oynatır ve özetini hazırlar.
+  // Oyun duraklatılmışsa zaman işlemez.
+  function catchUp(ms) {
+    if (!(ms > 0) || !s.speed) return;
+    const min = Math.min(AWAY_MAX, Math.floor(ms * AWAY_RATE));
+    if (min < 5) return;
+    const log = { min, capped: ms * AWAY_RATE > AWAY_MAX, inc: {}, exp: {}, money: s.money, news: s.news.length };
+    awayLog = log;
+    for (let i = 0; i < min; i += 5) step(5);
+    awayLog = null;
+    log.news = Math.max(0, s.news.length - log.news);
+    if (min >= AWAY_MIN) ui.away = log;
+  }
   function load() {
     try { const d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (d && d.v === 2 && Array.isArray(d.plots)) { s = d; for (const pl of s.plots) if (pl.b && !pl.b.out) pl.b.out = {}; if (!s.workers) { s.workers = []; s.cands = {}; for (const r in R) s.cands[r] = genCands(r); } return true; } } catch (e) { /* yoksay */ }
     return false;
@@ -121,10 +138,12 @@
   const freePlots = pl => s.plots.filter(x => x !== pl && !x.b && !x.part && x.region === pl.region);
   const plot = id => s.plots.find(p => p.id === id);
   function add(pl, p, q) { pl.inv[p] = (pl.inv[p] || 0) + q; if (pl.inv[p] <= 0) delete pl.inv[p]; }
-  function inc(kind, amt) { s.money += amt; s.totalIncome += amt; s.today.inc[kind] = (s.today.inc[kind] || 0) + amt; }
-  function exp(kind, amt) { s.money -= amt; s.today.exp[kind] = (s.today.exp[kind] || 0) + amt; }
+  function inc(kind, amt) { s.money += amt; s.totalIncome += amt; s.today.inc[kind] = (s.today.inc[kind] || 0) + amt; if (awayLog) awayLog.inc[kind] = (awayLog.inc[kind] || 0) + amt; }
+  function exp(kind, amt) { s.money -= amt; s.today.exp[kind] = (s.today.exp[kind] || 0) + amt; if (awayLog) awayLog.exp[kind] = (awayLog.exp[kind] || 0) + amt; }
+  // Hedef ödülü kasaya girer ama ticari gelir sayılmaz (totalIncome'a eklenmez)
+  function reward(amt) { s.money += amt; s.today.inc['Hedef ödülü'] = (s.today.inc['Hedef ödülü'] || 0) + amt; if (awayLog) awayLog.inc['Hedef ödülü'] = (awayLog.inc['Hedef ödülü'] || 0) + amt; }
   function rentOn(pl, amt) { if (pl.rented && s.t >= FREE_UNTIL) exp('Kira', amt * RENT); }
-  function news(title, body, alert) { s.news.unshift({ t: s.t, title, body }); if (s.news.length > 40) s.news.pop(); if (ui.tab !== 'news') s.unread = (s.unread || 0) + 1; if (alert) toast(title); }
+  function news(title, body, alert) { s.news.unshift({ t: s.t, title, body }); if (s.news.length > 40) s.news.pop(); if (ui.tab !== 'news') s.unread = (s.unread || 0) + 1; if (alert && !awayLog) toast(title); }
   function shopRate(pl, p) {
     const pr = pl.b.prices[p] || retailRef(p);
     const A = Math.pow(retailRef(p) / pr, 2) * (1 + 0.1 * (pl.b.level - 1));
@@ -283,7 +302,10 @@
     for (const a of s.auctions.filter(a => s.t >= a.end)) endAuction(a);
     s.auctions = s.auctions.filter(a => s.t < a.end);
     while (Math.floor(s.t / 60) > s.lastHour) { s.lastHour++; hourly(s.lastHour); }
-    for (let i = 0; i < GOALS.length; i++) if (!s.goals[i] && GOALS[i][1](s)) s.goals[i] = true;
+    for (let i = 0; i < GOALS.length; i++) if (!s.goals[i] && GOALS[i][1](s)) {
+      s.goals[i] = true; reward(GOALS[i][2]);
+      news('Hedef tamamlandı: ' + GOALS[i][0], 'Ödül olarak kasana ' + fmt(GOALS[i][2]) + ' eklendi.', true);
+    }
   }
 
   function hourly(h) {
@@ -328,7 +350,10 @@
     if (Math.abs(s.mult[top] - 1) > 0.08) news('Piyasa: ' + P[top].n + (s.mult[top] > 1 ? ' pahalandı' : ' ucuzladı'), P[top].n + ' fiyatı olağan seviyesinin %' + Math.round(Math.abs(s.mult[top] - 1) * 100) + (s.mult[top] > 1 ? ' üstünde.' : ' altında.'));
     if (s.auctions.filter(a => !a.plot).length < 2) spawnAuction();
     if (day % 2 === 0) announceEvent();
-    if (s.money < 0) news('Kasan ekside', 'Borcun var: ' + fmt(-s.money) + '. Mal sat ya da bir arsanı sisteme devret.');
+    if (s.money < 0) {
+      const fee = -s.money * DEBT_RATE; exp('Borç faizi', fee);
+      news('Kasan ekside', 'Borcun var: ' + fmt(-s.money) + '. Borca günde %' + DEBT_RATE * 100 + ' faiz işler; bugün ' + fmt(fee) + ' faiz ödendi. Para yetmeyen üretim hatları durur. Mal sat ya da bir arsanı sisteme devret.', true);
+    }
   }
 
   function announceEvent() {
@@ -395,7 +420,8 @@
     },
     fire(d) { const w = s.workers.find(x => x.id === +d.id); if (!w) return; s.workers = s.workers.filter(x => x !== w); toast(w.name + ' işten çıkarıldı'); },
     focus(d) { ui.tab = 'plots'; ui.focusPlot = +d.plot; },
-    tab(d) { ui.tab = d.v; if (d.v === 'news') s.unread = 0; },
+    tab(d) { ui.tab = d.v; if (d.v === 'news') { s.unread = 0; ui.away = null; } },
+    awayOk() { ui.away = null; },
     speed(d) { s.speed = +d.v; },
     reset() { if (ui.confirmReset) { newGame(); ui.confirmReset = false; ui.tab = 'plots'; } else { ui.confirmReset = true; setTimeout(() => { ui.confirmReset = false; }, 4000); } },
     build(d) {
@@ -589,11 +615,23 @@
   function viewPlots() {
     const out = [];
     const next = GOALS.findIndex((g, i) => !s.goals[i]);
-    out.push(['goal', next < 0 ? '<div class="goal">Bütün hedefler tamamlandı. Şirketini büyütmeye devam et.</div>' : `<div class="goal"><span class="small">Sıradaki hedef ${next + 1}/${GOALS.length}</span><b>${GOALS[next][0]}</b></div>`]);
+    if (ui.away) out.push(['away', awayCard(ui.away)]);
+    out.push(['goal', next < 0 ? '<div class="goal">Bütün hedefler tamamlandı. Şirketini büyütmeye devam et.</div>' : `<div class="goal"><span class="small">Sıradaki hedef ${next + 1}/${GOALS.length} · ödül ${fmt(GOALS[next][2])}</span><b>${GOALS[next][0]}</b></div>`]);
     if (window.TezgahArt) out.push(['map', window.TezgahArt.map(mapModel()) + '<p class="muted small maphint">Haritada bir binaya dokununca kartına gidersin. Ünlem işareti, binanın ilgilenilmesi gereken bir durumu olduğunu gösterir.</p>']);
     out.push(['lm', `<div class="row small"><label for="listMul">Pazara ilan fiyatı</label><select id="listMul" data-c="listMul"><option value="0.9" ${ui.listMul === 0.9 ? 'selected' : ''}>olağanın %10 altı (%20 daha hızlı satar)</option><option value="1" ${ui.listMul === 1 ? 'selected' : ''}>olağan fiyat</option><option value="1.1" ${ui.listMul === 1.1 ? 'selected' : ''}>olağanın %10 üstü (%20 daha yavaş satar)</option></select></div>`]);
     for (const pl of s.plots) out.push(['p' + pl.id, plotCard(pl)]);
     return out;
+  }
+
+  function awayCard(a) {
+    const i = Object.entries(a.inc), e = Object.entries(a.exp);
+    const ti = i.reduce((x, y) => x + y[1], 0), te = e.reduce((x, y) => x + y[1], 0);
+    const h = Math.floor(a.min / 60), m = a.min % 60, dur = (h ? h + ' saat' : '') + (h && m ? ' ' : '') + (m ? m + ' dakika' : '');
+    const rows = i.map(([k, v]) => `<tr><td>${k}</td><td class="up">${fmt(v)}</td></tr>`).join('') + e.map(([k, v]) => `<tr><td>${k}</td><td class="down">${fmt(-v)}</td></tr>`).join('');
+    return `<div class="card away"><div class="row head"><h3>Sen yokken</h3><span class="muted small">${dur} geçti</span></div>`
+      + (rows ? `<table class="t">${rows}<tr><th>Net</th><th class="${ti - te < 0 ? 'down' : 'up'}">${fmt(ti - te)}</th></tr></table>` : '<p class="muted small">Binaların boştaydı; para girişi ya da çıkışı olmadı.</p>')
+      + `<p class="muted small">${a.capped ? 'Uygulama kapalıyken en fazla bir oyun günü işler. ' : ''}${a.news ? `Gazetede ${a.news} yeni haber var.` : ''}</p>`
+      + `<div class="row wrap">${btn('Tamam', 'awayOk')}${a.news ? btn('Gazeteyi aç', 'tab', { v: 'news' }, 'ghost') : ''}</div></div>`;
   }
 
   function viewMarket() {
@@ -649,7 +687,7 @@
     out.push(['nw', `<div class="card"><div class="row"><span>Net değer</span><b class="num">${fmt(netWorth())}</b></div><div class="row"><span>Kasa</span><span class="num">${fmt(s.money)}</span></div><div class="row"><span>Arsa değeri</span><span class="num">${fmt(landValue())}</span></div>${s.t < FREE_UNTIL ? '<p class="muted small">İlk iki gün kira ve vergi alınmıyor.</p>' : ''}</div>`]);
     out.push(['td', tbl(s.today, 'Bugün')]); out.push(['pv', tbl(s.prev, 'Dün')]);
     out.push(['pr', '<div class="card"><h3>Fiyatlar</h3><div class="scroll"><table class="t prices">' + PK.map(k => `<tr><td>${P[k].n}</td><td>${fmt1(price(k))}</td><td>${trend(k)}</td><td>${spark(k)}</td></tr>`).join('') + '</table></div></div>']);
-    out.push(['gl', '<div class="card"><h3>Hedefler</h3>' + GOALS.map((g, i) => `<div class="row"><span class="${s.goals[i] ? 'done' : ''}">${g[0]}</span><span>${s.goals[i] ? '✓' : ''}</span></div>`).join('') + '</div>']);
+    out.push(['gl', '<div class="card"><h3>Hedefler</h3>' + GOALS.map((g, i) => `<div class="row"><span class="${s.goals[i] ? 'done' : ''}">${g[0]}</span><span class="num small ${s.goals[i] ? 'muted' : ''}">${s.goals[i] ? '✓ ' : ''}${fmt(g[2])}</span></div>`).join('') + '</div>']);
     out.push(['credit', '<p class="muted small">Ürün ve bina ikonları: game-icons.net (Lorc, Delapouite ve katkıda bulunanlar), CC BY 3.0. Harita çizimleri bu oyun için yapıldı.</p>']);
     out.push(['rs', `<div class="row">${btn(ui.confirmReset ? 'Emin misin? Tekrar dokun' : 'Oyunu sıfırla', 'reset', {}, 'ghost')}</div>`]);
     return out;
@@ -712,16 +750,24 @@
     root = document.getElementById('app');
     root.innerHTML = '<header id="hud"></header><main id="main"></main><div id="toast" role="status" hidden></div>';
     hud = document.getElementById('hud'); main = document.getElementById('main');
-    if (!load()) newGame();
+    if (load()) catchUp(Date.now() - (s.savedAt || Date.now())); else newGame();
     if (!plot(ui.dest)) ui.dest = s.plots[0].id;
+    // Arka plandayken tarayıcı zamanlayıcıları yavaşlatır ya da durdurur; bu yüzden gizlenince
+    // adımlamayı bırakıp kaydeder, geri gelince geçen süreyi telafi eder.
+    let hiddenAt = 0;
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) { hiddenAt = Date.now(); save(); }
+      else if (hiddenAt) { const ms = Date.now() - hiddenAt; hiddenAt = 0; catchUp(ms); render(); }
+    });
     root.addEventListener('click', e => { const el = e.target.closest('[data-a]'); if (!el || !A[el.dataset.a]) return; A[el.dataset.a](el.dataset); render(); focusCard(); });
     root.addEventListener('keydown', e => { const el = e.target.closest('g[data-a]'); if (el && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); A[el.dataset.a](el.dataset); render(); focusCard(); } });
     root.addEventListener('change', e => { const el = e.target.closest('[data-c]'); if (!el || !C[el.dataset.c]) return; C[el.dataset.c](el); el.blur(); render(); });
-    setInterval(() => { if (s.speed > 0) step(3.75 * s.speed); render(); }, 250);
+    setInterval(() => { if (document.hidden) return; if (s.speed > 0) step(3.75 * s.speed); render(); }, 250);
+    window.addEventListener('pagehide', save);
     setInterval(save, 8000);
     render();
   }
 
-  window.__tezgah = { get state() { return s; }, advance(min) { for (let i = 0; i < min; i += 5) step(5); render(); }, reset() { newGame(); render(); } };
+  window.__tezgah = { get state() { return s; }, away(ms) { catchUp(ms); render(); }, advance(min) { for (let i = 0; i < min; i += 5) step(5); render(); }, reset() { newGame(); render(); } };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
