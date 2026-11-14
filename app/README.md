@@ -57,4 +57,4 @@ Xcode'da Signing & Capabilities altında ekibini seç, simülatörde ya da iPhon
 
 - `capacitor.config.json` içindeki `appId` (`com.archyntech.tezgah`) ve `appName` (`Tezgâh`) geçici. Mağazaya ilk yüklemeden önce kesinleşmeli; `appId` sonradan değiştirilemez.
 - Reklam için sıradaki adım `@capacitor-community/admob` eklentisi.
-- Oyun büyüdükçe kod `demo/` klasöründen TypeScript ve PixiJS ile bu klasöre taşınacak (tasarım dokümanı: Görsel yön ve teknoloji).
+- Harita PixiJS 8 ile çiziliyor (`demo/map-pixi.js`, kütüphane `demo/vendor/` içinde). Oyun büyüdükçe kod TypeScript ile bu klasöre taşınacak (tasarım belgesi, bölüm 7).

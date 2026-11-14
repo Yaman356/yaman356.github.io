@@ -1,3 +1,40 @@
-// Üretilen görsellerin listesi. Bir görseli eklemek için PNG dosyasını bu klasöre koy ve anahtarını buraya yaz;
-// oyun o anahtar için ikon yerine bu görseli kullanır. Örnek: window.TezgahAssets = { fabrika: 'assets/fabrika.png' };
-window.TezgahAssets = {};
+// Üretilen görsellerin listesi (art-src/process.py yazar; elle düzenleme).
+// Oyun bir anahtar için burada görsel varsa kodla çizilmiş ikon yerine onu kullanır.
+window.TezgahAssets = {
+  "alet": "assets/alet.webp",
+  "bugday": "assets/bugday.webp",
+  "celik": "assets/celik.webp",
+  "demir": "assets/demir.webp",
+  "dukkan_1": "assets/dukkan_1.webp",
+  "dukkan_2": "assets/dukkan_2.webp",
+  "dukkan_3": "assets/dukkan_3.webp",
+  "ekmek": "assets/ekmek.webp",
+  "fabrika_1": "assets/fabrika_1.webp",
+  "fabrika_2": "assets/fabrika_2.webp",
+  "fabrika_3": "assets/fabrika_3.webp",
+  "fabrika_ek": "assets/fabrika_ek.webp",
+  "giysi": "assets/giysi.webp",
+  "komur": "assets/komur.webp",
+  "kumas": "assets/kumas.webp",
+  "m_cow": "assets/m_cow.webp",
+  "m_ewe": "assets/m_ewe.webp",
+  "m_houses": "assets/m_houses.webp",
+  "m_money": "assets/m_money.webp",
+  "m_mountain": "assets/m_mountain.webp",
+  "m_office": "assets/m_office.webp",
+  "m_person": "assets/m_person.webp",
+  "m_pine": "assets/m_pine.webp",
+  "m_rock": "assets/m_rock.webp",
+  "m_tree": "assets/m_tree.webp",
+  "m_truck": "assets/m_truck.webp",
+  "maden_1": "assets/maden_1.webp",
+  "maden_2": "assets/maden_2.webp",
+  "maden_3": "assets/maden_3.webp",
+  "pamuk": "assets/pamuk.webp",
+  "peynir": "assets/peynir.webp",
+  "sut": "assets/sut.webp",
+  "tarla_1": "assets/tarla_1.webp",
+  "tarla_2": "assets/tarla_2.webp",
+  "tarla_3": "assets/tarla_3.webp",
+  "un": "assets/un.webp"
+};

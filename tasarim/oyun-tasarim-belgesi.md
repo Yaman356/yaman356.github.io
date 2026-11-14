@@ -155,3 +155,36 @@ Oyun içinde bir kurum olarak sunulur; kurallar oyuncuya açıkça yazılıdır.
 - Kalite sistemi.
 - Gelir modeli ve reklam yerleşimi.
 - Sunucu mimarisi ve sunucu başına oyuncu sayısı.
+
+## 7. Görsel yön ve teknoloji
+
+### Oyun motoru: PixiJS 8
+
+Tezgâh'ın oynanışının çoğu panel, liste ve formdan oluşur (pazar, arsa kartları, işçiler, rapor). Bunlar HTML ile en iyi çalışır. Grafik isteyen tek yer şehir haritasıdır. Bu yüzden tam bir oyun motoru yerine harita için yalnızca bir 2B WebGL çizici seçildi.
+
+| Seçenek | Neden seçilmedi / seçildi |
+|---|---|
+| **PixiJS 8** | **Seçildi.** Hızlı 2B WebGL sprite çizimi, tek dosya (~820 KB), HTML arayüzle yan yana çalışır, Capacitor içinde web, Android ve iOS'ta aynı kodla çalışır. |
+| Phaser | Sahne, fizik ve girdi sistemi getirir; bu oyunda kullanılmayacak, panelleri oyun içinde çizmeye zorlar. |
+| Godot, Unity | Arayüzün tamamını yeniden yazmayı gerektirir; web çıktısı büyük ve yavaş açılır, Capacitor kabuğu boşa çıkar. |
+
+Kullanım:
+
+- `demo/map-pixi.js` her bölge için bir Pixi sahnesi kurar: zemin karoları, bina görselleri, süsler, alışveriş yapan figürler, fabrika dumanı, yolda gidip gelen kamyon.
+- Pixi kütüphanesi `demo/vendor/pixi.min.js` içinde yerel olarak durur (sürüm `app/package.json` içinde sabit). Uygulama internetsiz açılır.
+- WebGL açılamazsa oyun eski kodla çizilmiş SVG haritaya (`demo/art.js`) döner.
+- Oyun büyüdükçe kod TypeScript'e taşınacak; Pixi aynı kalır.
+
+### Görsel üretimi: Codex CLI
+
+Bütün bina, süs ve ürün görselleri Codex CLI'nin yerleşik görsel üretimiyle, aynı üslup cümlesi ve aynı referans görselle (`tarla_1`) üretilir. Komutlar `tasarim/gorsel-uretim-promptlari.md` ile aynıdır.
+
+```bash
+python art-src/generate.py            # eksik görselleri üretir (gruplar paralel çalışır)
+python art-src/generate.py fabrika    # yalnızca bir grup
+python art-src/process.py             # kırpar, boyutlar, WebP yapar, demo/assets/assets.js'i yazar
+```
+
+- Bir görseli yeniden üretmek için `art-src/raw/<anahtar>.png` dosyasını silip `generate.py`'yi yeniden çalıştır.
+- Ham PNG'ler (1024 piksel, her biri ~1 MB) depoya girmez; oyunun kullandığı WebP dosyaları `demo/assets/` içindedir.
+- Boyutlar: binalar 512, harita süsleri 256, ürün ikonları 128 piksel.

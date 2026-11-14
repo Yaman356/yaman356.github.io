@@ -525,6 +525,8 @@
     return { regions };
   }
   const otherPlots = pl => s.plots.filter(x => x !== pl && x.b);
+  const pixiMap = () => window.TezgahMap && window.TezgahMap.ok;
+  const focusFromMap = id => { A.focus({ plot: id }); render(); focusCard(); };
 
   // ---------- Görünüm ----------
   let toastT = 0;
@@ -617,7 +619,10 @@
     const next = GOALS.findIndex((g, i) => !s.goals[i]);
     if (ui.away) out.push(['away', awayCard(ui.away)]);
     out.push(['goal', next < 0 ? '<div class="goal">Bütün hedefler tamamlandı. Şirketini büyütmeye devam et.</div>' : `<div class="goal"><span class="small">Sıradaki hedef ${next + 1}/${GOALS.length} · ödül ${fmt(GOALS[next][2])}</span><b>${GOALS[next][0]}</b></div>`]);
-    if (window.TezgahArt) out.push(['map', window.TezgahArt.map(mapModel()) + '<p class="muted small maphint">Haritada bir binaya dokununca kartına gidersin. Ünlem işareti, binanın ilgilenilmesi gereken bir durumu olduğunu gösterir.</p>']);
+    const hint = '<p class="muted small maphint">Haritada bir binaya dokununca kartına gidersin. Ünlem işareti, binanın ilgilenilmesi gereken bir durumu olduğunu gösterir.</p>';
+    // PixiJS haritası kendi tuvallerini yönetir; buradaki kutu sabit kalır ve render() içinde doldurulur
+    if (pixiMap()) out.push(['map', '<div class="map" data-pixi></div>' + hint]);
+    else if (window.TezgahArt) out.push(['svgmap', window.TezgahArt.map(mapModel()) + hint]);
     out.push(['lm', `<div class="row small"><label for="listMul">Pazara ilan fiyatı</label><select id="listMul" data-c="listMul"><option value="0.9" ${ui.listMul === 0.9 ? 'selected' : ''}>olağanın %10 altı (%20 daha hızlı satar)</option><option value="1" ${ui.listMul === 1 ? 'selected' : ''}>olağan fiyat</option><option value="1.1" ${ui.listMul === 1.1 ? 'selected' : ''}>olağanın %10 üstü (%20 daha yavaş satar)</option></select></div>`]);
     for (const pl of s.plots) out.push(['p' + pl.id, plotCard(pl)]);
     return out;
@@ -688,7 +693,7 @@
     out.push(['td', tbl(s.today, 'Bugün')]); out.push(['pv', tbl(s.prev, 'Dün')]);
     out.push(['pr', '<div class="card"><h3>Fiyatlar</h3><div class="scroll"><table class="t prices">' + PK.map(k => `<tr><td>${P[k].n}</td><td>${fmt1(price(k))}</td><td>${trend(k)}</td><td>${spark(k)}</td></tr>`).join('') + '</table></div></div>']);
     out.push(['gl', '<div class="card"><h3>Hedefler</h3>' + GOALS.map((g, i) => `<div class="row"><span class="${s.goals[i] ? 'done' : ''}">${g[0]}</span><span class="num small ${s.goals[i] ? 'muted' : ''}">${s.goals[i] ? '✓ ' : ''}${fmt(g[2])}</span></div>`).join('') + '</div>']);
-    out.push(['credit', '<p class="muted small">Ürün ve bina ikonları: game-icons.net (Lorc, Delapouite ve katkıda bulunanlar), CC BY 3.0. Harita çizimleri bu oyun için yapıldı.</p>']);
+    out.push(['credit', '<p class="muted small">Bina, harita ve ürün görselleri bu oyun için üretildi. Bina türü rozetleri: game-icons.net (Lorc, Delapouite ve katkıda bulunanlar), CC BY 3.0. Harita çizimi: PixiJS (MIT).</p>']);
     out.push(['rs', `<div class="row">${btn(ui.confirmReset ? 'Emin misin? Tekrar dokun' : 'Oyunu sıfırla', 'reset', {}, 'ghost')}</div>`]);
     return out;
   }
@@ -738,6 +743,7 @@
       ['tabs', `<nav class="tabs">${TABS.map(([k, l]) => `<button type="button" data-a="tab" data-v="${k}" class="${ui.tab === k ? 'on' : ''}">${l}${k === 'news' && s.unread ? `<span class="badge" aria-label="${s.unread} yeni">${s.unread}</span>` : ''}</button>`).join('')}</nav>`],
     ]);
     paint(main, VIEWS[ui.tab]());
+    if (ui.tab === 'plots' && pixiMap()) window.TezgahMap.update(main.querySelector('[data-pixi]'), mapModel(), focusFromMap);
     main.querySelectorAll('[data-prog]').forEach(el => { const [id, i] = el.dataset.prog.split(':'); const pl = plot(+id), ln = pl && pl.b && pl.b.lines[+i]; el.style.width = ln && ln.busy ? Math.min(100, ln.prog / P[ln.r].t * 100) + '%' : '0%'; });
   }
 
