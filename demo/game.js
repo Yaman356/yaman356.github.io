@@ -104,7 +104,11 @@
   function transMult() { let m = 1; for (const e of activeEvents()) if (EVENTS[e.key].tr) m *= EVENTS[e.key].tr; return m; }
   const trans = (qty, p, from, to) => qty * P[p].w * (0.1 + DIST[from][to] * 0.2) * transMult();
   const invTotal = pl => Object.values(pl.inv).reduce((a, b) => a + b, 0);
-  const cap = pl => (pl.b ? B[pl.b.type].cap * pl.b.level : 0);
+  const cap = pl => (pl.b ? B[pl.b.type].cap * (pl.b.level + (pl.b.parts || []).length) : 0);
+  // Üretim binasında seviye partiyi büyütür: 1. seviye 10, 2. seviye 15, 3. seviye 20 birim (girdi ve gider de aynı oranda)
+  const batch = pl => pl.b.type === 'dukkan' ? 1 : 1 + 0.5 * (pl.b.level - 1);
+  // Yeni hat için aynı bölgedeki boş arsalar (binanın genişleyebileceği yer)
+  const freePlots = pl => s.plots.filter(x => x !== pl && !x.b && !x.part && x.region === pl.region);
   const plot = id => s.plots.find(p => p.id === id);
   function add(pl, p, q) { pl.inv[p] = (pl.inv[p] || 0) + q; if (pl.inv[p] <= 0) delete pl.inv[p]; }
   function inc(kind, amt) { s.money += amt; s.totalIncome += amt; s.today.inc[kind] = (s.today.inc[kind] || 0) + amt; }
@@ -187,9 +191,10 @@
     }
   }
   function autoInputs(pl, ln) {
+    const m = batch(pl);
     for (const [k, q] of Object.entries(P[ln.r].in)) {
       const have = pl.inv[k] || 0;
-      if (have < q) supply(pl, k, Math.min(3 * q - have, cap(pl) - invTotal(pl)), price(k) * ln.auto);
+      if (have < q * m) supply(pl, k, Math.min(3 * q * m - have, cap(pl) - invTotal(pl)), price(k) * ln.auto);
     }
   }
   function landValue() { return s.plots.filter(p => !p.rented).reduce((a, p) => a + p.ref, 0); }
@@ -200,7 +205,10 @@
     for (const a of s.auctions) { if (a.bidder === 'me') v += a.bid; if (a.plot) v += a.plot.ref; }
     return v;
   }
-  function taxRate(pl) { return !pl.b ? 0.08 : (s.t - pl.last < 1440 ? 0.01 : 0.04); }
+  function taxRate(pl) {
+    if (pl.part) { const m = plot(pl.part); return m && s.t - m.last < 1440 ? 0.01 : 0.04; }
+    return !pl.b ? 0.08 : (s.t - pl.last < 1440 ? 0.01 : 0.04);
+  }
   function taxFactor() { const n = s.plots.filter(p => !p.rented).length; return 1 + 0.1 * Math.max(0, n - 1); }
   const dailyTax = pl => pl.rented ? 0 : pl.ref * taxRate(pl) * taxFactor() / 7;
 
@@ -222,20 +230,21 @@
         }
         continue;
       }
+      const k = batch(pl);
       for (const ln of pl.b.lines) {
         if (!ln.r) { ln.st = 'Tarif seç'; continue; }
         const rc = P[ln.r];
         if (ln.busy) {
           ln.prog += dt;
-          if (ln.prog >= rc.t) { add(pl, ln.r, Math.round(10 * yieldMult(pl.region, pl.b.type))); ln.busy = false; ln.prog = 0; pl.last = s.t; }
+          if (ln.prog >= rc.t) { add(pl, ln.r, Math.round(10 * k * yieldMult(pl.region, pl.b.type))); ln.busy = false; ln.prog = 0; pl.last = s.t; }
           continue;
         }
-        const need = Object.entries(rc.in).find(([k, q]) => (pl.inv[k] || 0) < q);
-        if (need) { ln.st = 'Girdi yok: ' + need[1] + ' ' + P[need[0]].n; continue; }
-        if (invTotal(pl) + 13 > cap(pl) + Object.values(rc.in).reduce((a, b) => a + b, 0)) { ln.st = 'Depo dolu'; continue; }
-        if (s.money < rc.op) { ln.st = 'Para yetersiz'; continue; }
-        for (const k in rc.in) add(pl, k, -rc.in[k]);
-        exp('Üretim', rc.op); ln.busy = true; ln.prog = 0; ln.st = '';
+        const need = Object.entries(rc.in).find(([x, q]) => (pl.inv[x] || 0) < q * k);
+        if (need) { ln.st = 'Girdi yok: ' + need[1] * k + ' ' + P[need[0]].n; continue; }
+        if (invTotal(pl) + 13 * k > cap(pl) + Object.values(rc.in).reduce((a, b) => a + b, 0) * k) { ln.st = 'Depo dolu'; continue; }
+        if (s.money < rc.op * k) { ln.st = 'Para yetersiz'; continue; }
+        for (const x in rc.in) add(pl, x, -rc.in[x] * k);
+        exp('Üretim', rc.op * k); ln.busy = true; ln.prog = 0; ln.st = '';
       }
     }
     // Pazardaki ilanlarım
@@ -352,11 +361,19 @@
       const pl = plot(+d.plot), c = B[pl.b.type].cost * pl.b.level;
       if (pl.b.level >= 3) return; if (s.money < c) return toast('Para yetersiz');
       exp('İnşaat', c); pl.b.level++; pl.b.spent += c;
-      if (pl.b.type !== 'dukkan') pl.b.lines.push({ r: null, prog: 0, busy: false, st: 'Tarif seç', auto: 0 });
+    },
+    expand(d) {
+      const pl = plot(+d.plot), tgt = plot(+(ui.sel['ex' + pl.id] || freePlots(pl)[0]?.id));
+      if (!tgt || tgt.b || tgt.part || tgt.region !== pl.region) return toast('Aynı bölgede boş arsan yok');
+      const c = B[pl.b.type].cost; if (s.money < c) return toast('Para yetersiz');
+      exp('İnşaat', c); pl.b.spent += c; tgt.part = pl.id; pl.b.parts = [...(pl.b.parts || []), tgt.id];
+      pl.b.lines.push({ r: null, prog: 0, busy: false, st: 'Tarif seç', auto: 0 });
+      news('Bina genişledi', 'Arsa ' + pl.id + '’deki ' + B[pl.b.type].n.toLocaleLowerCase('tr-TR') + ', Arsa ' + tgt.id + '’ye yayıldı ve yeni bir üretim hattı açıldı.');
     },
     demolish(d) {
       const pl = plot(+d.plot);
       if (invTotal(pl) > 0) return toast('Önce depoyu boşalt');
+      for (const id of pl.b.parts || []) { const x = plot(id); if (x) x.part = null; }
       s.money += pl.b.spent * (s.freeSwap ? 1 : 0.5); s.freeSwap = false; pl.b = null;
     },
     sellw(d) { const pl = plot(+d.plot), q = pl.inv[d.p]; inc('Toptancı', q * price(d.p) * W_SELL); rentOn(pl, q * price(d.p) * W_SELL); s.mult[d.p] = clamp(s.mult[d.p] - 0.00002 * P[d.p].ref * q, 0.6, 1.5); add(pl, d.p, -q); pl.last = s.t; },
@@ -390,7 +407,7 @@
       if (ui.dest === pl.id) ui.dest = s.plots[0].id;
     },
     auctionMine(d) {
-      const pl = plot(+d.plot); if (pl.b || invTotal(pl) > 0) return toast('Önce binayı yık ve depoyu boşalt');
+      const pl = plot(+d.plot); if (pl.part) return toast('Bu arsa bir binanın parçası'); if (pl.b || invTotal(pl) > 0) return toast('Önce binayı yık ve depoyu boşalt');
       s.plots = s.plots.filter(x => x !== pl);
       s.auctions.push({ id: s.nextId++, region: pl.region, ref: pl.ref, start: Math.round(pl.ref * 0.7), bid: 0, bidder: null, end: s.t + 720, npc: [0, 0, 0].map(() => pl.ref * rnd(0.6, 1.25)), plot: pl });
       if (ui.dest === pl.id) ui.dest = s.plots[0].id;
@@ -423,18 +440,30 @@
   function plotCard(pl) {
     const reg = R[pl.region];
     let h = `<div class="card"><div class="row head"><h3>Arsa ${pl.id} · ${reg.n}</h3><span class="tag ${pl.rented ? '' : 'own'}">${pl.rented ? 'Kiralık' : 'Senin'}</span></div><p class="muted small">${reg.note}</p>`;
+    if (pl.part) {
+      const m = plot(pl.part);
+      return h + `<p class="small">Bu arsa, Arsa ${pl.part}’deki ${m && m.b ? B[m.b.type].n.toLocaleLowerCase('tr-TR') : 'binanın'} genişlemesi; ek üretim hattı burada çalışıyor. Ayrı kullanılamaz; bina yıkılınca boşalır.</p></div>`;
+    }
     if (!pl.b) {
       h += '<p>Bu arsaya ne kuracaksın?</p><div class="choices">';
       for (const k in B) h += `<button type="button" class="choice" data-a="build" data-plot="${pl.id}" data-v="${k}"><b>${B[k].n}</b><span>${fmt(B[k].cost)}</span><small>${B[k].hint}${reg.bonus === k ? ' · bölge bonusu' : ''}</small></button>`;
       return h + '</div></div>';
     }
     const b = pl.b, bt = B[b.type];
-    h += `<div class="row"><b>${bt.n} · seviye ${b.level}</b><span class="muted small">Depo ${invTotal(pl)}/${cap(pl)}</span></div><div class="row wrap">`;
-    if (b.level < 3) h += btn(`Yükselt ${fmt(bt.cost * b.level)}`, 'upgrade', { plot: pl.id });
+    const k = batch(pl), parts = b.parts || [], prod = b.type !== 'dukkan';
+    h += `<div class="row"><b>${bt.n} · seviye ${b.level}</b><span class="muted small">Depo ${invTotal(pl)}/${cap(pl)}</span></div>`;
+    if (prod) h += `<p class="muted small">Parti ${10 * k} birim · ${b.lines.length} hat${parts.length ? ' · ' + (parts.length + 1) + ' arsaya yayılıyor' : ''}</p>`;
+    h += '<div class="row wrap">';
+    if (b.level < 3) h += btn(prod ? `Kapasiteyi artır: parti ${10 * (k + 0.5)} birim · ${fmt(bt.cost * b.level)}` : `Yükselt ${fmt(bt.cost * b.level)}`, 'upgrade', { plot: pl.id });
     h += btn(`Yık (iade ${fmt(b.spent * (s.freeSwap ? 1 : 0.5))})`, 'demolish', { plot: pl.id }, 'ghost') + '</div>';
+    if (prod && b.level >= 3 && b.lines.length < 3) {
+      const free = freePlots(pl);
+      h += free.length ? `<div class="row wrap small"><label for="ex${pl.id}">Yeni hat için genişle</label><select id="ex${pl.id}" data-c="sel" data-k="ex${pl.id}">${free.map(o => `<option value="${o.id}" ${ui.sel['ex' + pl.id] == o.id ? 'selected' : ''}>Arsa ${o.id}</option>`).join('')}</select>${btn('Genişlet ' + fmt(bt.cost), 'expand', { plot: pl.id })}</div><p class="muted small">Bina seçilen boş arsaya yayılır ve ikinci bir hat açılır; bina tek kalır.</p>`
+        : `<p class="muted small">Yeni hat için ${R[pl.region].n} bölgesinde boş bir arsan olmalı.</p>`;
+    } else if (prod && b.level < 3) h += '<p class="muted small">3. seviyeden sonra bina, aynı bölgedeki boş bir arsaya genişleyerek yeni hat açabilir.</p>';
     b.lines.forEach((ln, i) => {
-      const opts = PK.filter(k => P[k].b === b.type).map(k => `<option value="${k}" ${ln.r === k ? 'selected' : ''}>${P[k].n}${Object.keys(P[k].in).length ? ' ← ' + Object.entries(P[k].in).map(([x, q]) => q + ' ' + P[x].n).join(', ') : ''}</option>`).join('');
-      h += `<div class="line"><label class="small muted" for="rc${pl.id}_${i}">Hat ${i + 1}</label><select id="rc${pl.id}_${i}" data-c="recipe" data-plot="${pl.id}" data-i="${i}"><option value="">Tarif seç</option>${opts}</select><div class="bar"><i data-prog="${pl.id}:${i}"></i></div><span class="small ${ln.busy ? 'muted' : 'warn'}">${ln.busy ? 'Üretiyor · parti gideri ' + fmt(P[ln.r].op) : esc(ln.st || '') + (ln.auto && ln.st && ln.st.startsWith('Girdi') ? ' · bu fiyata uygun satıcı yok' : '')}</span>${ln.r && Object.keys(P[ln.r].in).length ? `<label class="small muted" for="la${pl.id}_${i}">Girdi bitince</label><select id="la${pl.id}_${i}" data-c="lineAuto" data-plot="${pl.id}" data-i="${i}">${[[0, 'Elle alırım'], [1, 'Olağan fiyata kadar al'], [1.1, 'Olağanın %10 fazlasına kadar al'], [1.35, 'Toptancı dahil al (%35 fazlası)']].map(([v, l]) => `<option value="${v}" ${(ln.auto || 0) === v ? 'selected' : ''}>${l}</option>`).join('')}</select>` : ''}</div>`;
+      const opts = PK.filter(k => P[k].b === b.type).map(k => `<option value="${k}" ${ln.r === k ? 'selected' : ''}>${P[k].n}${Object.keys(P[k].in).length ? ' ← ' + Object.entries(P[k].in).map(([x, q]) => q * batch(pl) + ' ' + P[x].n).join(', ') : ''}</option>`).join('');
+      h += `<div class="line"><label class="small muted" for="rc${pl.id}_${i}">Hat ${i + 1}</label><select id="rc${pl.id}_${i}" data-c="recipe" data-plot="${pl.id}" data-i="${i}"><option value="">Tarif seç</option>${opts}</select><div class="bar"><i data-prog="${pl.id}:${i}"></i></div><span class="small ${ln.busy ? 'muted' : 'warn'}">${ln.busy ? 'Üretiyor · parti gideri ' + fmt(P[ln.r].op * batch(pl)) : esc(ln.st || '') + (ln.auto && ln.st && ln.st.startsWith('Girdi') ? ' · bu fiyata uygun satıcı yok' : '')}</span>${ln.r && Object.keys(P[ln.r].in).length ? `<label class="small muted" for="la${pl.id}_${i}">Girdi bitince</label><select id="la${pl.id}_${i}" data-c="lineAuto" data-plot="${pl.id}" data-i="${i}">${[[0, 'Elle alırım'], [1, 'Olağan fiyata kadar al'], [1.1, 'Olağanın %10 fazlasına kadar al'], [1.35, 'Toptancı dahil al (%35 fazlası)']].map(([v, l]) => `<option value="${v}" ${(ln.auto || 0) === v ? 'selected' : ''}>${l}</option>`).join('')}</select>` : ''}</div>`;
     });
     const items = b.type === 'dukkan' ? shelf(pl) : [...new Set([...b.lines.filter(l => l.r).map(l => l.r), ...Object.keys(pl.inv), ...Object.keys(b.out || {}).filter(p => b.out[p])])];
     if (!items.length) h += `<p class="muted small">${b.type === 'dukkan' ? 'Raflar boş. Pazar sekmesinden mal al ya da kendi üretimini buraya taşı.' : 'Depo boş.'}</p>`;
@@ -493,7 +522,7 @@
 
   function viewMarket() {
     const out = [], dst = plot(ui.dest) || s.plots[0];
-    out.push(['dest', `<div class="card"><div class="row wrap"><label for="dest">Teslim arsası</label><select id="dest" data-c="dest">${s.plots.map(p => `<option value="${p.id}" ${p.id === dst.id ? 'selected' : ''}>Arsa ${p.id} · ${R[p.region].n}${p.b ? ' · ' + B[p.b.type].n : ' · boş'}</option>`).join('')}</select><label for="qty">Adet</label><input id="qty" class="price" inputmode="numeric" data-c="qty" value="${ui.qty}"></div><p class="muted small">Fiyatlar teslim fiyatıdır: mal bedeli ve ${R[dst.region].n} bölgesine taşıma dahil.${transMult() > 1 ? ' Taşıma ücretleri şu an zamlı.' : ''}</p></div>`]);
+    out.push(['dest', `<div class="card"><div class="row wrap"><label for="dest">Teslim arsası</label><select id="dest" data-c="dest">${s.plots.filter(p => !p.part).map(p => `<option value="${p.id}" ${p.id === dst.id ? 'selected' : ''}>Arsa ${p.id} · ${R[p.region].n}${p.b ? ' · ' + B[p.b.type].n : ' · boş'}</option>`).join('')}</select><label for="qty">Adet</label><input id="qty" class="price" inputmode="numeric" data-c="qty" value="${ui.qty}"></div><p class="muted small">Fiyatlar teslim fiyatıdır: mal bedeli ve ${R[dst.region].n} bölgesine taşıma dahil.${transMult() > 1 ? ' Taşıma ücretleri şu an zamlı.' : ''}</p></div>`]);
     if (s.mine.length) out.push(['mine', '<div class="card"><h3>İlanlarım</h3>' + s.mine.map(l => `<div class="row"><span>${P[l.p].n} · ${l.qty} adet · ${fmt1(l.price)}${l.auto ? ' · otomatik' : ''}<br><span class="small">${speedNote(l.price / price(l.p))}</span></span>${btn('Geri çek', 'unlist', { id: l.id }, 'ghost')}</div>`).join('') + '<p class="muted small">Satışlardan %3 komisyon kesilir.</p></div>']);
     for (const k of PK) {
       const wU = price(k) * W_BUY + trans(1, k, dst.region, dst.region);
@@ -519,6 +548,7 @@
     const owned = s.plots.filter(p => !p.rented);
     if (owned.length) out.push(['hd', '<h2>Arsalarını sat</h2>']);
     for (const pl of owned) {
+      if (pl.part || (pl.b && (pl.b.parts || []).length)) { out.push(['s' + pl.id, `<div class="card"><div class="row head"><h3>Arsa ${pl.id} · ${R[pl.region].n}</h3><span class="muted small">günlük vergi ${fmt(dailyTax(pl))}</span></div><p class="muted small">Bu arsa birden çok arsaya yayılan bir binanın parçası. Satmak için önce binayı yık.</p></div>`]); continue; }
       const mv = +(ui.sel['ss' + pl.id] || 0), q = systemSaleQuote(pl, mv), others = otherPlots(pl);
       let h = `<div class="card"><div class="row head"><h3>Arsa ${pl.id} · ${R[pl.region].n}</h3><span class="muted small">günlük vergi ${fmt(dailyTax(pl))}</span></div><table class="t"><tr><td>Arsa (referans ${fmt(pl.ref)})</td><td>${fmt(q.land)}</td></tr><tr><td>Bina, harcananın yarısı</td><td>${fmt(q.bld)}</td></tr>`;
       if (invTotal(pl)) h += mv ? `<tr><td>Malların taşınması</td><td>${fmt(-q.tr)}</td></tr>` : `<tr><td>Depodaki mal, değerinin yarısı</td><td>${fmt(q.goods)}</td></tr>`;
