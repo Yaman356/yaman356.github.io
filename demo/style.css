@@ -123,3 +123,5 @@ section.flash .card { box-shadow: 0 0 0 2px var(--accent); transition: box-shado
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 select.cur { font: inherit; font-size: 13px; padding: 2px 4px; border-radius: 6px; }
 .right { text-align: right; }
+.rank { display: grid; gap: 4px; padding: 6px 0 2px; }
+.rank .bar i { background: var(--gold, var(--accent)); }

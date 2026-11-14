@@ -229,3 +229,21 @@ Gerçek piyasayı izlemez; seviye ve oynaklıklar araştırmaya göre ayarlanmı
 - **Emlak vergisi (büyükşehir):** arsa binde 6, tarla ve arazi binde 2, işyeri binde 4, yıllık; her oyun günü 52'de biri alınır. Boş ya da son günde çalışmamış arsaya oyun kuralı olarak 5 kat atıl arsa vergisi uygulanır; arsa sayısı çarpanı (%10/arsa) sürer.
 - **Tapu harcı:** alıcı ve satıcı %2 öder; satıcı ayrıca %1 ilan ücreti öder.
 - **Kira:** kiralık arsada kira cironun %5'idir (ortakçılık usulü). Gerçek tarla kirası (yılda 4.000–6.000 TL/dönüm) üretim gelirinin yanında çok küçük kaldığı için oyunda ciroya bağlı tutuldu.
+
+## 9. Zenginleşme amacı: servet basamakları
+
+Oyunun uzun vadeli amacı net değeri büyütüp **holding patronu** olmak. Kısa hedefler (bölüm hedefleri) ilk saatleri yönlendirir; bittikten sonra oyuncuyu servet basamakları taşır.
+
+| Unvan | Net değer eşiği | Açılan ayrıcalık |
+|---|---|---|
+| Seyyar esnaf | başlangıç | — |
+| Esnaf | ₺10 mn | Taşıma %10 ucuz |
+| Tüccar | ₺30 mn | Borç faizi yarıya iner |
+| Sanayici | ₺100 mn | Emlak vergisi %25 indirimli |
+| Fabrikatör | ₺300 mn | Taşıma %20 ucuz |
+| Holding patronu | ₺1 mlr | Oyun kazanılır; kaçıncı günde ulaşıldığı rekor olarak saklanır |
+
+- Unvan kalıcıdır: net değer sonradan düşse de geri alınmaz.
+- Üst bilgi çubuğunda unvan ve bir sonraki eşiğe ilerleme çubuğu görünür; Rapor sekmesinde bütün basamaklar listelenir.
+- Kazandıktan sonra oyun sürer; amaç daha az günde holding olmak (rekor).
+- Sonraki sürüm fikri: rekorlar için arkadaşlarla karşılaştırma tablosu, her basamakta yeni bina türü ya da bölge açılması.
