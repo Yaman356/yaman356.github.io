@@ -650,7 +650,7 @@
     out.push(['td', tbl(s.today, 'Bugün')]); out.push(['pv', tbl(s.prev, 'Dün')]);
     out.push(['pr', '<div class="card"><h3>Fiyatlar</h3><div class="scroll"><table class="t prices">' + PK.map(k => `<tr><td>${P[k].n}</td><td>${fmt1(price(k))}</td><td>${trend(k)}</td><td>${spark(k)}</td></tr>`).join('') + '</table></div></div>']);
     out.push(['gl', '<div class="card"><h3>Hedefler</h3>' + GOALS.map((g, i) => `<div class="row"><span class="${s.goals[i] ? 'done' : ''}">${g[0]}</span><span>${s.goals[i] ? '✓' : ''}</span></div>`).join('') + '</div>']);
-    out.push(['credit', '<p class="muted small">İkonlar: Microsoft Fluent Emoji, MIT lisansı.</p>']);
+    out.push(['credit', '<p class="muted small">Ürün ve bina ikonları: game-icons.net (Lorc, Delapouite ve katkıda bulunanlar), CC BY 3.0. Harita çizimleri bu oyun için yapıldı.</p>']);
     out.push(['rs', `<div class="row">${btn(ui.confirmReset ? 'Emin misin? Tekrar dokun' : 'Oyunu sıfırla', 'reset', {}, 'ghost')}</div>`]);
     return out;
   }

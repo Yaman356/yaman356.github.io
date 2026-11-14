@@ -97,7 +97,7 @@ input.price { width: 76px; text-align: right; font-variant-numeric: tabular-nums
 .grid2 { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 10px; align-items: center; }
 .grid2 select, .grid2 input { width: 100%; }
 input:disabled { opacity: .6; }
-.ic { flex: none; color: var(--fg); filter: drop-shadow(0 1px 0 rgba(0,0,0,.08)); }
+.ic { flex: none; color: var(--fg); }
 .named { display: inline-flex; align-items: center; gap: 6px; }
 .choice .ic { margin-bottom: 2px; }
 .map { display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 4px; }
@@ -107,7 +107,7 @@ input:disabled { opacity: .6; }
 .pin text { font: 700 9px var(--body); fill: var(--on-accent); }
 .tag rect { fill: var(--amber); }
 .tag text { font: 700 7px var(--body); fill: #1a1a1a; letter-spacing: .04em; }
-.decor { opacity: .8; }
+.decor { opacity: .9; }
 .region figcaption { display: flex; justify-content: space-between; align-items: baseline; }
 .region figcaption span { font: 400 12px var(--body); color: var(--muted); }
 .sign { font: 700 6px var(--body); fill: #1a1a1a; letter-spacing: .04em; }
