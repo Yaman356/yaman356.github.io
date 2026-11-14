@@ -8,9 +8,9 @@
     pamuk: { n: 'Pamuk', ref: 8, w: 1, b: 'tarla', t: 45, op: 40, in: {} },
     komur: { n: 'Kömür', ref: 6, w: 2, b: 'maden', t: 45, op: 30, in: {}, d: 4 },
     demir: { n: 'Demir cevheri', ref: 10, w: 2, b: 'maden', t: 60, op: 50, in: {} },
-    un: { n: 'Un', ref: 14, w: 1, b: 'fabrika', t: 60, op: 30, in: { bugday: 20 }, d: 3 },
-    kumas: { n: 'Kumaş', ref: 27, w: 1, b: 'fabrika', t: 120, op: 50, in: { pamuk: 20 } },
-    celik: { n: 'Çelik', ref: 40, w: 2, b: 'fabrika', t: 120, op: 60, in: { demir: 20, komur: 10 } },
+    un: { n: 'Un', ref: 14, w: 1, b: 'fabrika', t: 60, op: 15, in: { bugday: 20 }, d: 3 },
+    kumas: { n: 'Kumaş', ref: 27, w: 1, b: 'fabrika', t: 120, op: 25, in: { pamuk: 20 } },
+    celik: { n: 'Çelik', ref: 40, w: 2, b: 'fabrika', t: 120, op: 30, in: { demir: 20, komur: 10 } },
     ekmek: { n: 'Ekmek', ref: 24, w: 1, b: 'fabrika', t: 60, op: 40, in: { un: 10 }, d: 12 },
     peynir: { n: 'Peynir', ref: 30, w: 1, b: 'fabrika', t: 180, op: 50, in: { sut: 30 }, d: 8 },
     giysi: { n: 'Giysi', ref: 46, w: 0.5, b: 'fabrika', t: 180, op: 80, in: { kumas: 10 }, d: 5 },
@@ -48,32 +48,13 @@
   const GOALS = [
     ['Arsana bir bina kur', s => s.plots.some(p => p.b)],
     ['İlk satışını yap', s => s.totalIncome > 0],
+    ['Bir ürüne otomatik fiyat kuralı koy', s => s.plots.some(p => p.b && Object.values(p.b.rule || {}).some(r => r.mode !== 'elle'))],
     ['Kasanda ₺10.000 biriktir', s => s.money >= 10000],
     ['Bir arsa artırması kazan', s => s.plots.some(p => !p.rented)],
     ['Üç arsaya ulaş', s => s.plots.length >= 3],
     ['Net değerini ₺50.000 yap', s => netWorth() >= 50000],
   ];
-  const SAVE_KEY = 'tezgah-demo-v1';
-  const BUYERS = ['Nazlı Hanım', 'Cemil Usta', 'Bakkal Rıza', 'Sirma Abla', 'Genç Tuna', 'Hacı Dayı', 'Mimar Efsun'];
-  const BT = {
-    aceleci: { hint: 'Saatine bakıp duruyor. Acelesi var.', max: [1.10, 1.20], pat: 3, open: 0.98 },
-    pazarlikci: { hint: 'Gözleri parlıyor. Pazarlığı seviyor.', max: [1.08, 1.18], pat: 5, open: 0.92 },
-    cimri: { hint: 'Cüzdanını sıkı sıkı tutuyor.', max: [1.02, 1.10], pat: 4, open: 0.95 },
-    zengin: { hint: 'Kapıda şoförü bekliyor.', max: [1.18, 1.32], pat: 3, open: 1.0 },
-    kararsiz: { hint: 'Bir rafa bir sana bakıyor.', max: [1.03, 1.24], pat: 4, open: 0.96 },
-  };
-  const SAY = {
-    open: ['Selam! {q} {p} lazım. Tanesine {o} veririm.', 'Hepsini alırım ama tanesi {o} olur.', 'Kolay gelsin. {q} {p}, tanesi {o}. Ne dersin?'],
-    far: ['Hmm, peki. {o} diyelim.', 'Tamam tamam, {o}.', 'İyi pazarlık ediyorsun. {o} olsun.'],
-    mid: ['Zorluyorsun ama... {o}.', 'Bu son olsun, {o}.', 'Evdekiler duymasın, {o}.'],
-    near: ['{o}. Kuruş daha çıkmaz.', 'Cebimde bu kadar var: {o}.', 'Terlettin beni. {o}, son sözüm.'],
-    ceil: ['Daha fazlası kesemden çıkmaz.', 'Olmaz, sınırım bu.', 'Boşuna uğraşma, daha veremem.'],
-    angry: ['Yok artık! Soyguna mı geldik?', 'Bu fiyata dükkânı da verirsin herhalde!', 'Sen beni turist mi sandın?'],
-    bluffWin: ['Dur dur, başkasına verme! {o} veriyorum.', 'Aman, elimden kaçmasın. {o}!'],
-    bluffLose: ['Öyleyse ona sat. Sabrım taşıyor.', 'Başka alıcı mı? Güldürme beni.'],
-    leave: ['Hayırlı işler. Ben karşı dükkâna gidiyorum.', 'Bu kadar naz yeter. Hoşça kal.'],
-    deal: ['Anlaştık! Hayırlı olsun.', 'El sıkışalım. Bereketini gör.', 'Sonunda! Paketle bakalım.'],
-  };
+  const SAVE_KEY = 'tezgah-demo-v2';
 
   // ---------- Durum ----------
   let s, ui = { tab: 'plots', dest: 1, qty: 20, listMul: 1, sel: {} };
@@ -87,14 +68,13 @@
   function emptyStats() { return { inc: {}, exp: {} }; }
   function newGame() {
     s = {
-      v: 1, money: 5000, t: 8 * 60, lastHour: 8, speed: 1, nextId: 100, nextPlot: 2, totalIncome: 0,
+      v: 2, money: 5000, t: 8 * 60, lastHour: 8, speed: 1, nextId: 100, nextPlot: 2, totalIncome: 0,
       plots: [{ id: 1, region: 'kirsal', rented: true, ref: R.kirsal.land, b: null, inv: {}, last: -1e9, paid: 0 }],
-      mult: {}, hist: {}, npcA: {}, listings: [], mine: [], auctions: [], events: [], news: [],
+      mult: {}, hist: {}, rivals: {}, unread: 0, listings: [], mine: [], auctions: [], events: [], news: [],
       today: emptyStats(), prev: emptyStats(), goals: [], freeSwap: true, lastEvent: '', nextListAt: 0,
-      hag: { left: 5, offer: null, streak: 0 },
     };
     for (const k of PK) { s.mult[k] = 1; s.hist[k] = [1]; }
-    for (const r in R) { s.npcA[r] = {}; for (const k of PK) s.npcA[r][k] = rnd(1.4, 2.0); }
+    for (const r in R) { s.rivals[r] = {}; for (const k of PK) if (P[k].d) s.rivals[r][k] = [rnd(0.97, 1.1), rnd(0.97, 1.1)]; }
     genListings();
     spawnAuction();
     news('Tezgâh açıldı', 'Kırsal’da kiralık bir arsan ve ₺5.000 sermayen var. İlk iki gün kira ve vergi alınmaz.');
@@ -102,7 +82,7 @@
   }
   function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(s)); } catch (e) { /* depolama yoksa oyun yine çalışır */ } }
   function load() {
-    try { const d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (d && d.v === 1 && Array.isArray(d.plots)) { s = d; if (!s.hag) s.hag = { left: 5, offer: null, streak: 0 }; if (!s.nextPlot) s.nextPlot = Math.max(...s.plots.map(p => p.id)) + 1; return true; } } catch (e) { /* yoksay */ }
+    try { const d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (d && d.v === 2 && Array.isArray(d.plots)) { s = d; return true; } } catch (e) { /* yoksay */ }
     return false;
   }
 
@@ -121,12 +101,64 @@
   function inc(kind, amt) { s.money += amt; s.totalIncome += amt; s.today.inc[kind] = (s.today.inc[kind] || 0) + amt; }
   function exp(kind, amt) { s.money -= amt; s.today.exp[kind] = (s.today.exp[kind] || 0) + amt; }
   function rentOn(pl, amt) { if (pl.rented && s.t >= FREE_UNTIL) exp('Kira', amt * RENT); }
-  function news(title, body) { s.news.unshift({ t: s.t, title, body }); if (s.news.length > 40) s.news.pop(); }
+  function news(title, body, alert) { s.news.unshift({ t: s.t, title, body }); if (s.news.length > 40) s.news.pop(); if (ui.tab !== 'news') s.unread = (s.unread || 0) + 1; if (alert) toast(title); }
   function shopRate(pl, p) {
     const pr = pl.b.prices[p] || retailRef(p);
     const A = Math.pow(retailRef(p) / pr, 2) * (1 + 0.1 * (pl.b.level - 1));
     const D = (P[p].d || 0) * R[pl.region].dm * demandMult(pl.region, p);
-    return D * A / (A + s.npcA[pl.region][p] + 1);
+    const RA = s.rivals[pl.region][p].reduce((a, m) => a + 1 / (m * m), 0);
+    return D * A / (A + RA + 1);
+  }
+  // Rakip dükkânlar: her bölgede her ürün için iki rakip; fiyatları olağan perakende fiyatının katı olarak tutulur
+  const rivalLo = (region, p) => Math.min(...s.rivals[region][p]) * retailRef(p);
+  const rivalAvg = (region, p) => s.rivals[region][p].reduce((a, b) => a + b, 0) / s.rivals[region][p].length * retailRef(p);
+  function rivalsMove() {
+    for (const r in R) for (const p in s.rivals[r]) {
+      let pm = Infinity;
+      for (const pl of s.plots) if (pl.b && pl.b.type === 'dukkan' && pl.region === r && (pl.inv[p] || 0) > 0) pm = Math.min(pm, (pl.b.prices[p] || retailRef(p)) / retailRef(p));
+      s.rivals[r][p] = s.rivals[r][p].map(m => (pm < m && Math.random() < 0.3) ? clamp(pm - 0.01, 0.72, 1.3) : clamp(m + (1.02 - m) * 0.05 + rnd(-0.01, 0.01), 0.72, 1.3));
+    }
+  }
+  // Dükkânın rafındaki ürünler: stokta olanlar ve kuralı tanımlı olanlar
+  const shelf = pl => [...new Set([...Object.keys(pl.inv), ...Object.keys(pl.b.rule), ...Object.keys(pl.b.auto).filter(p => pl.b.auto[p])])].filter(p => P[p]);
+  const shopCost = (pl, p) => pl.b.cost[p] || price(p) * W_BUY;
+  function ruleFloor(pl, p) { const r = pl.b.rule[p]; return shopCost(pl, p) * (1 + (r ? r.margin : 0.1)) / (pl.rented ? 1 - RENT : 1); }
+  function applyRule(pl, p) {
+    const r = pl.b.rule[p]; if (!r || r.mode === 'elle' || !P[p].d) return;
+    const target = r.mode === 'ucuz' ? rivalLo(pl.region, p) * 0.99 : rivalAvg(pl.region, p);
+    pl.b.prices[p] = Math.round(Math.min(retailRef(p) * 1.5, Math.max(ruleFloor(pl, p), target)) * 10) / 10;
+  }
+  // Satın alma: pazardaki ilanlar ve sistem toptancısı, teslim fiyatına göre
+  function sources(p, region) {
+    const src = s.listings.filter(l => l.p === p).map(l => ({ l, unit: l.price + trans(1, p, l.region, region) }));
+    src.push({ l: null, unit: price(p) * W_BUY + trans(1, p, region, region) });
+    return src.sort((a, b) => a.unit - b.unit);
+  }
+  function addCost(pl, p, q, unit) { if (!pl.b || pl.b.type !== 'dukkan') return; const old = pl.inv[p] || 0; pl.b.cost[p] = (old * (pl.b.cost[p] || unit) + q * unit) / (old + q); }
+  function purchase(to, p, q, l) {
+    const unit = l ? l.price : price(p) * W_BUY, tu = trans(1, p, l ? l.region : to.region, to.region);
+    q = Math.min(q, l ? l.qty : Infinity, cap(to) - invTotal(to), Math.floor(s.money / (unit + tu)));
+    if (q <= 0) return 0;
+    exp('Mal alımı', unit * q); exp('Taşıma', tu * q); addCost(to, p, q, unit + tu); add(to, p, q);
+    if (l) { l.qty -= q; if (l.qty <= 0) s.listings = s.listings.filter(x => x !== l); }
+    s.mult[p] = clamp(s.mult[p] + 0.00002 * P[p].ref * q, 0.6, 1.5);
+    return q;
+  }
+  function supply(pl, p, q, maxUnit) {
+    let got = 0;
+    for (const x of sources(p, pl.region)) { if (q - got <= 0 || x.unit > maxUnit) break; got += purchase(pl, p, q - got, x.l); }
+    return got;
+  }
+  function autoRestock(pl, p) {
+    const m = pl.b.auto[p]; if (!m || !P[p].d) return;
+    const have = pl.inv[p] || 0; if (have >= 20) return;
+    supply(pl, p, Math.min(60 - have, cap(pl) - invTotal(pl)), price(p) * m);
+  }
+  function autoInputs(pl, ln) {
+    for (const [k, q] of Object.entries(P[ln.r].in)) {
+      const have = pl.inv[k] || 0;
+      if (have < q) supply(pl, k, Math.min(3 * q - have, cap(pl) - invTotal(pl)), price(k) * ln.auto);
+    }
   }
   function landValue() { return s.plots.filter(p => !p.rented).reduce((a, p) => a + p.ref, 0); }
   function netWorth() {
@@ -194,24 +226,27 @@
       s.mult[k] = clamp(s.mult[k] + (1 - s.mult[k]) * 0.03 + rnd(-0.012, 0.012), 0.6, 1.5);
       if (h % 2 === 0) { s.hist[k].push(s.mult[k]); if (s.hist[k].length > 36) s.hist[k].shift(); }
     }
-    for (const r in R) for (const k of PK) s.npcA[r][k] = clamp(s.npcA[r][k] + rnd(-0.08, 0.08), 1.2, 2.4);
     for (const a of s.auctions) {
       const next = Math.ceil(Math.max(a.start, a.bid * 1.05));
       if (a.bidder !== 'npc' && a.npc.some(m => m >= next) && Math.random() < 0.55) {
-        if (a.bidder === 'me') { s.money += a.bid; news('Teklifin geçildi', R[a.region].n + ' arsası için yeni teklif: ' + fmt(next) + '. Teminatın iade edildi.'); }
+        if (a.bidder === 'me') { s.money += a.bid; news('Teklifin geçildi', R[a.region].n + ' arsası için yeni teklif: ' + fmt(next) + '. Teminatın iade edildi.', true); }
         a.bid = next; a.bidder = 'npc';
         if (a.end - s.t < 60) a.end = s.t + 60;
       }
     }
     if (s.t >= s.nextListAt) genListings();
-    if (s.hag.offer && (s.t > s.hag.offer.until || (plot(s.hag.offer.plot)?.inv[s.hag.offer.p] || 0) < s.hag.offer.qty)) s.hag.offer = null;
-    if (!s.hag.offer && s.hag.left > 0 && !ui.neg && Math.random() < 0.6) newBuyer();
+    rivalsMove();
+    for (const pl of s.plots) {
+      if (!pl.b) continue;
+      if (pl.b.type === 'dukkan') { for (const p of shelf(pl)) { autoRestock(pl, p); applyRule(pl, p); } }
+      else for (const ln of pl.b.lines) if (ln.auto && ln.r) autoInputs(pl, ln);
+    }
     if (h % 24 === 0) daily(h / 24);
   }
 
   function daily(day) {
     if (s.t >= FREE_UNTIL) for (const pl of s.plots) { const tx = dailyTax(pl); if (tx > 0) exp('Vergi', tx); }
-    s.prev = s.today; s.today = emptyStats(); s.hag.left = 5;
+    s.prev = s.today; s.today = emptyStats();
     s.events = s.events.filter(e => s.t < e.end);
     let top = PK[0]; for (const k of PK) if (Math.abs(s.mult[k] - 1) > Math.abs(s.mult[top] - 1)) top = k;
     if (Math.abs(s.mult[top] - 1) > 0.08) news('Piyasa: ' + P[top].n + (s.mult[top] > 1 ? ' pahalandı' : ' ucuzladı'), P[top].n + ' fiyatı olağan seviyesinin %' + Math.round(Math.abs(s.mult[top] - 1) * 100) + (s.mult[top] > 1 ? ' üstünde.' : ' altında.'));
@@ -227,7 +262,7 @@
     if (!key || key === s.lastEvent) key = pick(Object.keys(EVENTS).filter(k => k !== s.lastEvent));
     s.lastEvent = key;
     s.events.push({ key, start: s.t + 1440, end: s.t + 1440 * 3 });
-    news(EVENTS[key].title, EVENTS[key].body + ' Yarın başlıyor, iki gün sürecek.');
+    news(EVENTS[key].title, EVENTS[key].body + ' Yarın başlıyor, iki gün sürecek.', true);
   }
 
   function genListings() {
@@ -258,7 +293,7 @@
       const id = s.nextPlot++;
       s.plots.push({ id, region: a.region, rented: false, ref: a.ref, b: null, inv: {}, last: -1e9, paid: a.bid });
       s.today.exp['Arsa alımı'] = (s.today.exp['Arsa alımı'] || 0) + a.bid;
-      news('Artırmayı kazandın', name + ' ' + fmt(a.bid) + ' karşılığında senin oldu.');
+      news('Artırmayı kazandın', name + ' ' + fmt(a.bid) + ' karşılığında senin oldu.', true);
     } else if (a.bidder === 'npc') news('Arsa satışı', name + ' isimsiz bir alıcıya ' + fmt(a.bid) + ' bedelle satıldı.');
   }
 
@@ -271,63 +306,22 @@
     return { land, bld, goods, tr, total: land + bld + goods - tr, fits };
   }
 
-  // ---------- Pazarlık mini oyunu ----------
-  function newBuyer() {
-    const c = [];
-    for (const pl of s.plots) for (const p in pl.inv) if (P[p].d && pl.inv[p] >= 10) c.push([pl, p]);
-    if (!c.length) return;
-    const [pl, p] = pick(c), type = pick(Object.keys(BT));
-    s.hag.offer = { name: pick(BUYERS), type, p, plot: pl.id, qty: Math.min(pl.inv[p], Math.round(rnd(1, 4)) * 10), until: s.t + 360 };
-  }
-  const say = (k, n) => pick(SAY[k]).replace('{o}', fmt1(n.offer)).replace('{q}', n.qty).replace('{p}', P[n.p].n.toLocaleLowerCase('tr-TR'));
-  function negReply(n) { const g = n.max / n.offer; n.line = say(g > 1.12 ? 'far' : g > 1.04 ? 'mid' : 'near', n); }
-  function negEnd(n, result) {
-    n.done = result; s.hag.left--; s.hag.offer = null;
-    if (result === 'left') { s.hag.streak = 0; n.line = say('leave', n); return; }
-    const pl = plot(n.plot), v = n.qty * n.offer;
-    add(pl, n.p, -n.qty); inc('Pazarlık', v); rentOn(pl, v); pl.last = s.t;
-    n.gain = (n.offer - n.base) * n.qty;
-    if (result === 'deal') { s.hag.streak++; n.line = say('deal', n); n.rate = n.offer / n.max >= 0.97 ? 'Usta işi' : n.offer / n.max >= 0.9 ? 'İyi anlaşma' : 'İdare eder'; }
-  }
-
   // ---------- Oyuncu eylemleri ----------
   const A = {
-    negStart() {
-      const o = s.hag.offer; if (!o) return; const bt = BT[o.type], base = retailRef(o.p);
-      ui.neg = { ...o, base, max: base * rnd(bt.max[0], bt.max[1]), offer: base * bt.open, pat: bt.pat, maxPat: bt.pat, bluffed: false, done: null, mood: '' };
-      ui.neg.line = say('open', ui.neg);
-    },
-    negMove(d) {
-      const n = ui.neg; if (!n || n.done) return; n.mood = ''; n.moved = true;
-      if (d.v === 'bluff') {
-        n.bluffed = true;
-        if (Math.random() < 0.5) { n.offer = Math.min(n.max, n.offer * 1.15); n.line = say('bluffWin', n); n.mood = 'pop'; }
-        else { n.pat -= 2; n.line = say('bluffLose', n); n.mood = 'shake'; }
-      } else {
-        const target = n.offer * (d.v === 'hard' ? 1.10 : 1.04);
-        if (target <= n.max) { n.offer = target; if (d.v === 'hard' || Math.random() > 0.35) n.pat--; negReply(n); n.mood = 'pop'; }
-        else if (d.v === 'hard') { n.pat -= 2; n.line = say('angry', n); n.mood = 'shake'; }
-        else { n.pat--; n.line = say('ceil', n); }
-      }
-      if (n.pat <= 0) negEnd(n, 'left');
-    },
-    negAccept() { const n = ui.neg; if (n && !n.done) negEnd(n, 'deal'); },
-    negAuto() { const n = ui.neg; if (n && !n.done) { n.offer = n.base; negEnd(n, 'auto'); n.line = 'Olağan fiyattan anlaştınız.'; } },
-    negClose() { ui.neg = null; },
-    tab(d) { ui.tab = d.v; },
+    tab(d) { ui.tab = d.v; if (d.v === 'news') s.unread = 0; },
     speed(d) { s.speed = +d.v; },
     reset() { if (ui.confirmReset) { newGame(); ui.confirmReset = false; ui.tab = 'plots'; } else { ui.confirmReset = true; setTimeout(() => { ui.confirmReset = false; }, 4000); } },
     build(d) {
       const pl = plot(+d.plot), bt = B[d.v];
       if (s.money < bt.cost) return toast('Para yetersiz');
       exp('İnşaat', bt.cost);
-      pl.b = { type: d.v, level: 1, spent: bt.cost, lines: d.v === 'dukkan' ? [] : [{ r: null, prog: 0, busy: false, st: 'Tarif seç' }], prices: {}, acc: {} };
+      pl.b = { type: d.v, level: 1, spent: bt.cost, lines: d.v === 'dukkan' ? [] : [{ r: null, prog: 0, busy: false, st: 'Tarif seç', auto: 0 }], prices: {}, acc: {}, rule: {}, auto: {}, cost: {} };
     },
     upgrade(d) {
       const pl = plot(+d.plot), c = B[pl.b.type].cost * pl.b.level;
       if (pl.b.level >= 3) return; if (s.money < c) return toast('Para yetersiz');
       exp('İnşaat', c); pl.b.level++; pl.b.spent += c;
-      if (pl.b.type !== 'dukkan') pl.b.lines.push({ r: null, prog: 0, busy: false, st: 'Tarif seç' });
+      if (pl.b.type !== 'dukkan') pl.b.lines.push({ r: null, prog: 0, busy: false, st: 'Tarif seç', auto: 0 });
     },
     demolish(d) {
       const pl = plot(+d.plot);
@@ -336,24 +330,19 @@
     },
     sellw(d) { const pl = plot(+d.plot), q = pl.inv[d.p]; inc('Toptancı', q * price(d.p) * W_SELL); rentOn(pl, q * price(d.p) * W_SELL); s.mult[d.p] = clamp(s.mult[d.p] - 0.00002 * P[d.p].ref * q, 0.6, 1.5); add(pl, d.p, -q); pl.last = s.t; },
     list(d) { const pl = plot(+d.plot), q = pl.inv[d.p]; s.mine.push({ id: s.nextId++, p: d.p, qty: q, price: Math.round(price(d.p) * ui.listMul * 10) / 10, acc: 0 }); add(pl, d.p, -q); pl.last = s.t; },
-    unlist(d) { const l = s.mine.find(x => x.id === +d.id), pl = plot(ui.dest) || s.plots.find(p => p.b); if (!pl || !pl.b) return toast('Malı koyacak depon yok'); if (invTotal(pl) + l.qty > cap(pl)) return toast('Hedef depoda yer yok'); add(pl, l.p, l.qty); s.mine = s.mine.filter(x => x !== l); },
+    unlist(d) { const l = s.mine.find(x => x.id === +d.id), pl = plot(ui.dest) || s.plots.find(p => p.b); if (!pl || !pl.b) return toast('Malı koyacak depon yok'); if (invTotal(pl) + l.qty > cap(pl)) return toast('Hedef depoda yer yok'); addCost(pl, l.p, l.qty, l.price); add(pl, l.p, l.qty); s.mine = s.mine.filter(x => x !== l); },
     move(d) {
       const pl = plot(+d.plot), to = plot(+(ui.sel['mv' + pl.id] || otherPlots(pl)[0]?.id)), q = pl.inv[d.p];
       if (!to || !to.b) return toast('Hedef arsada bina yok');
       if (invTotal(to) + q > cap(to)) return toast('Hedef depoda yer yok');
       const c = trans(q, d.p, pl.region, to.region); if (s.money < c) return toast('Para yetersiz');
-      exp('Taşıma', c); add(pl, d.p, -q); add(to, d.p, q);
+      exp('Taşıma', c); add(pl, d.p, -q); addCost(to, d.p, q, price(d.p) + c / q); add(to, d.p, q);
     },
     buy(d) {
       const to = plot(ui.dest); if (!to || !to.b) return toast('Önce binası olan bir hedef arsa seç');
-      const l = d.id ? s.listings.find(x => x.id === +d.id) : null, p = d.p;
-      const q = Math.min(Math.max(1, Math.floor(ui.qty) || 1), l ? l.qty : 9999, cap(to) - invTotal(to));
-      if (q <= 0) return toast('Hedef depoda yer yok');
-      const unit = l ? l.price : price(p) * W_BUY, tr = trans(q, p, l ? l.region : to.region, to.region);
-      if (s.money < unit * q + tr) return toast('Para yetersiz');
-      exp('Mal alımı', unit * q); exp('Taşıma', tr); add(to, p, q);
-      if (l) { l.qty -= q; if (l.qty <= 0) s.listings = s.listings.filter(x => x !== l); }
-      s.mult[p] = clamp(s.mult[p] + 0.00002 * P[p].ref * q, 0.6, 1.5);
+      if (cap(to) - invTotal(to) <= 0) return toast('Hedef depoda yer yok');
+      const l = d.id ? s.listings.find(x => x.id === +d.id) : null;
+      if (!purchase(to, d.p, Math.max(1, Math.floor(ui.qty) || 1), l)) toast('Para yetersiz');
     },
     bid(d) {
       const a = s.auctions.find(x => x.id === +d.id); if (!a || a.bidder === 'me') return;
@@ -378,7 +367,11 @@
   };
   const C = {
     recipe(el) { const ln = plot(+el.dataset.plot).b.lines[+el.dataset.i]; ln.r = el.value || null; ln.busy = false; ln.prog = 0; },
-    price(el) { const v = parseFloat(el.value.replace(',', '.')); if (v > 0) plot(+el.dataset.plot).b.prices[el.dataset.p] = v; },
+    price(el) { const v = parseFloat(el.value.replace(',', '.')), pl = plot(+el.dataset.plot); if (v > 0) { pl.b.prices[el.dataset.p] = v; if (pl.b.rule[el.dataset.p]) pl.b.rule[el.dataset.p].mode = 'elle'; } },
+    rule(el) { const pl = plot(+el.dataset.plot), p = el.dataset.p, r = pl.b.rule[p] || { mode: 'elle', margin: 0.1 }; r[el.dataset.f] = el.dataset.f === 'mode' ? el.value : +el.value; pl.b.rule[p] = r; applyRule(pl, p); },
+    auto(el) { const pl = plot(+el.dataset.plot); pl.b.auto[el.dataset.p] = +el.value; autoRestock(pl, el.dataset.p); },
+    lineAuto(el) { const pl = plot(+el.dataset.plot), ln = pl.b.lines[+el.dataset.i]; ln.auto = +el.value; if (ln.auto && ln.r) autoInputs(pl, ln); },
+    addShelf(el) { if (!el.value) return; const pl = plot(+el.dataset.plot), p = el.value; pl.b.auto[p] = pl.b.auto[p] || 1.1; pl.b.rule[p] = pl.b.rule[p] || { mode: 'ucuz', margin: 0.1 }; autoRestock(pl, p); applyRule(pl, p); },
     qty(el) { ui.qty = clamp(parseInt(el.value, 10) || 1, 1, 500); },
     dest(el) { ui.dest = +el.value; },
     listMul(el) { ui.listMul = +el.value; },
@@ -409,39 +402,43 @@
     h += btn(`Yık (iade ${fmt(b.spent * (s.freeSwap ? 1 : 0.5))})`, 'demolish', { plot: pl.id }, 'ghost') + '</div>';
     b.lines.forEach((ln, i) => {
       const opts = PK.filter(k => P[k].b === b.type).map(k => `<option value="${k}" ${ln.r === k ? 'selected' : ''}>${P[k].n}${Object.keys(P[k].in).length ? ' ← ' + Object.entries(P[k].in).map(([x, q]) => q + ' ' + P[x].n).join(', ') : ''}</option>`).join('');
-      h += `<div class="line"><label class="small muted" for="rc${pl.id}_${i}">Hat ${i + 1}</label><select id="rc${pl.id}_${i}" data-c="recipe" data-plot="${pl.id}" data-i="${i}"><option value="">Tarif seç</option>${opts}</select><div class="bar"><i data-prog="${pl.id}:${i}"></i></div><span class="small ${ln.busy ? 'muted' : 'warn'}">${ln.busy ? 'Üretiyor · parti gideri ' + fmt(P[ln.r].op) : esc(ln.st || '')}</span></div>`;
+      h += `<div class="line"><label class="small muted" for="rc${pl.id}_${i}">Hat ${i + 1}</label><select id="rc${pl.id}_${i}" data-c="recipe" data-plot="${pl.id}" data-i="${i}"><option value="">Tarif seç</option>${opts}</select><div class="bar"><i data-prog="${pl.id}:${i}"></i></div><span class="small ${ln.busy ? 'muted' : 'warn'}">${ln.busy ? 'Üretiyor · parti gideri ' + fmt(P[ln.r].op) : esc(ln.st || '') + (ln.auto && ln.st && ln.st.startsWith('Girdi') ? ' · bu fiyata uygun satıcı yok' : '')}</span>${ln.r && Object.keys(P[ln.r].in).length ? `<label class="small muted" for="la${pl.id}_${i}">Girdi bitince</label><select id="la${pl.id}_${i}" data-c="lineAuto" data-plot="${pl.id}" data-i="${i}">${[[0, 'Elle alırım'], [1, 'Olağan fiyata kadar al'], [1.1, 'Olağanın %10 fazlasına kadar al'], [1.35, 'Toptancı dahil al (%35 fazlası)']].map(([v, l]) => `<option value="${v}" ${(ln.auto || 0) === v ? 'selected' : ''}>${l}</option>`).join('')}</select>` : ''}</div>`;
     });
-    const items = Object.keys(pl.inv);
+    const items = b.type === 'dukkan' ? shelf(pl) : Object.keys(pl.inv);
     if (!items.length) h += `<p class="muted small">${b.type === 'dukkan' ? 'Raflar boş. Pazar sekmesinden mal al ya da kendi üretimini buraya taşı.' : 'Depo boş.'}</p>`;
     const others = otherPlots(pl);
     if (items.length && others.length) h += `<div class="row small"><label for="mv${pl.id}">Taşıma hedefi</label><select id="mv${pl.id}" data-c="sel" data-k="mv${pl.id}">${others.map(o => `<option value="${o.id}" ${ui.sel['mv' + pl.id] == o.id ? 'selected' : ''}>Arsa ${o.id} · ${R[o.region].n}</option>`).join('')}</select></div>`;
     for (const p of items) {
-      h += `<div class="item"><div class="row"><b>${P[p].n}</b><span class="num">${pl.inv[p]} adet</span></div>`;
-      if (b.type === 'dukkan' && P[p].d) {
-        const pr = b.prices[p] || retailRef(p);
-        h += `<div class="row small"><label for="pr${pl.id}${p}">Raf fiyatı</label><input id="pr${pl.id}${p}" class="price" inputmode="decimal" data-c="price" data-plot="${pl.id}" data-p="${p}" value="${pr.toFixed(1)}"><span class="muted">olağan ${fmt1(retailRef(p))} · saatte ≈${shopRate(pl, p).toFixed(1)} satış</span></div>`;
-      } else if (b.type === 'dukkan') h += '<p class="warn small">Şehir halkı bu ürünü almaz; pazarda sat ya da fabrikaya taşı.</p>';
-      h += `<div class="row wrap">${btn('Toptancıya sat ' + fmt(pl.inv[p] * price(p) * W_SELL), 'sellw', { plot: pl.id, p })}${btn('Pazara ilan ver', 'list', { plot: pl.id, p })}${others.length ? btn('Taşı', 'move', { plot: pl.id, p }, 'ghost') : ''}</div></div>`;
+      const q = pl.inv[p] || 0;
+      h += `<div class="item"><div class="row"><b>${P[p].n}</b><span class="num">${q} adet</span></div>`;
+      if (b.type === 'dukkan' && P[p].d) h += shopControls(pl, p);
+      else if (b.type === 'dukkan') h += '<p class="warn small">Şehir halkı bu ürünü almaz; pazarda sat ya da fabrikaya taşı.</p>';
+      if (q > 0) h += `<div class="row wrap">${btn('Toptancıya sat ' + fmt(q * price(p) * W_SELL), 'sellw', { plot: pl.id, p })}${btn('Pazara ilan ver', 'list', { plot: pl.id, p }, 'ghost')}${others.length ? btn('Taşı', 'move', { plot: pl.id, p }, 'ghost') : ''}</div>`;
+      h += '</div>';
+    }
+    if (b.type === 'dukkan') {
+      const rest = PK.filter(p => P[p].d && !items.includes(p));
+      if (rest.length) h += `<div class="row small"><label for="as${pl.id}">Rafa ürün ekle</label><select id="as${pl.id}" data-c="addShelf" data-plot="${pl.id}"><option value="">Ürün seç</option>${rest.map(p => `<option value="${p}">${P[p].n}</option>`).join('')}</select></div><p class="muted small">Eklenen ürün otomatik alınır ve en ucuz rakibin biraz altında satılır; ayarları sonra değiştirebilirsin.</p>`;
     }
     return h + '</div>';
   }
 
-  function negCard(n) {
-    const face = n.done === 'left' ? '😤' : n.done ? '🤝' : n.pat / n.maxPat > 0.67 ? '😀' : n.pat / n.maxPat > 0.34 ? '😐' : '😠';
-    const diff = (n.offer / n.base - 1) * 100;
-    let h = `<div class="card neg"><div class="row head"><h3>${esc(n.name)}</h3><span class="tag">${n.qty} ${P[n.p].n}</span></div><p class="muted small">${BT[n.type].hint}</p>
-      <div class="talk ${n.mood}"><span class="face" aria-hidden="true">${face}</span><p class="bubble">${esc(n.line)}</p></div>
-      <div class="row"><div><span class="small muted">Teklifi, tanesi</span><div class="offer ${n.mood === 'pop' ? 'bump' : ''}">${fmt1(n.offer)}</div></div><div class="small" style="text-align:right"><span class="muted">olağan ${fmt1(n.base)}</span><br><span class="${diff >= 0 ? 'up' : 'down'}">${diff >= 0 ? '+' : '−'}%${Math.abs(diff).toFixed(0)}</span></div></div>
-      <div class="row small"><span class="muted">Sabır</span><span class="pips" aria-label="Kalan sabır ${Math.max(0, n.pat)}">${Array.from({ length: n.maxPat }, (_, i) => `<i class="${i < n.pat ? 'on' : ''}"></i>`).join('')}</span></div>`;
-    if (!n.done) h += `<div class="moves">${btn('Biraz artır<small>az risk</small>', 'negMove', { v: 'soft' }, 'ghost')}${btn('Sıkı pazarlık<small>çok kazanç, çok risk</small>', 'negMove', { v: 'hard' }, 'ghost')}${n.bluffed ? '' : btn('Blöf yap<small>başka alıcım var</small>', 'negMove', { v: 'bluff' }, 'ghost')}</div><div class="row wrap">${btn('Anlaştık ' + fmt(n.offer * n.qty), 'negAccept')}${n.moved ? '' : btn('Pazarlıksız sat ' + fmt(n.base * n.qty), 'negAuto', {}, 'ghost')}</div>`;
-    else h += `<div class="result">${n.done === 'left' ? '<b>Alıcı gitti.</b><span class="small">Malın sende kaldı.</span>' : `<b>${n.done === 'deal' ? n.rate : 'Satıldı'} · ${fmt(n.offer * n.qty)}</b><span class="small">Olağan fiyata göre ${n.gain >= 0 ? '+' : '−'}${fmt(Math.abs(n.gain)).replace('−', '')}${n.done === 'deal' && s.hag.streak > 1 ? ' · ' + s.hag.streak + ' anlaşmalık seri' : ''}</span>`}</div>${btn('Tamam', 'negClose')}`;
-    return h + '</div>';
+  function shopControls(pl, p) {
+    const r = pl.b.rule[p] || { mode: 'elle', margin: 0.1 }, pr = pl.b.prices[p] || retailRef(p), au = pl.b.auto[p] || 0, id = pl.id + p;
+    const lo = rivalLo(pl.region, p), cheapest = pr <= lo + 0.05;
+    const opt = (list, cur) => list.map(([v, l]) => `<option value="${v}" ${cur === v ? 'selected' : ''}>${l}</option>`).join('');
+    return `<div class="rivals small"><span>Rakiplerde en ucuz <b class="num">${fmt1(lo)}</b></span><span>ortalama <b class="num">${fmt1(rivalAvg(pl.region, p))}</b></span><span class="${cheapest ? 'up' : 'warn'}">${cheapest ? 'En ucuz sensin' : 'Rakip daha ucuz'}</span></div>
+      <div class="grid2 small">
+        <label for="rm${id}">Fiyat kuralı</label><select id="rm${id}" data-c="rule" data-f="mode" data-plot="${pl.id}" data-p="${p}">${opt([['elle', 'Elle belirlerim'], ['ucuz', 'En ucuz rakibin %1 altı'], ['ort', 'Bölge ortalaması']], r.mode)}</select>
+        <label for="rg${id}">En düşük fiyat</label><select id="rg${id}" data-c="rule" data-f="margin" data-plot="${pl.id}" data-p="${p}">${opt([[0, 'Maliyet kadar'], [0.1, 'Maliyetin %10 üstü'], [0.2, 'Maliyetin %20 üstü']], r.margin)}</select>
+        <label for="pr${id}">Raf fiyatı</label><input id="pr${id}" class="price" inputmode="decimal" data-c="price" data-plot="${pl.id}" data-p="${p}" value="${pr.toFixed(1)}" ${r.mode !== 'elle' ? 'disabled' : ''}>
+        <label for="au${id}">Stok azalınca</label><select id="au${id}" data-c="auto" data-plot="${pl.id}" data-p="${p}">${opt([[0, 'Elle alırım'], [1, 'Olağan fiyata kadar al'], [1.1, 'Olağanın %10 fazlasına kadar al'], [1.35, 'Toptancı dahil al (%35 fazlası)']], au)}</select>
+      </div>
+      <p class="muted small">Birim maliyetin ${fmt1(shopCost(pl, p))} · saatte ≈${shopRate(pl, p).toFixed(1)} satış${au ? ' · stok 20’nin altına inince 60’a tamamlanır' : ''}</p>`;
   }
 
   function viewPlots() {
-    if (ui.neg) return [['neg', negCard(ui.neg)]];
     const out = [];
-    if (s.hag.offer) { const o = s.hag.offer; out.push(['buyer', `<div class="card buyer"><div class="row"><div><b>Kapıda bir alıcı var</b><p class="small muted">${esc(o.name)}, ${o.qty} ${P[o.p].n.toLocaleLowerCase('tr-TR')} istiyor · bugün ${s.hag.left} pazarlık hakkın kaldı</p></div>${btn('Pazarlık et', 'negStart')}</div></div>`]); }
     const next = GOALS.findIndex((g, i) => !s.goals[i]);
     out.push(['goal', next < 0 ? '<div class="goal">Bütün hedefler tamamlandı. Şirketini büyütmeye devam et.</div>' : `<div class="goal"><span class="small">Sıradaki hedef ${next + 1}/${GOALS.length}</span><b>${GOALS[next][0]}</b></div>`]);
     out.push(['lm', `<div class="row small"><label for="listMul">Pazara ilan fiyatı</label><select id="listMul" data-c="listMul"><option value="0.9" ${ui.listMul === 0.9 ? 'selected' : ''}>olağanın %10 altı (hızlı satar)</option><option value="1" ${ui.listMul === 1 ? 'selected' : ''}>olağan fiyat</option><option value="1.1" ${ui.listMul === 1.1 ? 'selected' : ''}>olağanın %10 üstü (yavaş satar)</option></select></div>`]);
@@ -471,7 +468,7 @@
     for (const a of s.auctions) {
       const next = Math.ceil(Math.max(a.start, a.bid * 1.05));
       const who = a.plot ? 'Senin ilanın' : a.bidder === 'me' ? 'En yüksek teklif sende' : a.bidder ? 'Başka bir teklif önde' : 'Henüz teklif yok';
-      out.push(['a' + a.id, `<div class="card"><div class="row head"><h3>${R[a.region].n} arsası</h3><span class="tag ${a.bidder === 'me' ? 'own' : ''}">${who}</span></div><p class="muted small">${R[a.region].note} · referans değer ${fmt(a.ref)} · kalan süre ${hoursLeft(a)}</p><div class="row"><span>Güncel teklif</span><span class="num">${a.bid ? fmt(a.bid) : '—'}</span>${a.plot || a.bidder === 'me' ? '' : btn('Teklif ver ' + fmt(next), 'bid', { id: a.id })}</div></div>`]);
+      out.push(['a' + a.id, `<div class="card"><div class="row head"><h3>${R[a.region].n} arsası</h3><span class="tag ${a.bidder === 'me' ? 'own' : ''}">${who}</span></div><p class="muted small">${R[a.region].note} · referans değer ${fmt(a.ref)} · <span class="${a.end - s.t < 60 ? 'warn' : ''}">kalan süre ${hoursLeft(a)}</span></p><div class="row"><span>Güncel teklif</span><span class="num">${a.bid ? fmt(a.bid) : '—'}</span>${a.plot || a.bidder === 'me' ? '' : btn('Teklif ver ' + fmt(next), 'bid', { id: a.id })}</div></div>`]);
     }
     if (!s.auctions.length) out.push(['none', '<p class="muted">Şu an açık artırma yok. Yenisi gün başında açılır.</p>']);
     const owned = s.plots.filter(p => !p.rented);
@@ -531,7 +528,7 @@
     paint(hud, [
       ['top', `<div class="row"><div><span class="brand">Tezgâh</span> <span class="small muted">demo</span></div><div class="small num">${clock()}</div></div>`],
       ['cash', `<div class="row"><div class="cash ${s.money < 0 ? 'down' : ''}">${fmt(s.money)}${bids ? `<span class="small muted"> · teminatta ${fmt(bids)}</span>` : ''}</div><div class="speed" role="group" aria-label="Oyun hızı">${[[0, 'Dur'], [1, '1×'], [2, '2×'], [4, '4×']].map(([v, l]) => `<button type="button" data-a="speed" data-v="${v}" class="${s.speed === v ? 'on' : ''}">${l}</button>`).join('')}</div></div>`],
-      ['tabs', `<nav class="tabs">${TABS.map(([k, l]) => `<button type="button" data-a="tab" data-v="${k}" class="${ui.tab === k ? 'on' : ''}">${l}</button>`).join('')}</nav>`],
+      ['tabs', `<nav class="tabs">${TABS.map(([k, l]) => `<button type="button" data-a="tab" data-v="${k}" class="${ui.tab === k ? 'on' : ''}">${l}${k === 'news' && s.unread ? `<span class="badge" aria-label="${s.unread} yeni">${s.unread}</span>` : ''}</button>`).join('')}</nav>`],
     ]);
     paint(main, VIEWS[ui.tab]());
     main.querySelectorAll('[data-prog]').forEach(el => { const [id, i] = el.dataset.prog.split(':'); const pl = plot(+id), ln = pl && pl.b && pl.b.lines[+i]; el.style.width = ln && ln.busy ? Math.min(100, ln.prog / P[ln.r].t * 100) + '%' : '0%'; });
@@ -545,7 +542,7 @@
     if (!plot(ui.dest)) ui.dest = s.plots[0].id;
     root.addEventListener('click', e => { const el = e.target.closest('[data-a]'); if (!el || !A[el.dataset.a]) return; A[el.dataset.a](el.dataset); render(); });
     root.addEventListener('change', e => { const el = e.target.closest('[data-c]'); if (!el || !C[el.dataset.c]) return; C[el.dataset.c](el); el.blur(); render(); });
-    setInterval(() => { if (s.speed > 0 && !ui.neg) step(3.75 * s.speed); render(); }, 250);
+    setInterval(() => { if (s.speed > 0) step(3.75 * s.speed); render(); }, 250);
     setInterval(save, 8000);
     render();
   }
