@@ -79,14 +79,16 @@
   ];
   // Uygulama kapalıyken geçen süre: gerçek 1 saniye = 1× hızda 15 oyun dakikası; en fazla bir oyun günü telafi edilir.
   // Servet basamakları: net değer eşiği geçilince unvan kalıcı olarak yükselir ve ayrıcalığı açılır.
-  // tr: taşıma çarpanı, debt: borç faizi çarpanı, tax: emlak vergisi çarpanı. Son basamak oyunun büyük amacı.
+  // tr: taşıma çarpanı, debt: borç faizi çarpanı, tax: emlak vergisi çarpanı. Oyun çevrim içi olduğu için bitiş yok; unvan herkese görünen sıralamadır.
   const RANKS = [
     { n: 'Seyyar esnaf', at: 0, perk: 'Başlangıç' },
     { n: 'Esnaf', at: 10e6, perk: 'Nakliyecilerle anlaşma: taşıma %10 ucuz', tr: 0.9 },
     { n: 'Tüccar', at: 30e6, perk: 'Bankalar güveniyor: borç faizi yarıya iner', debt: 0.5 },
     { n: 'Sanayici', at: 100e6, perk: 'Yatırım teşviki: emlak vergisi %25 indirimli', tax: 0.75 },
     { n: 'Fabrikatör', at: 300e6, perk: 'Kendi filon: taşıma %20 ucuz', tr: 0.8 },
-    { n: 'Holding patronu', at: 1e9, perk: 'Büyük amaç: oyunu kazanırsın', win: true },
+    { n: 'Holding patronu', at: 1e9, perk: 'Emlak vergisi %50 indirimli', tax: 0.5 },
+    { n: 'Sektör lideri', at: 2e9, perk: 'Taşıma %30 ucuz', tr: 0.7 },
+    { n: 'Dünya markası', at: 5e9, perk: 'Borç faizi dörtte birine iner', debt: 0.25 },
   ];
   const rankNow = () => s.rank || 0;
   const perk = key => RANKS.slice(0, rankNow() + 1).reduce((m, r) => Math.min(m, r[key] || 1), 1);
@@ -297,8 +299,7 @@
     if (!nx || netWorth() < nx.at) return;
     s.rank = rankNow() + 1;
     const day = Math.floor(s.t / 1440) + 1;
-    if (nx.win) { s.won = s.won || day; news('Holding patronu oldun!', 'Net değerin ' + fmt(nx.at) + ' sınırını ' + day + '. günde aştı. Tezgâh’ın büyük amacına ulaştın; istersen büyümeye devam et ya da yeni oyunla rekorunu kır.', true); }
-    else news('Yeni unvan: ' + nx.n, 'Net değerin ' + fmt(nx.at) + ' sınırını aştı (' + day + '. gün). Açılan ayrıcalık: ' + nx.perk + '.', true);
+    news('Yeni unvan: ' + nx.n, 'Net değerin ' + fmt(nx.at) + ' sınırını aştı (' + day + '. gün). Açılan ayrıcalık: ' + nx.perk + '.', true);
   }
   function landValue() { return s.plots.filter(p => !p.rented).reduce((a, p) => a + p.ref, 0); }
   function netWorth() {
@@ -806,7 +807,7 @@
     const out = [];
     const next = GOALS.findIndex((g, i) => !s.goals[i]);
     if (ui.away) out.push(['away', awayCard(ui.away)]);
-    out.push(['goal', next < 0 ? `<div class="goal"><span class="small">Büyük amaç</span><b>${RANKS[rankNow() + 1] ? RANKS[rankNow() + 1].n + ' ol: net değer ' + fmt(RANKS[rankNow() + 1].at) : 'Holding patronusun. Rekorun: ' + s.won + '. gün'}</b></div>` : `<div class="goal"><span class="small">Sıradaki hedef ${next + 1}/${GOALS.length} · ödül ${fmt(GOALS[next][2])}</span><b>${goalText(next)}</b></div>`]);
+    out.push(['goal', next < 0 ? `<div class="goal"><span class="small">Sıradaki unvan</span><b>${RANKS[rankNow() + 1] ? RANKS[rankNow() + 1].n + ' ol: net değer ' + fmt(RANKS[rankNow() + 1].at) : 'En üst unvandasın. Büyümeye devam et'}</b></div>` : `<div class="goal"><span class="small">Sıradaki hedef ${next + 1}/${GOALS.length} · ödül ${fmt(GOALS[next][2])}</span><b>${goalText(next)}</b></div>`]);
     const hint = '<p class="muted small maphint">Haritada bir binaya dokununca kartına gidersin. Ünlem işareti, binanın ilgilenilmesi gereken bir durumu olduğunu gösterir.</p>';
     // PixiJS haritası kendi tuvallerini yönetir; buradaki kutu sabit kalır ve render() içinde doldurulur
     if (pixiMap()) out.push(['map', '<div class="map" data-pixi></div>' + hint]);
@@ -880,7 +881,7 @@
     out.push(['nw', `<div class="card"><div class="row"><span>Net değer</span><b class="num">${fmt(netWorth())}</b></div><div class="row"><span>Kasa</span><span class="num">${fmt(s.money)}</span></div><div class="row"><span>Arsa değeri</span><span class="num">${fmt(landValue())}</span></div>${s.t < FREE_UNTIL ? '<p class="muted small">İlk iki gün kira ve vergi alınmıyor.</p>' : ''}</div>`]);
     out.push(['td', tbl(s.today, 'Bugün')]); out.push(['pv', tbl(s.prev, 'Dün')]);
     out.push(['pr', '<div class="card"><h3>Fiyatlar</h3><div class="scroll"><table class="t prices">' + PK.map(k => `<tr><td>${P[k].n}</td><td>${fmt1(price(k))}</td><td>${trend(k)}</td><td>${spark(k)}</td></tr>`).join('') + '</table></div></div>']);
-    out.push(['rk', '<div class="card"><h3>Servet basamakları</h3><p class="muted small">Net değerin her eşiği geçtiğinde unvanın kalıcı olarak yükselir ve bir ayrıcalık açılır. Büyük amaç: ' + fmt(RANKS[RANKS.length - 1].at) + ' net değerle holding patronu olmak.</p>' + RANKS.map((r, i) => `<div class="row"><span class="${i <= rankNow() ? 'done' : ''}"><b>${r.n}</b><br><span class="small muted">${r.perk}</span></span><span class="num small ${i <= rankNow() ? 'muted' : ''}">${i <= rankNow() ? '✓ ' : ''}${fmt(r.at)}</span></div>`).join('') + '</div>']);
+    out.push(['rk', '<div class="card"><h3>Servet basamakları</h3><p class="muted small">Net değerin her eşiği geçtiğinde unvanın kalıcı olarak yükselir ve bir ayrıcalık açılır. Oyunun sonu yok; unvanın diğer oyunculara görünür.</p>' + RANKS.map((r, i) => `<div class="row"><span class="${i <= rankNow() ? 'done' : ''}"><b>${r.n}</b><br><span class="small muted">${r.perk}</span></span><span class="num small ${i <= rankNow() ? 'muted' : ''}">${i <= rankNow() ? '✓ ' : ''}${fmt(r.at)}</span></div>`).join('') + '</div>']);
     out.push(['gl', '<div class="card"><h3>Hedefler</h3>' + GOALS.map((g, i) => `<div class="row"><span class="${s.goals[i] ? 'done' : ''}">${goalText(i)}</span><span class="num small ${s.goals[i] ? 'muted' : ''}">${s.goals[i] ? '✓ ' : ''}${fmt(g[2])}</span></div>`).join('') + '</div>']);
     out.push(['credit', '<p class="muted small">Bina, harita ve ürün görselleri bu oyun için üretildi. Bina türü rozetleri: game-icons.net (Lorc, Delapouite ve katkıda bulunanlar), CC BY 3.0. Harita çizimi: PixiJS (MIT).</p>']);
     out.push(['rs', `<div class="row">${btn(ui.confirmReset ? 'Emin misin? Tekrar dokun' : 'Oyunu sıfırla', 'reset', {}, 'ghost')}</div>`]);
@@ -947,7 +948,7 @@
 
   function rankBar() {
     const r = RANKS[rankNow()], nx = RANKS[rankNow() + 1], nw = netWorth();
-    if (!nx) return `<div class="rank"><div class="row small"><b>${r.n}</b><span class="muted">${s.won}. günde kazandın · net değer ${fmt(nw)}</span></div></div>`;
+    if (!nx) return `<div class="rank"><div class="row small"><b>${r.n}</b><span class="muted">en üst unvan · net değer ${fmt(nw)}</span></div></div>`;
     const f = Math.max(0, Math.min(1, (nw - r.at) / (nx.at - r.at)));
     return `<div class="rank"><div class="row small"><span><b>${r.n}</b> <span class="muted">→ ${nx.n}</span></span><span class="num muted">${fmt(nw)} / ${fmt(nx.at)}</span></div><div class="bar" role="progressbar" aria-label="Sonraki unvana ilerleme" aria-valuenow="${Math.round(f * 100)}" aria-valuemin="0" aria-valuemax="100"><i style="width:${(f * 100).toFixed(1)}%"></i></div></div>`;
   }
@@ -991,6 +992,8 @@
     render();
   }
 
-  window.__tezgah = { get state() { return s; }, away(ms) { catchUp(ms); render(); }, advance(min) { for (let i = 0; i < min; i += 5) step(5); render(); }, reset() { newGame(); render(); } };
+  window.__tezgah = { get state() { return s; }, away(ms) { catchUp(ms); render(); }, advance(min) { for (let i = 0; i < min; i += 5) step(5); render(); }, reset() { newGame(); render(); },
+    // Denge testleri için: oyun içi eylemler ve tablolar (bot simülasyonu)
+    dbg: { A, C, B, P, R, RANKS, netWorth, price, step } };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();

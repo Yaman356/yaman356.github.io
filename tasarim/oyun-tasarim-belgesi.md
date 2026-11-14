@@ -232,7 +232,7 @@ Gerçek piyasayı izlemez; seviye ve oynaklıklar araştırmaya göre ayarlanmı
 
 ## 9. Zenginleşme amacı: servet basamakları
 
-Oyunun uzun vadeli amacı net değeri büyütüp **holding patronu** olmak. Kısa hedefler (bölüm hedefleri) ilk saatleri yönlendirir; bittikten sonra oyuncuyu servet basamakları taşır.
+Oyun çevrim içi olacağı için **bitiş ya da kazanma yok**. Uzun vadeli amaç net değeri büyütüp unvan basamaklarını çıkmak; unvan diğer oyunculara görünen sıralamadır. Kısa hedefler ilk saatleri yönlendirir, sonra oyuncuyu basamaklar taşır.
 
 | Unvan | Net değer eşiği | Açılan ayrıcalık |
 |---|---|---|
@@ -241,9 +241,25 @@ Oyunun uzun vadeli amacı net değeri büyütüp **holding patronu** olmak. Kıs
 | Tüccar | ₺30 mn | Borç faizi yarıya iner |
 | Sanayici | ₺100 mn | Emlak vergisi %25 indirimli |
 | Fabrikatör | ₺300 mn | Taşıma %20 ucuz |
-| Holding patronu | ₺1 mlr | Oyun kazanılır; kaçıncı günde ulaşıldığı rekor olarak saklanır |
+| Holding patronu | ₺1 mlr | Emlak vergisi %50 indirimli |
+| Sektör lideri | ₺2 mlr | Taşıma %30 ucuz |
+| Dünya markası | ₺5 mlr | Borç faizi dörtte birine iner |
 
 - Unvan kalıcıdır: net değer sonradan düşse de geri alınmaz.
 - Üst bilgi çubuğunda unvan ve bir sonraki eşiğe ilerleme çubuğu görünür; Rapor sekmesinde bütün basamaklar listelenir.
-- Kazandıktan sonra oyun sürer; amaç daha az günde holding olmak (rekor).
-- Sonraki sürüm fikri: rekorlar için arkadaşlarla karşılaştırma tablosu, her basamakta yeni bina türü ya da bölge açılması.
+
+### Bot simülasyonu (Kasım 2026)
+
+Tarayıcıda oyunun kendi kuralları üzerinde çalışan basit bir bot (`window.__tezgah.dbg` üzerinden) her oyun saatinde karar verdi: artırmalara teklif, tarla/maden kurma, ham madde sayısı fabrikaların iki katını geçince fabrika için para biriktirme, kapasite yükseltme, üretimi pazara koyma ve pazarın bir günde eritemeyeceği fazlayı toptancıya satma. İşçi, dükkân ve yatırım sekmesi kullanılmadı.
+
+| Unvan | Ulaşılan oyun günü (5 deneme) |
+|---|---|
+| Esnaf (₺10 mn) | 21–28 |
+| Tüccar (₺30 mn) | 31–38 |
+| Sanayici (₺100 mn) | 42–53 |
+| Fabrikatör (₺300 mn) | 57–70 |
+| Holding patronu (₺1 mlr) | 77–90 |
+
+- Bir oyun günü 1× hızda ~96 gerçek saniye; 85 oyun günü ≈ 2,3 saat kesintisiz oyun (4× hızda ~35 dk). Uygulama kapalıyken en fazla bir oyun günü telafi edildiği için gerçekte günlere yayılır.
+- Bot ~₺2,5 mlr civarında takıldı: ~130 arsa ve ~42 fabrikada bütün ürünlerin fiyatı olağanın %60–70'ine indi (pazar doydu). Bu yüzden son iki eşik ₺2 mlr ve ₺5 mlr seçildi; işçi, dükkân ve yatırımı iyi kullanan bir oyuncu daha yükseğe çıkabilir.
+- Çevrim içi için uyarı: tek oyuncuda bile 1 milyara birkaç saatlik aktif oyunla ulaşılıyor. Ortak pazarda oyuncular aynı talebi paylaşacağı için doyma daha erken gelir; çevrim içi sürümde zaman ölçeği ve pazar talebi oyuncu sayısına göre yeniden ayarlanmalı.
