@@ -518,12 +518,12 @@
     }
     if (!pl.b) {
       h += '<p>Bu arsaya ne kuracaksın?</p><div class="choices">';
-      for (const k in B) h += `<button type="button" class="choice" data-a="build" data-plot="${pl.id}" data-v="${k}">${ic(k, 28)}<b>${B[k].n}</b><span>${fmt(B[k].cost)}</span><small>${B[k].hint}${reg.bonus === k ? ' · bölge bonusu' : ''}</small></button>`;
+      for (const k in B) h += `<button type="button" class="choice" data-a="build" data-plot="${pl.id}" data-v="${k}">${ic(k, 34)}<b>${B[k].n}</b><span>${fmt(B[k].cost)}</span><small>${B[k].hint}${reg.bonus === k ? ' · bölge bonusu' : ''}</small></button>`;
       return h + '</div></div>';
     }
     const b = pl.b, bt = B[b.type];
     const k = batch(pl), parts = b.parts || [], prod = b.type !== 'dukkan';
-    h += `<div class="row"><b class="named">${ic(b.type, 22)}${bt.n} · seviye ${b.level}</b><span class="muted small">Depo ${invTotal(pl)}/${cap(pl)}</span></div>`;
+    h += `<div class="row"><b class="named">${ic(b.type, 26)}${bt.n} · seviye ${b.level}</b><span class="muted small">Depo ${invTotal(pl)}/${cap(pl)}</span></div>`;
     const cw = crew(pl);
     h += `<p class="small"><span class="muted">Çalışanlar ${cw.length}/${slots(pl)}:</span> ${cw.length ? cw.map(w => WK[w.type].n + ' ' + esc(w.name) + ' ' + stars(w.star)).join(' · ') : '<span class="muted">yok · İşçiler sekmesinden alabilirsin</span>'}</p>`;
     if (prod) h += `<p class="muted small">Parti ${10 * k} birim · ${b.lines.length} hat${parts.length ? ' · ' + (parts.length + 1) + ' arsaya yayılıyor' : ''}</p>`;
@@ -545,7 +545,7 @@
     if (items.length && others.length) h += `<div class="row small"><label for="mv${pl.id}">Taşıma hedefi</label><select id="mv${pl.id}" data-c="sel" data-k="mv${pl.id}">${others.map(o => `<option value="${o.id}" ${ui.sel['mv' + pl.id] == o.id ? 'selected' : ''}>Arsa ${o.id} · ${R[o.region].n}</option>`).join('')}</select></div>`;
     for (const p of items) {
       const q = pl.inv[p] || 0;
-      h += `<div class="item"><div class="row"><b class="named">${ic(p, 22)}${P[p].n}</b><span class="num">${q} adet</span></div>`;
+      h += `<div class="item"><div class="row"><b class="named">${ic(p, 26)}${P[p].n}</b><span class="num">${q} adet</span></div>`;
       if (b.type === 'dukkan' && P[p].d) h += shopControls(pl, p);
       else if (b.type === 'dukkan') h += '<p class="warn small">Şehir halkı bu ürünü almaz; pazarda sat ya da fabrikaya taşı.</p>';
       else h += outControls(pl, p);
@@ -602,7 +602,7 @@
     if (s.mine.length) out.push(['mine', '<div class="card"><h3>İlanlarım</h3>' + s.mine.map(l => `<div class="row"><span>${P[l.p].n} · ${l.qty} adet · ${fmt1(l.price)}${l.auto ? ' · otomatik' : ''}<br><span class="small">${speedNote(l.price / price(l.p))}</span></span>${btn('Geri çek', 'unlist', { id: l.id }, 'ghost')}</div>`).join('') + '<p class="muted small">Satışlardan %3 komisyon kesilir.</p></div>']);
     for (const k of PK) {
       const wU = price(k) * W_BUY + trans(1, k, dst.region, dst.region);
-      let h = `<div class="card"><div class="row head"><h3 class="named">${ic(k, 24)}${P[k].n}</h3><span class="small">${trend(k)}</span></div><p class="muted small">Olağan fiyat ${fmt1(price(k))} · ${WNAME[P[k].w]} yük</p><div class="row"><span>Sistem toptancısı</span><span class="num">${fmt1(wU)}</span>${btn('Al', 'buy', { p: k })}</div>`;
+      let h = `<div class="card"><div class="row head"><h3 class="named">${ic(k, 28)}${P[k].n}</h3><span class="small">${trend(k)}</span></div><p class="muted small">Olağan fiyat ${fmt1(price(k))} · ${WNAME[P[k].w]} yük</p><div class="row"><span>Sistem toptancısı</span><span class="num">${fmt1(wU)}</span>${btn('Al', 'buy', { p: k })}</div>`;
       for (const l of s.listings.filter(x => x.p === k)) {
         const u = l.price + trans(1, k, l.region, dst.region);
         h += `<div class="row"><span>${R[l.region].n} ilanı · ${l.qty} adet</span><span class="num ${u < wU ? 'up' : ''}">${fmt1(u)}</span>${btn('Al', 'buy', { p: k, id: l.id })}</div>`;
@@ -650,6 +650,7 @@
     out.push(['td', tbl(s.today, 'Bugün')]); out.push(['pv', tbl(s.prev, 'Dün')]);
     out.push(['pr', '<div class="card"><h3>Fiyatlar</h3><div class="scroll"><table class="t prices">' + PK.map(k => `<tr><td>${P[k].n}</td><td>${fmt1(price(k))}</td><td>${trend(k)}</td><td>${spark(k)}</td></tr>`).join('') + '</table></div></div>']);
     out.push(['gl', '<div class="card"><h3>Hedefler</h3>' + GOALS.map((g, i) => `<div class="row"><span class="${s.goals[i] ? 'done' : ''}">${g[0]}</span><span>${s.goals[i] ? '✓' : ''}</span></div>`).join('') + '</div>']);
+    out.push(['credit', '<p class="muted small">İkonlar: Microsoft Fluent Emoji, MIT lisansı.</p>']);
     out.push(['rs', `<div class="row">${btn(ui.confirmReset ? 'Emin misin? Tekrar dokun' : 'Oyunu sıfırla', 'reset', {}, 'ghost')}</div>`]);
     return out;
   }

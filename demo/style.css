@@ -3,7 +3,7 @@
   --bg: #eef3f0; --surface: #ffffff; --fg: #14211d; --muted: #586a64; --line: #d3ddd8;
   --accent: #0b6e5c; --on-accent: #ffffff; --amber: #9a6510; --good: #0f7a4d; --bad: #b3372c; --soft: #e1ebe7;
   --ic-grain: #d9a53a; --ic-light: #f6f2e6; --ic-dark: #3a3f45; --ic-ore: #b5654a; --ic-cloth: #5b8fd6; --ic-steel: #93a0ab; --ic-cheese: #f0c53f; --ic-awning: #d4544a; --ic-field: #8bbf5a; --ic-rock: #a89f90;
-  --map-pave: #d6ddda; --map-grass: #bcdb9c; --map-grass2: #7db35a; --map-dirt: #d8c3a2; --map-line: #ffffff80; --map-roof: #c3cdc9; --map-wall: #eef2f0; --map-wall2: #cad4d0;
+  --map-pave: #dfe5e2; --map-pave2: #d3dbd7; --map-grass: #bfe0a0; --map-grass2: #b2d793; --map-dirt: #ddc8a6; --map-dirt2: #d2bc98; --map-line: #ffffff99; --map-edgeL: #9fb3aa; --map-edgeR: #8aa096; --map-wheat: #e5bd55; --map-pasture: #8cc56a; --map-cotton: #f4f1ea; --old-pave: #d6ddda; --map-grass: #bcdb9c; --map-grass2: #7db35a; --map-dirt: #d8c3a2; --map-line: #ffffff80; --map-roof: #c3cdc9; --map-wall: #eef2f0; --map-wall2: #cad4d0;
   --map-roofRed: #c0584a; --map-steel: #aab4bd; --map-steel2: #7f8a94; --map-steelTop: #c8d0d7; --map-tree: #5c9b47; --map-people: #2f5d8a; --map-smoke: #9aa3a8; --map-own: #6cc4ab; --map-ownGround: #d3efe6;
   --display: 'Bricolage Grotesque', 'Trebuchet MS', system-ui, sans-serif;
   --body: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -13,7 +13,7 @@
     --bg: #0e1513; --surface: #17211e; --fg: #e6efeb; --muted: #94a69f; --line: #283632;
     --accent: #3fc4a5; --on-accent: #06211b; --amber: #e0a84a; --good: #5fd39b; --bad: #f08374; --soft: #1f2c28;
     --ic-grain: #d6a648; --ic-light: #e6e1d3; --ic-dark: #1d2226; --ic-ore: #b9715a; --ic-cloth: #6c9be0; --ic-steel: #8c98a3; --ic-cheese: #e3bb46; --ic-awning: #d9655c; --ic-field: #6f9f4a; --ic-rock: #7d766b;
-    --map-pave: #27312e; --map-grass: #2c4527; --map-grass2: #4d7a38; --map-dirt: #463b2d; --map-line: #ffffff17; --map-roof: #4d5955; --map-wall: #66726e; --map-wall2: #48524f;
+    --map-pave: #2b3532; --map-pave2: #27302d; --map-grass: #2e4a2a; --map-grass2: #2a4426; --map-dirt: #4a3e2f; --map-dirt2: #43382a; --map-line: #ffffff14; --map-edgeL: #1b2321; --map-edgeR: #151c1a; --map-wheat: #b8923a; --map-pasture: #4f8a3a; --map-cotton: #cfcabe; --old-pave: #27312e; --map-grass: #2c4527; --map-grass2: #4d7a38; --map-dirt: #463b2d; --map-line: #ffffff17; --map-roof: #4d5955; --map-wall: #66726e; --map-wall2: #48524f;
     --map-roofRed: #a24a3f; --map-steel: #5d6770; --map-steel2: #46505a; --map-steelTop: #78828b; --map-tree: #3d7533; --map-people: #8fb8e0; --map-smoke: #6f7880; --map-own: #2f9a80; --map-ownGround: #1d3f37;
     color-scheme: dark;
   }
@@ -22,7 +22,7 @@
   --bg: #0e1513; --surface: #17211e; --fg: #e6efeb; --muted: #94a69f; --line: #283632;
   --accent: #3fc4a5; --on-accent: #06211b; --amber: #e0a84a; --good: #5fd39b; --bad: #f08374; --soft: #1f2c28;
     --ic-grain: #d6a648; --ic-light: #e6e1d3; --ic-dark: #1d2226; --ic-ore: #b9715a; --ic-cloth: #6c9be0; --ic-steel: #8c98a3; --ic-cheese: #e3bb46; --ic-awning: #d9655c; --ic-field: #6f9f4a; --ic-rock: #7d766b;
-    --map-pave: #27312e; --map-grass: #2c4527; --map-grass2: #4d7a38; --map-dirt: #463b2d; --map-line: #ffffff17; --map-roof: #4d5955; --map-wall: #66726e; --map-wall2: #48524f;
+    --map-pave: #2b3532; --map-pave2: #27302d; --map-grass: #2e4a2a; --map-grass2: #2a4426; --map-dirt: #4a3e2f; --map-dirt2: #43382a; --map-line: #ffffff14; --map-edgeL: #1b2321; --map-edgeR: #151c1a; --map-wheat: #b8923a; --map-pasture: #4f8a3a; --map-cotton: #cfcabe; --old-pave: #27312e; --map-grass: #2c4527; --map-grass2: #4d7a38; --map-dirt: #463b2d; --map-line: #ffffff17; --map-roof: #4d5955; --map-wall: #66726e; --map-wall2: #48524f;
     --map-roofRed: #a24a3f; --map-steel: #5d6770; --map-steel2: #46505a; --map-steelTop: #78828b; --map-tree: #3d7533; --map-people: #8fb8e0; --map-smoke: #6f7880; --map-own: #2f9a80; --map-ownGround: #1d3f37;
   color-scheme: dark;
 }
@@ -97,7 +97,7 @@ input.price { width: 76px; text-align: right; font-variant-numeric: tabular-nums
 .grid2 { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 10px; align-items: center; }
 .grid2 select, .grid2 input { width: 100%; }
 input:disabled { opacity: .6; }
-.ic { flex: none; color: var(--fg); }
+.ic { flex: none; color: var(--fg); filter: drop-shadow(0 1px 0 rgba(0,0,0,.08)); }
 .named { display: inline-flex; align-items: center; gap: 6px; }
 .choice .ic { margin-bottom: 2px; }
 .map { display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 4px; }
@@ -105,6 +105,11 @@ input:disabled { opacity: .6; }
 .region svg { display: block; width: 100%; height: auto; }
 .region figcaption { font-family: var(--display); font-weight: 600; font-size: 14px; padding: 0 6px; }
 .pin text { font: 700 9px var(--body); fill: var(--on-accent); }
+.tag rect { fill: var(--amber); }
+.tag text { font: 700 7px var(--body); fill: #1a1a1a; letter-spacing: .04em; }
+.decor { opacity: .8; }
+.region figcaption { display: flex; justify-content: space-between; align-items: baseline; }
+.region figcaption span { font: 400 12px var(--body); color: var(--muted); }
 .sign { font: 700 6px var(--body); fill: #1a1a1a; letter-spacing: .04em; }
 .hit { cursor: pointer; }
 .hit:focus-visible { outline: none; }
