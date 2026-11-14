@@ -1,0 +1,137 @@
+{
+ "kayan taban (güncel değerin %50si)": {
+  "kapsama": 1.291,
+  "satilan_arsa": 104.8,
+  "arsa_fiyati": {
+   "merkez": 0.15,
+   "kirsal": 0.29,
+   "dag": 0.31
+  },
+  "arsa_odemesi_tuketici_orani": 0.108,
+  "normal": {
+   "sirket": 50.0,
+   "gunluk_servet_artisi_uye_basina": 209,
+   "medyan": 138,
+   "alinan_arsa": 1.89,
+   "gunluk_vergi_uye_basina": 7,
+   "arsa_sayisi": 2.17
+  },
+  "yeni_oyuncu": {
+   "sayi": 21.0,
+   "ilk10_gun_servet_artisi": 197,
+   "kurucularin_ilk10_gunu": 503,
+   "kurucularin_20_30_gunleri": 185,
+   "arsa_alabilen_orani": 0.37,
+   "on_gunde_arsa_parasina_ulasamayan": 0.34
+  },
+  "yogunlasma": 0.36
+ },
+ "sabit taban (başlangıç değerinin %60ı)": {
+  "kapsama": 1.337,
+  "satilan_arsa": 73.8,
+  "arsa_fiyati": {
+   "merkez": 0.85,
+   "kirsal": 0.67,
+   "dag": 0.65
+  },
+  "arsa_odemesi_tuketici_orani": 0.117,
+  "normal": {
+   "sirket": 50.0,
+   "gunluk_servet_artisi_uye_basina": 261,
+   "medyan": 198,
+   "alinan_arsa": 1.39,
+   "gunluk_vergi_uye_basina": 7,
+   "arsa_sayisi": 1.73
+  },
+  "yeni_oyuncu": {
+   "sayi": 21.0,
+   "ilk10_gun_servet_artisi": 206,
+   "kurucularin_ilk10_gunu": 483,
+   "kurucularin_20_30_gunleri": 272,
+   "arsa_alabilen_orani": 0.17,
+   "on_gunde_arsa_parasina_ulasamayan": 0.76
+  },
+  "yogunlasma": 0.45
+ },
+ "karma taban (en az başlangıcın %40ı)": {
+  "kapsama": 1.345,
+  "satilan_arsa": 82,
+  "arsa_fiyati": {
+   "merkez": 0.45,
+   "kirsal": 0.5,
+   "dag": 0.46
+  },
+  "arsa_odemesi_tuketici_orani": 0.11,
+  "normal": {
+   "sirket": 50.0,
+   "gunluk_servet_artisi_uye_basina": 261,
+   "medyan": 185,
+   "alinan_arsa": 1.51,
+   "gunluk_vergi_uye_basina": 8,
+   "arsa_sayisi": 1.92
+  },
+  "yeni_oyuncu": {
+   "sayi": 21.0,
+   "ilk10_gun_servet_artisi": 208,
+   "kurucularin_ilk10_gunu": 502,
+   "kurucularin_20_30_gunleri": 238,
+   "arsa_alabilen_orani": 0.24,
+   "on_gunde_arsa_parasina_ulasamayan": 0.52
+  },
+  "yogunlasma": 0.37
+ },
+ "karma taban + yeni oyuncu destekleri": {
+  "kapsama": 1.338,
+  "satilan_arsa": 84.6,
+  "arsa_fiyati": {
+   "merkez": 0.43,
+   "kirsal": 0.54,
+   "dag": 0.51
+  },
+  "arsa_odemesi_tuketici_orani": 0.106,
+  "normal": {
+   "sirket": 50.0,
+   "gunluk_servet_artisi_uye_basina": 272,
+   "medyan": 168,
+   "alinan_arsa": 1.46,
+   "gunluk_vergi_uye_basina": 7,
+   "arsa_sayisi": 1.87
+  },
+  "yeni_oyuncu": {
+   "sayi": 21.0,
+   "ilk10_gun_servet_artisi": 205,
+   "kurucularin_ilk10_gunu": 474,
+   "kurucularin_20_30_gunleri": 284,
+   "arsa_alabilen_orani": 0.46,
+   "on_gunde_arsa_parasina_ulasamayan": 0.64
+  },
+  "yogunlasma": 0.45
+ },
+ "kayan taban + yeni oyuncu destekleri": {
+  "kapsama": 1.339,
+  "satilan_arsa": 98.6,
+  "arsa_fiyati": {
+   "merkez": 0.21,
+   "kirsal": 0.44,
+   "dag": 0.37
+  },
+  "arsa_odemesi_tuketici_orani": 0.103,
+  "normal": {
+   "sirket": 50.0,
+   "gunluk_servet_artisi_uye_basina": 254,
+   "medyan": 178,
+   "alinan_arsa": 1.76,
+   "gunluk_vergi_uye_basina": 7,
+   "arsa_sayisi": 2.15
+  },
+  "yeni_oyuncu": {
+   "sayi": 21.0,
+   "ilk10_gun_servet_artisi": 187,
+   "kurucularin_ilk10_gunu": 477,
+   "kurucularin_20_30_gunleri": 250,
+   "arsa_alabilen_orani": 0.4,
+   "on_gunde_arsa_parasina_ulasamayan": 0.52
+  },
+  "yogunlasma": 0.44
+ }
+}

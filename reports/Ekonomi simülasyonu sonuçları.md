@@ -397,3 +397,20 @@ Dükkân fiyat rekabeti ve ara mal ayarıyla kârlar daha düşük olduğu için
 | Sabit başlangıç değerinin %60'ı | 0,6–1,0 | 46 | %6 | %87 |
 
 Taban sabitlenince fiyatlar korunuyor ama arsalar satılmıyor ve yeni oyuncu arsa alamıyor. Arsa fiyat seviyesi, yeni oyuncu erişimiyle doğrudan bağlantılı; bu bir tasarım kararı.
+
+## Ek: Arsa artırması tabanı (karar)
+
+Kod: `sim/land_floor_test.py`. Ham sonuçlar: `sim/land_floor_results.json`. Güncel tasarımın tamamıyla: yeni yükseltme kuralı, dükkân fiyat rekabeti, ara mal gideri yarıya, doküman vergisi, her gün bir yeni oyuncu ve bu turda eklenen "pahalı mal yavaş satılır" kuralı (piyasanın her %10 üstü alım hızını %20 düşürür, altı en fazla %50 artırır). 40 gün, beş tohum.
+
+| Taban | Arsa fiyatı (başlangıca göre) | Satılan arsa | Yeni oyuncunun ilk 10 günde arsa alabilme oranı | Medyan şirket (günlük) |
+|---|---|---:|---:|---:|
+| Kayan: güncel değerin %50'si | 0,15–0,31 | 105 | %37 | 138 |
+| Sabit: başlangıç değerinin %60'ı | 0,65–0,85 | 74 | %17 | 198 |
+| Karma: kayan, ama en az başlangıcın %40'ı | 0,45–0,50 | 82 | %24 | 185 |
+| Karma + yeni oyuncu destekleri | 0,43–0,54 | 85 | %46 | 168 |
+| Kayan + yeni oyuncu destekleri | 0,21–0,44 | 99 | %40 | 178 |
+
+- Kayan taban fiyat sarmalı yaratıyor: arsalar başlangıç değerinin üçte birine iniyor.
+- Karma taban sarmalı başlangıç değerinin yaklaşık yarısında durduruyor. Yeni oyuncu destekleriyle (sunucu yaşına göre başlangıç parası ve yenilere kiralık arsa havuzu) birlikte yeni oyuncuların arsaya erişimi en yüksek çıkıyor (%46).
+- Karar: karma taban + yeni oyuncu destekleri. Tasarım dokümanına ve demoya işlendi.
+- Fiyat duyarlı talep eklenince dükkânlar piyasanın altında sattığı için şehir halkı temel talepten %30 kadar fazla alıyor; bu turda "talebin karşılanması" oranı bu yüzden 1'in üstünde (1,29–1,35) ve önceki turlarla karşılaştırılamaz.

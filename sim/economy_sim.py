@@ -125,14 +125,15 @@ class Wholesaler:
 class Sim:
     def __init__(s, n=50, seed=1, wmode='A', alloc='dengeli', followers=0.5, info_pending=False,
                  switch_delay=0, tax=None, days=30, hook=None, hoarder=False, fire=False, rd=None, retail_follow=False,
-                 qf=0.15, bf=0.10, switch_fee=0.0, shop_w=None, shop_comp=False, shop_op=0.0):
+                 qf=0.15, bf=0.10, switch_fee=0.0, shop_w=None, shop_comp=False, shop_op=0.0, elastic=False):
         s.rng = random.Random(seed)
         s.n, s.days, s.hook, s.tax = n, days, hook, tax
         s.info_pending, s.switch_delay = info_pending, switch_delay
         s.scale = n / sum(WEIGHT.values())
         s.dmult = 1.0
         s.W = Wholesaler(wmode, s.scale, qf, bf); s.switch_fee = switch_fee
-        s.shop_comp, s.shop_op = shop_comp, shop_op  # dükkânlar arası fiyat kırma; dükkânın saatlik işletme gideri
+        s.shop_comp, s.shop_op = shop_comp, shop_op
+        s.elastic = elastic  # pahalı mal yavaş satılır: piyasanın her %10 üstü alım hızını %20 düşürür (demodaki kural)  # dükkânlar arası fiyat kırma; dükkânın saatlik işletme gideri
         s.ema = {p: float(P[p]['ref']) for p in PK}
         s.money = defaultdict(float); s.goods = {p: defaultdict(float) for p in PK}
         s.firms = []
@@ -278,7 +279,8 @@ class Sim:
                 tot = sum(a for _, a in act) + K
                 s.day['D_' + p] += D
                 for f, a in act:
-                    q = min(D * a / tot, f.inv[p]); v = q * f.rp[p]
+                    sp = min(1.5, max(0.0, 1 - 2 * (f.rp[p] / rr - 1))) if s.elastic else 1.0
+                    q = min(D * a / tot * sp, f.inv[p]); v = q * f.rp[p]
                     f.inv[p] -= q; s.goods[p]['tuketici'] += q; s.money['tuketici'] += v; s.pay_seller(f, v, False)
                     f.rate[p] = 0.9 * f.rate[p] + 0.1 * q; s.day['S_' + p] += q
                 lo = min((g.rp[p] for g in shops if g.inv[p] > 1e-9), default=None) if s.shop_comp else None

@@ -318,7 +318,8 @@
   function spawnAuction(pl) {
     const region = pl ? pl.region : pick(Object.keys(R));
     const ref = pl ? pl.ref : Math.round(R[region].land * rnd(0.9, 1.1) / 100) * 100;
-    s.auctions.push({ id: s.nextId++, region, ref, start: Math.round(ref * 0.5), bid: 0, bidder: null, end: s.t + 720, npc: [0, 0, 0].map(() => ref * rnd(0.6, 1.1)) });
+    // Artırma tabanı: güncel değerin yarısı, ama bölgenin başlangıç değerinin %40'ından az değil
+    s.auctions.push({ id: s.nextId++, region, ref, start: Math.round(Math.max(ref * 0.5, R[region].land * 0.4)), bid: 0, bidder: null, end: s.t + 720, npc: [0, 0, 0].map(() => ref * rnd(0.6, 1.1)) });
   }
 
   function endAuction(a) {
