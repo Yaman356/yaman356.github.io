@@ -477,24 +477,29 @@ Capacitor uygulaması (`app/`) aynı API'yi kullanır. Google Play Games ya da A
 
 ## 13. Denge riskleri ve test planı
 
-Dış inceleme (Kasım 2026) altı risk saydı. Her biri koda karşı kontrol edildi; altısı da doğru.
+İki dış inceleme (Kasım 2026) sekiz risk saydı. Her biri koda karşı kontrol edildi; hepsi doğru.
+
+**Hedef:** herkesi eşit tutmak değil. Herkese anlamlı bir başlangıç ve karşı strateji şansı vermek; daha iyi karar veren ve iyi örgütlenen avantaj kazanmalı, ama yeni ya da küçük oyuncu başka ürün, bölge, sözleşme veya iş birliğiyle karşı hamle yapabilmeli.
 
 | # | Risk | Koddaki durum | Öneri |
 |---|---|---|---|
 | 1 | Belgede eski ve yeni kurallar çelişiyor | Doğruydu: bölüm 1–2 ilk taslaktaydı (haftalık %1–8 vergi, %5 arsa satış vergisi, 7 günde aktiflik). | **Yapıldı:** bölüm 0 tek doğru kaynak; bölüm 1–2 ona göre yeniden yazıldı. |
 | 2 | Sürekli açık kalmak ödüllendiriliyor | 1 saat uzak kalan oyuncu ~37,5 oyun günü kaçırıyor, yalnızca 1 günü telafi ediliyor (`AWAY_MAX`). | Demo hızı ile çevrim içi hızı ayır. Sunucuda zaman herkes için aynı akmalı; çevrim dışı binalar çalışmaya devam etmeli. Bu, sezon uzunluğunu gerçek takvime bağlar (aşağıdaki 1. karar). |
-| 3 | Zenginin avantajı kalıcı birikiyor | Unvan ayrıcalıkları kalıcı ve birikimli. Görev ve holding ödülleri net değerle ölçekleniyor. | Kalıcı prestij (unvan adı, rozet) ile sezonluk ekonomik avantajı ayır: ayrıcalıklar sezon başında sıfırlansın ya da sabit tavanla sınırlansın. Ödüller net değer yerine sabit tutar olsun. |
+| 3 | Zenginin avantajı kalıcı birikiyor | Unvan ayrıcalıkları kalıcı ve birikimli. Görev ve holding ödülleri net değerle ölçekleniyor. | Kalıcı prestij (unvan adı, rozet) ile sezonluk ekonomik avantajı ayır: ayrıcalıklar sezon başında sıfırlansın ya da sabit tavanla sınırlansın. Ödüller net değer yerine sabit tutar olsun. Kazanan kooperatif ya da holdinge **süreli ve tavanlı** avantaj ver (ör. bir sezon boyunca bakım veya taşıma indirimi, en fazla %10); sezonlar arasında ekonomik bonus taşınmasın. |
 | 4 | Para ticaret yerine yan ödüllerden gelebilir | Başta haftalık görevler ₺750 bin = sermayenin %30'u. Hedefler toplam ₺5,6 mn. Holding haftada %2, mevduat yıllık %36. | Para kaynağı ölçümü (aşağıda) yapılmadan karar verme. Hedef: ilk 10 günden sonra ticaret dışı para, toplam girişin %15'ini geçmemeli. |
 | 5 | Toptancı oyuncu ticaretini gölgeleyebilir | Alım kooperatifiyle toptancı fiyatı ×1,12 × 0,92 = **×1,03**; neredeyse piyasa fiyatı. Stok ve bütçe sınırı yok. | Kooperatif indirimi toptancıya değil oyuncu ilanlarına uygulansın. Toptancının bölge başına günlük stok ve alım bütçesi olsun; aşıldıkça fiyatı kötüleşsin. |
 | 6 | Sıralama hacim şişirmeyi ödüllendiriyor | Toptancıya ve sözleşmeye satış sektör unvanına sayılıyor (`sold()` her ikisinde). | Sektör unvanına yalnızca dükkân perakendesi ve başka şirkete (ilan, sözleşme) satış saysın; toptancı saymasın. |
+| 7 | Tek büyüme yolu var | Rehberin ilk adımı "tarla kur" diyor (dükkân da kabul ediliyor ama anlatılmıyor). Haftalık satış görevi kendi ürettiğin ürünü, hiç üretmiyorsan buğdayı istiyor; sadece dükkân işleten tüccara halka satamadığı bir ürün düşüyor. | Başlangıçta yol seçimi: üretici, tüccar (al-sat, dükkân), sanayici, kooperatifçi. Rehber ve görev havuzu seçilen yola göre ayrılsın; yol sonradan değişebilsin. Dört yol aynı koşullarda kıyaslansın (test planı 1). |
+| 8 | Hacim ilişkili hesaplar arasında döndürülebilir | Demoda karşı taraf yalnızca sanal şirket olduğu için oluşmuyor; çevrim içinde iki hesap aynı malı birbirine satıp sektör hacmini şişirebilir. | Sektör puanı: nihai talebe (dükkân perakendesi, sanal şirket sözleşmesi) ulaşan satış tam, oyuncuya satış alıcı çeşitliliğiyle ağırlıklı sayılsın (aynı alıcıya giden payın üstü sayılmasın). Kısa sürede geri dönen mal sayılmasın; Rekabet Kurulu (bölüm 5) bu kalıbı işaretlesin. |
 
 ### Test planı
-1. **Çekirdek ekonomi:** görev, hedef, holding, yatırım ve kooperatif kapalı. Yalnızca üretim–ticaret. Bot her rol için (tarla, maden, fabrika, dükkân, karma) ayrı oynar.
+1. **Çekirdek ekonomi:** görev, hedef, holding, yatırım ve kooperatif kapalı. Yalnızca üretim–ticaret. Dört yol aynı koşullarda ayrı bot olarak oynar: üretici (tarla, maden), tüccar (yalnızca al-sat ve dükkân), sanayici (fabrika), kooperatifçi (zinciri paylaşan 3 bot).
 2. **Avantajları tek tek aç:** her bonusu açıp çekirdekle farkını ölç.
 3. **Senaryolar:**
    - yeni / eski oyuncu (sezon ortasında başlayan),
    - az / çok aktif (günde 1 kez vs. sürekli bakan),
-   - tek / ekip (kooperatifte üretim zinciri paylaşan 3 bot).
+   - tek / ekip (kooperatifte üretim zinciri paylaşan 3 bot),
+   - organize ekip piyasaya hakimken yeni oyuncunun karşı stratejisi (başka ürün, bölge ya da sözleşme).
 4. **Ölçülecekler:**
    - Rol başına günlük net kâr.
    - Para kaynağı payları: ticaret, ödül, faiz, temettü, toptancı.
@@ -506,7 +511,9 @@ Dış inceleme (Kasım 2026) altı risk saydı. Her biri koda karşı kontrol ed
 
 Bot testi tek oyunculudur. Gerçek çok oyunculu rekabeti, tekelleşmeyi ve eğlenceyi kanıtlamaz; bunlar için sunucu aşaması ve gerçek oyuncularla kapalı test gerekir.
 
+**Sıra:** önce zaman ve sezon kararı (aşağıdaki 1. karar), çünkü diğer sayılar ona bağlı. Sonra dört yolun kıyası, sonra NPC toptancı ve ödüllerin tek tek eklenmesi, en son gerçek oyuncularla keyif ve anlaşılırlık testi.
+
 ### Açık kararlar
-1. **Çevrim içi zaman ölçeği:** öneri, 1 oyun günü = 1 gerçek saat. Bu durumda sezon (60 gün) 2,5 gerçek gün sürer. Alternatif: 1 oyun günü = 4 gerçek saat, sezon 10 gerçek gün sürer. Demo hızı (96 sn) yalnızca deneme için kalır.
+1. **Çevrim içi zaman ölçeği:** sezonun gerçek süresi, çevrim dışı üretim ve oyuncudan günde ne kadar zaman istendiği birlikte belirlenmeli. Seçenekler: 1 oyun günü = 1 gerçek saat (sezon 2,5 gün), 4 saat (sezon 10 gün), 12 saat (sezon 30 gün, günde iki kısa ziyaret). Demo hızı (96 sn) yalnızca deneme için kalır.
 2. **Unvan ayrıcalıkları:** sezonluk mu olsun, yoksa tavanlı kalıcı mı?
 3. **Ödüller:** sabit tutar mı olsun, yoksa net değerle ölçeklenip tavanlı mı?
