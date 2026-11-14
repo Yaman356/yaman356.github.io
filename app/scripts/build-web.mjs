@@ -10,4 +10,5 @@ const out = join(root, 'www');
 rmSync(out, { recursive: true, force: true });
 mkdirSync(out, { recursive: true });
 for (const f of ['index.html', 'style.css', 'game.js', 'art.js', 'icons.js', 'LICENSE-ICONS.txt']) cpSync(join(src, f), join(out, f));
+cpSync(join(src, 'assets'), join(out, 'assets'), { recursive: true });
 console.log('www hazır:', out);

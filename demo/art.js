@@ -2,9 +2,10 @@
 (() => {
   'use strict';
   const ICONS = () => window.TezgahIcons || {};
+  const ASSET = k => (window.TezgahAssets || {})[k];  // üretilmiş PNG varsa o kullanılır
 
   // ---------- İkonlar ----------
-  const icon = (k, size = 24, cls = '') => ICONS()[k] ? `<svg class="ic ${cls}" viewBox="0 0 32 32" width="${size}" height="${size}" aria-hidden="true">${ICONS()[k]}</svg>` : '';
+  const icon = (k, size = 24, cls = '') => ASSET(k) ? `<img class="ic ${cls}" src="${ASSET(k)}" width="${size}" height="${size}" alt="">` : ICONS()[k] ? `<svg class="ic ${cls}" viewBox="0 0 32 32" width="${size}" height="${size}" aria-hidden="true">${ICONS()[k]}</svg>` : '';
 
   // ---------- İzometrik harita ----------
   const TW = 60, TH = 30, N = 4, W = 260, H = 196, OX = 130, OY = 58;
@@ -13,7 +14,7 @@
   const tile = (i, j) => { const [x, y] = iso(i, j); return [[x, y], [x + TW / 2, y + TH / 2], [x, y + TH], [x - TW / 2, y + TH / 2]]; };
   const center = (i, j) => iso(i + 0.5, j + 0.5);
   // Tabanı (x, y) noktasında duran bir ikon
-  const spr = (k, x, y, size, extra = '') => ICONS()[k] ? `<svg x="${(x - size / 2).toFixed(1)}" y="${(y - size).toFixed(1)}" width="${size}" height="${size}" viewBox="0 0 32 32" ${extra}>${ICONS()[k]}</svg>` : '';
+  const spr = (k, x, y, size, extra = '') => ASSET(k) ? `<image href="${ASSET(k)}" x="${(x - size / 2).toFixed(1)}" y="${(y - size).toFixed(1)}" width="${size}" height="${size}" ${extra}/>` : ICONS()[k] ? `<svg x="${(x - size / 2).toFixed(1)}" y="${(y - size).toFixed(1)}" width="${size}" height="${size}" viewBox="0 0 32 32" ${extra}>${ICONS()[k]}</svg>` : '';
   const SLOTS = [[1, 1], [2, 1], [1, 2], [2, 2], [0, 1], [3, 2], [1, 0], [2, 3], [0, 2], [3, 1], [0, 0], [3, 3], [2, 0], [1, 3], [0, 3], [3, 0]];
   const DECOR = {
     merkez: ['m_office', 'm_houses', 'm_dept', 'm_houses', 'm_classic', 'm_office'],
@@ -36,21 +37,23 @@
   }
   const own = (i, j) => `<polygon points="${pts(tile(i, j))}" fill="var(--map-ownGround)" stroke="var(--map-own)" stroke-width="1.5"/>`;
 
+  // Seviyeye özel üretilmiş görsel (ör. fabrika_2) varsa onu, yoksa genel ikonu kullan
+  const lv = (k, l) => (ASSET(k + '_' + l) ? k + '_' + l : k);
   function building(p, i, j, parts) {
     const [cx, cy] = center(i, j), base = cy + TH * 0.32, size = 44 + 7 * (p.level - 1);
     let s = own(i, j) + parts.map(([a, b]) => own(a, b)).join(''), topY = base - size;
     if (p.type === 'tarla') {
       s += rows(i, j, ROWCOL[p.product] || 'var(--map-pasture)');
       if (p.product) s += spr(p.product, cx + 12, base - 2, 18);
-      s += spr('tarla', cx - 8, base, 30 + 4 * (p.level - 1)); topY = base - 34;
+      s += spr(lv('tarla', p.level), cx - 8, base, 30 + 4 * (p.level - 1)); topY = base - 34;
     } else if (p.type === 'maden') {
-      s += spr('m_mountain', cx, base, size) + spr('maden', cx + 12, base + 2, 20);
+      s += ASSET('maden_' + p.level) ? spr('maden_' + p.level, cx, base, size) : spr('m_mountain', cx, base, size) + spr('maden', cx + 12, base + 2, 20);
     } else if (p.type === 'fabrika') {
-      for (const [a, b] of parts) { const [px, py] = center(a, b); s += spr('fabrika', px, py + TH * 0.32, size * 0.85); }
-      s += spr('fabrika', cx, base, size);
+      for (const [a, b] of parts) { const [px, py] = center(a, b); s += spr(ASSET('fabrika_ek') ? 'fabrika_ek' : 'fabrika', px, py + TH * 0.32, size * 0.85); }
+      s += spr(lv('fabrika', p.level), cx, base, size);
       if (p.busy) s += `<g class="smoke"><circle cx="${cx - 6}" cy="${topY + 2}" r="4"/><circle cx="${cx - 4}" cy="${topY}" r="3" style="animation-delay:-.8s"/><circle cx="${cx - 7}" cy="${topY + 1}" r="3.5" style="animation-delay:-1.6s"/></g>`;
     } else if (p.type === 'dukkan') {
-      s += spr('dukkan', cx, base, size);
+      s += spr(lv('dukkan', p.level), cx, base, size);
       for (let k = 0; k < Math.min(4, p.customers); k++) s += spr('m_person', cx - 20 + k * 9, base + 8 + (k % 2) * 2, 13);
     }
     return s + pin(cx, topY - 4, p.warn ? '!' : p.id, p.warn);
