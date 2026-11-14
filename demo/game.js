@@ -91,7 +91,7 @@
   }
   function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(s)); } catch (e) { /* depolama yoksa oyun yine çalışır */ } }
   function load() {
-    try { const d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (d && d.v === 2 && Array.isArray(d.plots)) { s = d; return true; } } catch (e) { /* yoksay */ }
+    try { const d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (d && d.v === 2 && Array.isArray(d.plots)) { s = d; for (const pl of s.plots) if (pl.b && !pl.b.out) pl.b.out = {}; return true; } } catch (e) { /* yoksay */ }
     return false;
   }
 
@@ -162,6 +162,29 @@
     const m = pl.b.auto[p]; if (!m || !P[p].d) return;
     const have = pl.inv[p] || 0; if (have >= 20) return;
     supply(pl, p, Math.min(60 - have, cap(pl) - invTotal(pl)), price(p) * m);
+  }
+  // Üretim çıktısının otomatik yönetimi: başka arsanın deposuna taşı ya da piyasa fiyatından ilana koy
+  const lineInputs = pl => new Set(pl.b.lines.flatMap(ln => ln.r ? Object.keys(P[ln.r].in) : []));
+  function autoOut(pl) {
+    const inputs = lineInputs(pl);
+    for (const [p, rule] of Object.entries(pl.b.out || {})) {
+      if (!rule || inputs.has(p)) continue;
+      const q = pl.inv[p] || 0;
+      if (rule.startsWith('ship:')) {
+        const to = plot(+rule.slice(5));
+        if (q < 10 || !to || !to.b) continue;
+        const n = Math.min(q, cap(to) - invTotal(to)); if (n <= 0) continue;
+        const c = trans(n, p, pl.region, to.region); if (s.money < c) continue;
+        exp('Taşıma', c); add(pl, p, -n); addCost(to, p, n, price(p) + c / n); add(to, p, n);
+      } else if (rule.startsWith('list:')) {
+        let l = s.mine.find(x => x.auto && x.plot === pl.id && x.p === p);
+        if (q > 0) {
+          if (!l) { l = { id: s.nextId++, p, qty: 0, price: 0, acc: 0, auto: true, plot: pl.id }; s.mine.push(l); }
+          l.qty += q; add(pl, p, -q); pl.last = s.t;
+        }
+        if (l) l.price = Math.round(price(p) * +rule.slice(5) * 10) / 10;
+      }
+    }
   }
   function autoInputs(pl, ln) {
     for (const [k, q] of Object.entries(P[ln.r].in)) {
@@ -247,7 +270,7 @@
     for (const pl of s.plots) {
       if (!pl.b) continue;
       if (pl.b.type === 'dukkan') { for (const p of shelf(pl)) { autoRestock(pl, p); applyRule(pl, p); } }
-      else for (const ln of pl.b.lines) if (ln.auto && ln.r) autoInputs(pl, ln);
+      else { for (const ln of pl.b.lines) if (ln.auto && ln.r) autoInputs(pl, ln); autoOut(pl); }
     }
     if (h % 24 === 0) daily(h / 24);
   }
@@ -323,7 +346,7 @@
       const pl = plot(+d.plot), bt = B[d.v];
       if (s.money < bt.cost) return toast('Para yetersiz');
       exp('İnşaat', bt.cost);
-      pl.b = { type: d.v, level: 1, spent: bt.cost, lines: d.v === 'dukkan' ? [] : [{ r: null, prog: 0, busy: false, st: 'Tarif seç', auto: 0 }], prices: {}, acc: {}, rule: {}, auto: {}, cost: {} };
+      pl.b = { type: d.v, level: 1, spent: bt.cost, lines: d.v === 'dukkan' ? [] : [{ r: null, prog: 0, busy: false, st: 'Tarif seç', auto: 0 }], prices: {}, acc: {}, rule: {}, auto: {}, cost: {}, out: {} };
     },
     upgrade(d) {
       const pl = plot(+d.plot), c = B[pl.b.type].cost * pl.b.level;
@@ -379,6 +402,7 @@
     rule(el) { const pl = plot(+el.dataset.plot), p = el.dataset.p, r = pl.b.rule[p] || { mode: 'elle', margin: 0.1 }; r[el.dataset.f] = el.dataset.f === 'mode' ? el.value : +el.value; pl.b.rule[p] = r; applyRule(pl, p); },
     auto(el) { const pl = plot(+el.dataset.plot); pl.b.auto[el.dataset.p] = +el.value; autoRestock(pl, el.dataset.p); },
     lineAuto(el) { const pl = plot(+el.dataset.plot), ln = pl.b.lines[+el.dataset.i]; ln.auto = +el.value; if (ln.auto && ln.r) autoInputs(pl, ln); },
+    out(el) { const pl = plot(+el.dataset.plot); pl.b.out[el.dataset.p] = el.value; if (el.value) autoOut(pl); },
     addShelf(el) { if (!el.value) return; const pl = plot(+el.dataset.plot), p = el.value; pl.b.auto[p] = pl.b.auto[p] || 1.1; pl.b.rule[p] = pl.b.rule[p] || { mode: 'ucuz', margin: 0.1 }; autoRestock(pl, p); applyRule(pl, p); },
     qty(el) { ui.qty = clamp(parseInt(el.value, 10) || 1, 1, 500); },
     dest(el) { ui.dest = +el.value; },
@@ -412,7 +436,7 @@
       const opts = PK.filter(k => P[k].b === b.type).map(k => `<option value="${k}" ${ln.r === k ? 'selected' : ''}>${P[k].n}${Object.keys(P[k].in).length ? ' ← ' + Object.entries(P[k].in).map(([x, q]) => q + ' ' + P[x].n).join(', ') : ''}</option>`).join('');
       h += `<div class="line"><label class="small muted" for="rc${pl.id}_${i}">Hat ${i + 1}</label><select id="rc${pl.id}_${i}" data-c="recipe" data-plot="${pl.id}" data-i="${i}"><option value="">Tarif seç</option>${opts}</select><div class="bar"><i data-prog="${pl.id}:${i}"></i></div><span class="small ${ln.busy ? 'muted' : 'warn'}">${ln.busy ? 'Üretiyor · parti gideri ' + fmt(P[ln.r].op) : esc(ln.st || '') + (ln.auto && ln.st && ln.st.startsWith('Girdi') ? ' · bu fiyata uygun satıcı yok' : '')}</span>${ln.r && Object.keys(P[ln.r].in).length ? `<label class="small muted" for="la${pl.id}_${i}">Girdi bitince</label><select id="la${pl.id}_${i}" data-c="lineAuto" data-plot="${pl.id}" data-i="${i}">${[[0, 'Elle alırım'], [1, 'Olağan fiyata kadar al'], [1.1, 'Olağanın %10 fazlasına kadar al'], [1.35, 'Toptancı dahil al (%35 fazlası)']].map(([v, l]) => `<option value="${v}" ${(ln.auto || 0) === v ? 'selected' : ''}>${l}</option>`).join('')}</select>` : ''}</div>`;
     });
-    const items = b.type === 'dukkan' ? shelf(pl) : Object.keys(pl.inv);
+    const items = b.type === 'dukkan' ? shelf(pl) : [...new Set([...b.lines.filter(l => l.r).map(l => l.r), ...Object.keys(pl.inv), ...Object.keys(b.out || {}).filter(p => b.out[p])])];
     if (!items.length) h += `<p class="muted small">${b.type === 'dukkan' ? 'Raflar boş. Pazar sekmesinden mal al ya da kendi üretimini buraya taşı.' : 'Depo boş.'}</p>`;
     const others = otherPlots(pl);
     if (items.length && others.length) h += `<div class="row small"><label for="mv${pl.id}">Taşıma hedefi</label><select id="mv${pl.id}" data-c="sel" data-k="mv${pl.id}">${others.map(o => `<option value="${o.id}" ${ui.sel['mv' + pl.id] == o.id ? 'selected' : ''}>Arsa ${o.id} · ${R[o.region].n}</option>`).join('')}</select></div>`;
@@ -421,6 +445,7 @@
       h += `<div class="item"><div class="row"><b>${P[p].n}</b><span class="num">${q} adet</span></div>`;
       if (b.type === 'dukkan' && P[p].d) h += shopControls(pl, p);
       else if (b.type === 'dukkan') h += '<p class="warn small">Şehir halkı bu ürünü almaz; pazarda sat ya da fabrikaya taşı.</p>';
+      else h += outControls(pl, p);
       if (q > 0) h += `<div class="row wrap">${btn('Toptancıya sat ' + fmt(q * price(p) * W_SELL), 'sellw', { plot: pl.id, p })}${btn('Pazara ilan ver', 'list', { plot: pl.id, p }, 'ghost')}${others.length ? btn('Taşı', 'move', { plot: pl.id, p }, 'ghost') : ''}</div>`;
       h += '</div>';
     }
@@ -429,6 +454,17 @@
       if (rest.length) h += `<div class="row small"><label for="as${pl.id}">Rafa ürün ekle</label><select id="as${pl.id}" data-c="addShelf" data-plot="${pl.id}"><option value="">Ürün seç</option>${rest.map(p => `<option value="${p}">${P[p].n}</option>`).join('')}</select></div><p class="muted small">Eklenen ürün otomatik alınır ve en ucuz rakibin biraz altında satılır; ayarları sonra değiştirebilirsin.</p>`;
     }
     return h + '</div>';
+  }
+
+  function outControls(pl, p) {
+    if (lineInputs(pl).has(p)) return '<p class="muted small">Bu arsadaki üretimin girdisi; otomatik gönderilmez.</p>';
+    const cur = (pl.b.out || {})[p] || '', id = pl.id + p;
+    const opts = [['', 'Elle yönetirim'], ...otherPlots(pl).map(o => ['ship:' + o.id, `Arsa ${o.id} · ${R[o.region].n} deposuna taşı`]),
+      ['list:0.95', 'Pazara koy: piyasanın %5 altı'], ['list:1', 'Pazara koy: piyasa fiyatı'], ['list:1.05', 'Pazara koy: piyasanın %5 üstü']];
+    let note = '';
+    if (cur.startsWith('ship:')) { const to = plot(+cur.slice(5)); note = to ? `10 adet birikince taşınır · birim taşıma ${fmt1(trans(1, p, pl.region, to.region))}` : 'Hedef arsa artık yok'; }
+    else if (cur.startsWith('list:')) { const l = s.mine.find(x => x.auto && x.plot === pl.id && x.p === p); note = (l ? `Pazarda ${l.qty} adet, tanesi ${fmt1(l.price)} · ` : 'Üretim çıktıkça ilana eklenir · ') + speedNote(+cur.slice(5)); }
+    return `<div class="grid2 small"><label for="ao${id}">Üretim çıkınca</label><select id="ao${id}" data-c="out" data-plot="${pl.id}" data-p="${p}">${opts.map(([v, l]) => `<option value="${v}" ${cur === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>${note ? `<p class="muted small">${note}</p>` : ''}`;
   }
 
   function shopControls(pl, p) {
@@ -458,7 +494,7 @@
   function viewMarket() {
     const out = [], dst = plot(ui.dest) || s.plots[0];
     out.push(['dest', `<div class="card"><div class="row wrap"><label for="dest">Teslim arsası</label><select id="dest" data-c="dest">${s.plots.map(p => `<option value="${p.id}" ${p.id === dst.id ? 'selected' : ''}>Arsa ${p.id} · ${R[p.region].n}${p.b ? ' · ' + B[p.b.type].n : ' · boş'}</option>`).join('')}</select><label for="qty">Adet</label><input id="qty" class="price" inputmode="numeric" data-c="qty" value="${ui.qty}"></div><p class="muted small">Fiyatlar teslim fiyatıdır: mal bedeli ve ${R[dst.region].n} bölgesine taşıma dahil.${transMult() > 1 ? ' Taşıma ücretleri şu an zamlı.' : ''}</p></div>`]);
-    if (s.mine.length) out.push(['mine', '<div class="card"><h3>İlanlarım</h3>' + s.mine.map(l => `<div class="row"><span>${P[l.p].n} · ${l.qty} adet · ${fmt1(l.price)}<br><span class="small">${speedNote(l.price / price(l.p))}</span></span>${btn('Geri çek', 'unlist', { id: l.id }, 'ghost')}</div>`).join('') + '<p class="muted small">Satışlardan %3 komisyon kesilir.</p></div>']);
+    if (s.mine.length) out.push(['mine', '<div class="card"><h3>İlanlarım</h3>' + s.mine.map(l => `<div class="row"><span>${P[l.p].n} · ${l.qty} adet · ${fmt1(l.price)}${l.auto ? ' · otomatik' : ''}<br><span class="small">${speedNote(l.price / price(l.p))}</span></span>${btn('Geri çek', 'unlist', { id: l.id }, 'ghost')}</div>`).join('') + '<p class="muted small">Satışlardan %3 komisyon kesilir.</p></div>']);
     for (const k of PK) {
       const wU = price(k) * W_BUY + trans(1, k, dst.region, dst.region);
       let h = `<div class="card"><div class="row head"><h3>${P[k].n}</h3><span class="small">${trend(k)}</span></div><p class="muted small">Olağan fiyat ${fmt1(price(k))} · ${WNAME[P[k].w]} yük</p><div class="row"><span>Sistem toptancısı</span><span class="num">${fmt1(wU)}</span>${btn('Al', 'buy', { p: k })}</div>`;
