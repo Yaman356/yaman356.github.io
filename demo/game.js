@@ -2,26 +2,30 @@
   'use strict';
 
   // ---------- Sabit veriler ----------
+  // Ürünler. Birim (u) ve olağan fiyat (ref, TL, toptan) Kasım 2026 Türkiye fiyatlarına dayanır:
+  // reports/Türkiye işletme maliyetleri ve fiyatlar.md. kg: birimin ağırlığı (taşıma ücreti buna göre).
+  // Tarifler gerçek dönüşüm oranlarıdır (100 kg buğday ≈ 72 kg un, 1 kg peynir ≈ 5 L süt, 1 kg lif ≈ 2,3 kg kütlü pamuk).
+  // op: 10 birimlik partinin işletme gideri (işçilik, enerji, bakım). d: dükkânda saatlik talep (birim).
   const P = {
-    bugday: { n: 'Buğday', ref: 4, w: 1, b: 'tarla', t: 30, op: 20, in: {} },
-    sut: { n: 'Süt', ref: 6, w: 1, b: 'tarla', t: 30, op: 30, in: {}, d: 6 },
-    pamuk: { n: 'Pamuk', ref: 8, w: 1, b: 'tarla', t: 45, op: 40, in: {} },
-    komur: { n: 'Kömür', ref: 6, w: 2, b: 'maden', t: 45, op: 30, in: {}, d: 4 },
-    demir: { n: 'Demir cevheri', ref: 10, w: 2, b: 'maden', t: 60, op: 50, in: {} },
-    un: { n: 'Un', ref: 14, w: 1, b: 'fabrika', t: 60, op: 15, in: { bugday: 20 }, d: 3 },
-    kumas: { n: 'Kumaş', ref: 27, w: 1, b: 'fabrika', t: 120, op: 25, in: { pamuk: 20 } },
-    celik: { n: 'Çelik', ref: 40, w: 2, b: 'fabrika', t: 120, op: 30, in: { demir: 20, komur: 10 } },
-    ekmek: { n: 'Ekmek', ref: 24, w: 1, b: 'fabrika', t: 60, op: 40, in: { un: 10 }, d: 12 },
-    peynir: { n: 'Peynir', ref: 30, w: 1, b: 'fabrika', t: 180, op: 50, in: { sut: 30 }, d: 8 },
-    giysi: { n: 'Giysi', ref: 46, w: 0.5, b: 'fabrika', t: 180, op: 80, in: { kumas: 10 }, d: 5 },
-    alet: { n: 'Alet', ref: 65, w: 1, b: 'fabrika', t: 240, op: 100, in: { celik: 10 }, d: 3 },
+    bugday: { n: 'Buğday', u: '100 kg', kg: 100, ref: 1650, w: 1, b: 'tarla', t: 30, op: 12400, in: {} },          // TMO 2026: 16,5 TL/kg
+    sut: { n: 'Süt', u: '100 L', kg: 100, ref: 2430, w: 1, b: 'tarla', t: 30, op: 19500, in: {}, d: 4 },          // USK: 24,3 TL/L
+    pamuk: { n: 'Pamuk', u: '100 kg kütlü', kg: 100, ref: 3100, w: 1, b: 'tarla', t: 45, op: 23200, in: {} },   // Çukobirlik: 31 TL/kg
+    komur: { n: 'Kömür', u: 'ton', kg: 1000, ref: 4000, w: 2, b: 'maden', t: 45, op: 30000, in: {}, d: 2 },      // santrale ~4.000 TL/t
+    demir: { n: 'Demir cevheri', u: 'ton', kg: 1000, ref: 6200, w: 2, b: 'maden', t: 60, op: 46500, in: {} },    // ~124 $/t
+    un: { n: 'Un', u: '100 kg', kg: 100, ref: 3700, w: 1, b: 'fabrika', t: 60, op: 1650, in: { bugday: 14 }, d: 4 },
+    kumas: { n: 'Kumaş', u: '100 m', kg: 25, ref: 11000, w: 0.5, b: 'fabrika', t: 120, op: 55000, in: { pamuk: 6 } },
+    celik: { n: 'Çelik', u: 'ton', kg: 1000, ref: 29700, w: 2, b: 'fabrika', t: 120, op: 85000, in: { demir: 16, komur: 6 } },  // inşaat demiri
+    ekmek: { n: 'Ekmek', u: '1.000 adet', kg: 200, ref: 13000, w: 0.5, b: 'fabrika', t: 60, op: 48000, in: { un: 14 }, d: 6 },  // rafta 17,5 TL
+    peynir: { n: 'Peynir', u: '100 kg', kg: 100, ref: 28000, w: 1, b: 'fabrika', t: 180, op: 60000, in: { sut: 50 }, d: 2 },     // rafta ~380 TL/kg
+    giysi: { n: 'Giysi', u: '100 adet', kg: 30, ref: 25000, w: 0.5, b: 'fabrika', t: 180, op: 25000, in: { kumas: 12 }, d: 3 },
+    alet: { n: 'Alet', u: '100 adet', kg: 80, ref: 35000, w: 1, b: 'fabrika', t: 240, op: 233000, in: { celik: 1 }, d: 2 },
   };
   const PK = Object.keys(P);
   const WNAME = { 0.5: 'hafif', 1: 'orta', 2: 'ağır' };
   const R = {
-    merkez: { n: 'Merkez', dm: 1.6, land: 12000, note: 'Tüketici talebi en yüksek bölge' },
-    kirsal: { n: 'Kırsal', dm: 1.0, land: 6000, bonus: 'tarla', note: 'Tarlalar %25 fazla ürün verir' },
-    dag: { n: 'Dağ', dm: 0.7, land: 7000, bonus: 'maden', note: 'Madenler %25 fazla ürün verir' },
+    merkez: { n: 'Merkez', dm: 1.6, land: 6000000, note: 'Tüketici talebi en yüksek bölge' },
+    kirsal: { n: 'Kırsal', dm: 1.0, land: 2500000, bonus: 'tarla', note: 'Tarlalar %25 fazla ürün verir' },
+    dag: { n: 'Dağ', dm: 0.7, land: 1500000, bonus: 'maden', note: 'Madenler %25 fazla ürün verir' },
   };
   const DIST = {
     merkez: { merkez: 0, kirsal: 1, dag: 2 },
@@ -29,10 +33,10 @@
     dag: { merkez: 2, kirsal: 1, dag: 0 },
   };
   const B = {
-    dukkan: { n: 'Dükkân', cost: 1500, cap: 150, hint: 'Mal alır, şehir halkına perakende satar' },
-    tarla: { n: 'Tarla', cost: 1200, cap: 200, hint: 'Buğday, süt ve pamuk üretir' },
-    maden: { n: 'Maden', cost: 2000, cap: 200, hint: 'Kömür ve demir cevheri çıkarır' },
-    fabrika: { n: 'Fabrika', cost: 2500, cap: 250, hint: 'Ham maddeyi işleyip ürün yapar' },
+    dukkan: { n: 'Dükkân', cost: 1200000, cap: 150, scale: 1, hint: 'Mal alır, şehir halkına perakende satar' },
+    tarla: { n: 'Tarla', cost: 1600000, cap: 200, scale: 1, hint: 'Buğday, süt ve pamuk üretir' },
+    maden: { n: 'Maden', cost: 4500000, cap: 400, scale: 2, hint: 'Kömür ve demir cevheri çıkarır' },
+    fabrika: { n: 'Fabrika', cost: 12000000, cap: 1250, scale: 5, hint: 'Ham maddeyi işleyip ürün yapar' },
   };
   const EVENTS = {
     festival: { title: 'Merkez’de hasat festivali', body: 'Festival boyunca Merkez’de ekmek ve peynir talebi %50 artacak.', d: { region: 'merkez', ps: ['ekmek', 'peynir'], m: 1.5 } },
@@ -46,30 +50,33 @@
   };
   // İşçiler: zorunlu değil; binayı bir konuda iyileştirir, günlük maaş alır
   const WK = {
-    usta: { n: 'Usta', b: ['tarla', 'maden', 'fabrika'], eff: [0.05, 0.10, 0.15], wage: [25, 50, 75], desc: e => `parti süresi %${e * 100} kısalır` },
-    mudur: { n: 'Müdür', b: ['tarla', 'maden', 'fabrika', 'dukkan'], eff: [0.05, 0.10, 0.15], wage: [25, 50, 75], desc: e => `işletme gideri ve toptancıdan alış %${e * 100} ucuzlar` },
-    satis: { n: 'Satış görevlisi', b: ['dukkan'], eff: [1, 2, 3], wage: [20, 40, 60], desc: e => `rafa ${e} ek ürün` },
-    sofor: { n: 'Şoför', b: ['tarla', 'maden', 'fabrika', 'dukkan'], eff: [0.10, 0.20, 0.30], wage: [15, 30, 45], desc: e => `taşıma ücreti %${e * 100} azalır` },
+    usta: { n: 'Usta', b: ['tarla', 'maden', 'fabrika'], eff: [0.05, 0.10, 0.15], wage: [16500, 25000, 33000], desc: e => `parti süresi %${e * 100} kısalır` },
+    mudur: { n: 'Müdür', b: ['tarla', 'maden', 'fabrika', 'dukkan'], eff: [0.05, 0.10, 0.15], wage: [12500, 19000, 25000], desc: e => `işletme gideri ve toptancıdan alış %${e * 100} ucuzlar` },
+    satis: { n: 'Satış görevlisi', b: ['dukkan'], eff: [1, 2, 3], wage: [8200, 12000, 16500], desc: e => `rafa ${e} ek ürün` },
+    sofor: { n: 'Şoför', b: ['tarla', 'maden', 'fabrika', 'dukkan'], eff: [0.10, 0.20, 0.30], wage: [15700, 23500, 31500], desc: e => `taşıma ücreti %${e * 100} azalır` },
   };
   const REG_WK = { merkez: { mudur: 3, satis: 3, usta: 1, sofor: 1 }, kirsal: { usta: 3, sofor: 2, mudur: 1, satis: 1 }, dag: { usta: 3, sofor: 3, mudur: 1, satis: 1 } };
   const NAMES = ['Ayşe', 'Mehmet', 'Zeynep', 'Can', 'Elif', 'Mert', 'Deniz', 'Selin', 'Burak', 'Ece', 'Emre', 'Derya', 'Kerem', 'Nil', 'Onur', 'Sena', 'Tuna', 'Melis'];
-  const RETAIL = 1.6, W_BUY = 1.3, W_SELL = 0.75, RENT = 0.05, COMM = 0.03, FREE_UNTIL = 2 * 1440;
+  const RETAIL = 1.35, W_BUY = 1.12, W_SELL = 0.85, RENT = 0.05, COMM = 0.03, FREE_UNTIL = 2 * 1440;
   // Hedefler: [metin, koşul, ödül]. Ödül hedef tamamlanınca kasaya eklenir.
   const GOALS = [
-    ['Arsana bir bina kur', s => s.plots.some(p => p.b), 500],
-    ['İlk satışını yap', s => s.totalIncome > 0, 750],
-    ['Bir ürüne otomatik fiyat kuralı koy', s => s.plots.some(p => p.b && Object.values(p.b.rule || {}).some(r => r.mode !== 'elle')), 750],
-    ['Kasanda ₺10.000 biriktir', s => s.money >= 10000, 1500],
-    ['Bir arsa artırması kazan', s => s.plots.some(p => !p.rented), 2500],
-    ['Üç arsaya ulaş', s => s.plots.length >= 3, 3000],
-    ['Net değerini ₺50.000 yap', s => netWorth() >= 50000, 5000],
+    ['Arsana bir bina kur', s => s.plots.some(p => p.b), 200000],
+    ['İlk satışını yap', s => s.totalIncome > 0, 300000],
+    ['Bir ürüne otomatik fiyat kuralı koy', s => s.plots.some(p => p.b && Object.values(p.b.rule || {}).some(r => r.mode !== 'elle')), 300000],
+    [() => 'Kasanda ' + fmt(5e6) + ' biriktir', s => s.money >= 5e6, 600000],
+    ['Bir arsa artırması kazan', s => s.plots.some(p => !p.rented), 1000000],
+    ['Üç arsaya ulaş', s => s.plots.length >= 3, 1200000],
+    [() => 'Net değerini ' + fmt(4e7) + ' yap', s => netWorth() >= 4e7, 2000000],
   ];
   // Uygulama kapalıyken geçen süre: gerçek 1 saniye = 1× hızda 15 oyun dakikası; en fazla bir oyun günü telafi edilir.
-  const AWAY_RATE = 15 / 1000, AWAY_MAX = 1440, AWAY_MIN = 30, DEBT_RATE = 0.02;
-  const SAVE_KEY = 'tezgah-demo-v2';
+  const goalText = i => typeof GOALS[i][0] === 'function' ? GOALS[i][0]() : GOALS[i][0];
+  const AWAY_RATE = 15 / 1000, AWAY_MAX = 1440, AWAY_MIN = 30, DEBT_RATE = 0.008;
+  // Başlangıç sermayesi ve taşıma ücreti (TL/ton): sabit + bölge adımı başına
+  const START_MONEY = 2500000, TR_FIXED = 150, TR_STEP = 600;
+  const SAVE_KEY = 'tezgah-demo-v3';
 
   // ---------- Durum ----------
-  let s, ui = { tab: 'plots', dest: 1, qty: 20, listMul: 1, sel: {} };
+  let s, ui = { tab: 'plots', dest: 1, qty: 20, listMul: 1, sel: {}, invTL: 1000 };
   let awayLog = null;  // çevrimdışı telafi sırasında gelir ve giderleri toplar
   const rnd = (a, b) => a + Math.random() * (b - a);
   const pick = a => a[Math.floor(Math.random() * a.length)];
@@ -83,24 +90,30 @@
     if (d < 0) return `<span class="up">Piyasanın %${-d} altında · alım hızı %${v}</span>`;
     return 'Piyasa fiyatında · alım hızı %100';
   };
-  const fmt = n => (n < 0 ? '−' : '') + '₺' + Math.abs(Math.round(n)).toLocaleString('tr-TR');
-  const fmt1 = n => '₺' + (Math.round(n * 10) / 10).toLocaleString('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  // Para birimi: oyun içinde her tutar Türk lirası olarak tutulur; ekranda oyuncunun seçtiği birimde gösterilir.
+  const CUR = { TRY: { n: 'Türk lirası', sym: '₺' }, USD: { n: 'ABD doları', sym: '$' }, EUR: { n: 'Euro', sym: '€' } };
+  const rate = c => (c === 'TRY' || !s || !s.mkt ? 1 : s.mkt.px[c]);
+  const disp = n => n / rate(s ? s.cur || 'TRY' : 'TRY');
+  const sym = () => CUR[(s && s.cur) || 'TRY'].sym;
+  const fmt = n => { const v = disp(n), big = Math.abs(v) >= 1e6; return (v < 0 ? '−' : '') + sym() + (big ? (Math.abs(v) / 1e6).toLocaleString('tr-TR', { maximumFractionDigits: 2 }) + ' mn' : Math.abs(Math.round(v)).toLocaleString('tr-TR')); };
+  const fmt1 = n => { const v = disp(n), d = Math.abs(v) < 100 ? 2 : 0; return sym() + v.toLocaleString('tr-TR', { minimumFractionDigits: d, maximumFractionDigits: d }); };
   const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
   function emptyStats() { return { inc: {}, exp: {} }; }
   function newGame() {
     s = {
-      v: 2, money: 5000, t: 8 * 60, lastHour: 8, speed: 1, nextId: 100, nextPlot: 2, totalIncome: 0,
+      v: 3, cur: 'TRY', money: START_MONEY, t: 8 * 60, lastHour: 8, speed: 1, nextId: 100, nextPlot: 2, totalIncome: 0,
       plots: [{ id: 1, region: 'kirsal', rented: true, ref: R.kirsal.land, b: null, inv: {}, last: -1e9, paid: 0 }],
       mult: {}, hist: {}, rivals: {}, unread: 0, workers: [], cands: {}, listings: [], mine: [], auctions: [], events: [], news: [],
       today: emptyStats(), prev: emptyStats(), goals: [], freeSwap: true, lastEvent: '', nextListAt: 0,
     };
     for (const k of PK) { s.mult[k] = 1; s.hist[k] = [1]; }
+    s.mkt = newMarket(); s.pf = { cost: {}, DEP: 0 };
     for (const r in R) { s.rivals[r] = {}; for (const k of PK) if (P[k].d) s.rivals[r][k] = [rnd(0.97, 1.1), rnd(0.97, 1.1)]; }
     for (const r in R) s.cands[r] = genCands(r);
     genListings();
     spawnAuction();
-    news('Tezgâh açıldı', 'Kırsal’da kiralık bir arsan ve ₺5.000 sermayen var. İlk iki gün kira ve vergi alınmaz.');
+    news('Tezgâh açıldı', 'Kırsal’da kiralık bir arsan ve ' + fmt(START_MONEY) + ' sermayen var. Tarla ya da dükkân kurmaya yeter; fabrika için büyümen gerekecek. İlk iki gün kira ve vergi alınmaz.');
     ui.dest = 1;
   }
   function save() { s.savedAt = Date.now(); try { localStorage.setItem(SAVE_KEY, JSON.stringify(s)); } catch (e) { /* depolama yoksa oyun yine çalışır */ } }
@@ -118,30 +131,38 @@
     if (min >= AWAY_MIN) ui.away = log;
   }
   function load() {
-    try { const d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (d && d.v === 2 && Array.isArray(d.plots)) { s = d; for (const pl of s.plots) if (pl.b && !pl.b.out) pl.b.out = {}; if (!s.workers) { s.workers = []; s.cands = {}; for (const r in R) s.cands[r] = genCands(r); } return true; } } catch (e) { /* yoksay */ }
+    try { const d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (d && d.v === 3 && Array.isArray(d.plots)) { s = d; for (const pl of s.plots) if (pl.b && !pl.b.out) pl.b.out = {}; if (!s.workers) { s.workers = []; s.cands = {}; for (const r in R) s.cands[r] = genCands(r); } return true; } } catch (e) { /* yoksay */ }
     return false;
   }
 
   // ---------- Ekonomi yardımcıları ----------
   const price = p => P[p].ref * s.mult[p];
+  // Bir birimlik alım-satımın piyasa fiyatına etkisi: birimin değeri arttıkça etki büyür (eski ölçekle aynı aralıkta)
+  // Ulusal piyasa büyüktür: tek oyuncunun alımı fiyatı az etkiler. Fabrika ölçeğinde alım-satım fiyatı tavana ya da tabana itmesin.
+  const impact = p => Math.min(15, P[p].ref / 1600) / B[P[p].b].scale;
+  // Pazardaki bir ilanın saatlik satış hızı: ürünün üretildiği binanın ölçeğiyle büyür (fabrika malının alıcısı da çoktur)
+  const listRate = p => 15 * B[P[p].b].scale;
   const retailRef = p => price(p) * RETAIL;
   const activeEvents = () => s.events.filter(e => s.t >= e.start && s.t < e.end);
   function demandMult(region, p) { let m = 1; for (const e of activeEvents()) { const d = EVENTS[e.key].d; if (d && d.ps.includes(p) && (!d.region || d.region === region)) m *= d.m; } return m; }
   function yieldMult(region, b) { let m = R[region].bonus === b ? 1.25 : 1; for (const e of activeEvents()) { const y = EVENTS[e.key].y; if (y && y.b === b && y.region === region) m *= y.m; } return m; }
   function transMult() { let m = 1; for (const e of activeEvents()) if (EVENTS[e.key].tr) m *= EVENTS[e.key].tr; return m; }
-  const trans = (qty, p, from, to) => qty * P[p].w * (0.1 + DIST[from][to] * 0.2) * transMult();
+  // Taşıma: ton başına sabit ücret + bölge adımı başına ücret (yaklaşık 3 TL/ton-km, bir adım ≈ 200 km)
+  const trans = (qty, p, from, to) => qty * P[p].kg / 1000 * (TR_FIXED + DIST[from][to] * TR_STEP) * transMult();
   const invTotal = pl => Object.values(pl.inv).reduce((a, b) => a + b, 0);
   const cap = pl => (pl.b ? B[pl.b.type].cap * (pl.b.level + (pl.b.parts || []).length) : 0);
   // Üretim binasında seviye partiyi büyütür: 1. seviye 10, 2. seviye 15, 3. seviye 20 birim (girdi ve gider de aynı oranda)
-  const batch = pl => pl.b.type === 'dukkan' ? 1 : 1 + 0.5 * (pl.b.level - 1);
+  const batch = pl => pl.b.type === 'dukkan' ? 1 : B[pl.b.type].scale * (1 + 0.5 * (pl.b.level - 1));
   // Yeni hat için aynı bölgedeki boş arsalar (binanın genişleyebileceği yer)
   const freePlots = pl => s.plots.filter(x => x !== pl && !x.b && !x.part && x.region === pl.region);
   const plot = id => s.plots.find(p => p.id === id);
   function add(pl, p, q) { pl.inv[p] = (pl.inv[p] || 0) + q; if (pl.inv[p] <= 0) delete pl.inv[p]; }
   function inc(kind, amt) { s.money += amt; s.totalIncome += amt; s.today.inc[kind] = (s.today.inc[kind] || 0) + amt; if (awayLog) awayLog.inc[kind] = (awayLog.inc[kind] || 0) + amt; }
   function exp(kind, amt) { s.money -= amt; s.today.exp[kind] = (s.today.exp[kind] || 0) + amt; if (awayLog) awayLog.exp[kind] = (awayLog.exp[kind] || 0) + amt; }
-  // Hedef ödülü kasaya girer ama ticari gelir sayılmaz (totalIncome'a eklenmez)
-  function reward(amt) { s.money += amt; s.today.inc['Hedef ödülü'] = (s.today.inc['Hedef ödülü'] || 0) + amt; if (awayLog) awayLog.inc['Hedef ödülü'] = (awayLog.inc['Hedef ödülü'] || 0) + amt; }
+  // Hedef ödülü, temettü ve faiz kasaya girer ama ticari gelir sayılmaz (totalIncome'a eklenmez).
+  // inPlace: tutar kasaya değil başka yere (ör. mevduat bakiyesine) eklendi, yalnızca kayda geçer.
+  function finInc(kind, amt, inPlace) { if (!inPlace) s.money += amt; s.today.inc[kind] = (s.today.inc[kind] || 0) + amt; if (awayLog) awayLog.inc[kind] = (awayLog.inc[kind] || 0) + amt; }
+  const reward = amt => finInc('Hedef ödülü', amt);
   function rentOn(pl, amt) { if (pl.rented && s.t >= FREE_UNTIL) exp('Kira', amt * RENT); }
   function news(title, body, alert) { s.news.unshift({ t: s.t, title, body }); if (s.news.length > 40) s.news.pop(); if (ui.tab !== 'news') s.unread = (s.unread || 0) + 1; if (alert && !awayLog) toast(title); }
   function shopRate(pl, p) {
@@ -196,7 +217,7 @@
     if (q <= 0) return 0;
     exp('Mal alımı', unit * q); exp('Taşıma', tu * q); addCost(to, p, q, unit + tu); add(to, p, q);
     if (l) { l.qty -= q; if (l.qty <= 0) s.listings = s.listings.filter(x => x !== l); }
-    s.mult[p] = clamp(s.mult[p] + 0.00002 * P[p].ref * q, 0.6, 1.5);
+    s.mult[p] = clamp(s.mult[p] + 0.00002 * impact(p) * q, 0.6, 1.5);
     return q;
   }
   function supply(pl, p, q, maxUnit) {
@@ -244,6 +265,7 @@
     let v = s.money + landValue();
     for (const pl of s.plots) { if (pl.b) v += pl.b.spent * 0.5; for (const p in pl.inv) v += pl.inv[p] * price(p) * W_SELL; }
     for (const l of s.mine) v += l.qty * price(l.p) * W_SELL;
+    v += portfolioValue();
     for (const a of s.auctions) { if (a.bidder === 'me') v += a.bid; if (a.plot) v += a.plot.ref; }
     return v;
   }
@@ -253,6 +275,105 @@
   }
   function taxFactor() { const n = s.plots.filter(p => !p.rented).length; return 1 + 0.1 * Math.max(0, n - 1); }
   const dailyTax = pl => pl.rented ? 0 : pl.ref * taxRate(pl) * taxFactor() / 7;
+
+  // ---------- Sanal piyasa: döviz, altın, mevduat, hisse ----------
+  // Gerçek piyasa değildir; oranlar araştırma raporundaki seviye ve oynaklıklara göre ayarlanmış rastgele yürüyüştür.
+  // Bir oyun günü piyasada bir işlem haftası (5 gün) sayılır, yoksa fiyatlar oyun süresince neredeyse kıpırdamaz.
+  const MKT_DAYS = 5;
+  // Kaynak: reports/Türkiye işletme maliyetleri ve fiyatlar.md (13 Kasım 2026 kapanışları; oynaklıklar tahmindir)
+  const FXP = {  // başlangıç kuru (TL), yıllık beklenen değişim, yıllık oynaklık
+    USD: { n: 'ABD doları', p0: 50.37, mu: 0.20, vol: 0.06 },   // kontrollü değer kaybı: ayda %1,5-2
+    EUR: { n: 'Euro', p0: 55.6, mu: 0.17, vol: 0.10 },
+  };
+  const GOLD = { n: 'Gram altın', ons0: 3880, mu: 0.12, vol: 0.20, spread: 0.03 };  // ons dolar; bankalarda alış-satış farkı %3-4
+  // Bankada döviz alış-satış farkı, hisse komisyonu (binde 2 + %5 BSMV), mevduat yıllık brüt faizi (politika faizi %36)
+  const FX_SPREAD = 0.01, COMMISSION = 0.002 * 1.05, DEPOSIT_RATE = 0.36;
+  const INDEX = { p0: 11843, mu: 0.20, vol: 0.30, crash: 0.03 };  // TZ-30, BIST 100 seviyesinde başlar; crash: bir günde sert düşüş olasılığı
+  // Kurgusal şirketler; her biri oyundaki ürünlere bağlıdır: o ürünlerin fiyatı yükselince hissesi de destek bulur
+  const STOCKS = {
+    AUN: { n: 'Anadolu Un', sec: 'Gıda', p0: 48, beta: 0.8, vol: 0.32, div: 0.03, ps: ['un', 'ekmek', 'bugday'] },
+    YSU: { n: 'Yayla Süt', sec: 'Gıda', p0: 36, beta: 0.7, vol: 0.30, div: 0.025, ps: ['sut', 'peynir'] },
+    ETK: { n: 'Ege Tekstil', sec: 'Tekstil', p0: 22, beta: 1.1, vol: 0.42, div: 0.01, ps: ['pamuk', 'kumas', 'giysi'] },
+    DMC: { n: 'Demirkaya Çelik', sec: 'Metal', p0: 64, beta: 1.2, vol: 0.40, div: 0.02, ps: ['celik', 'alet', 'demir'] },
+    KMD: { n: 'Kuzey Madencilik', sec: 'Madencilik', p0: 31, beta: 1.3, vol: 0.48, div: 0.0, ps: ['komur', 'demir'] },
+    PZM: { n: 'Pazar Marketler', sec: 'Perakende', p0: 120, beta: 0.9, vol: 0.30, div: 0.02, ps: ['ekmek', 'peynir', 'giysi'] },
+  };
+  const ASSETS = ['USD', 'EUR', 'XAU', ...Object.keys(STOCKS)];
+  const assetName = a => a === 'XAU' ? GOLD.n : FXP[a] ? FXP[a].n : STOCKS[a].n;
+  const gauss = () => { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+  const avgMult = ps => ps.reduce((a, p) => a + s.mult[p], 0) / ps.length;
+  function newMarket() {
+    const px = { USD: FXP.USD.p0, EUR: FXP.EUR.p0, ons: GOLD.ons0 };
+    px.XAU = px.ons * px.USD / 31.1035;
+    for (const k in STOCKS) px[k] = STOCKS[k].p0;
+    const m = { px, hist: {}, idx: INDEX.p0, idxHist: [INDEX.p0], link: {}, open: {} };
+    for (const a of ASSETS) { m.hist[a] = [px[a]]; m.open[a] = px[a]; }
+    for (const k in STOCKS) m.link[k] = avgMult(STOCKS[k].ps);
+    return m;
+  }
+  // Saatlik fiyat adımı: log getiri = beklenen + oynaklık × rastgele şok. Hisseler genel endekse (beta) ve bağlı ürün fiyatlarına tepki verir.
+  function marketHour(h) {
+    const m = s.mkt, dt = MKT_DAYS / 252 / 24, sq = Math.sqrt(dt), step1 = (mu, vol, z) => Math.exp((mu - vol * vol / 2) * dt + vol * sq * z);
+    for (const c in FXP) m.px[c] *= step1(FXP[c].mu, FXP[c].vol, gauss());
+    m.px.ons *= step1(GOLD.mu, GOLD.vol, gauss());
+    m.px.XAU = m.px.ons * m.px.USD / 31.1035;
+    const zi = gauss(), ri = step1(INDEX.mu, INDEX.vol, zi);
+    m.idx *= ri;
+    for (const k in STOCKS) {
+      const st = STOCKS[k], idio = Math.sqrt(Math.max(0.01, st.vol * st.vol - (st.beta * INDEX.vol) ** 2));
+      const now = avgMult(st.ps), dLink = Math.log(now / (m.link[k] || now)); m.link[k] = now;
+      m.px[k] *= Math.exp(st.beta * Math.log(ri) + (INDEX.mu * (1 - st.beta)) * dt - idio * idio / 2 * dt + idio * sq * gauss() + 0.6 * dLink);
+    }
+    for (const e of activeEvents()) { const d = EVENTS[e.key].d; if (!d) continue; for (const k in STOCKS) if (STOCKS[k].ps.some(p => d.ps.includes(p))) m.px[k] *= 1 + 0.004 * (d.m - 1); }
+    if (h % 2 === 0) { for (const a of ASSETS) { m.hist[a].push(m.px[a]); if (m.hist[a].length > 48) m.hist[a].shift(); } m.idxHist.push(m.idx); if (m.idxHist.length > 48) m.idxHist.shift(); }
+  }
+  function marketDay() {
+    const m = s.mkt, pf = s.pf;
+    // Temettü: yıllık verimin bir oyun gününe (MKT_DAYS işlem günü) düşen payı
+    let div = 0; for (const k in STOCKS) div += (pf[k] || 0) * m.px[k] * STOCKS[k].div * MKT_DAYS / 252;
+    if (div > 0.5) finInc('Temettü', div);
+    // Vadeli mevduat: brüt faizden %15 stopaj düşülür
+    if (pf.DEP > 0) { const it = pf.DEP * DEPOSIT_RATE * MKT_DAYS / 365 * 0.85; pf.DEP += it; finInc('Mevduat faizi', it, true); }
+    // Ender kriz günü: endeks %6-9 düşer, devre kesici çalışır; hisseler betalarına göre etkilenir, altın ve dolar biraz yükselir
+    if (Math.random() < INDEX.crash) {
+      const f = rnd(0.06, 0.09); m.idx *= 1 - f;
+      for (const k in STOCKS) m.px[k] *= 1 - f * STOCKS[k].beta * rnd(0.8, 1.2);
+      m.px.USD *= 1 + f / 4; m.px.EUR *= 1 + f / 4; m.px.ons *= 1 + f / 6; m.px.XAU = m.px.ons * m.px.USD / 31.1035;
+      news('Borsada sert düşüş', 'TZ-30 endeksi bir günde %' + (f * 100).toFixed(1) + ' düştü, devre kesici devreye girdi. Dolar ve altın değer kazandı.', true);
+    }
+    const moves = ASSETS.map(a => [a, m.px[a] / m.open[a] - 1]).sort((x, y) => Math.abs(y[1]) - Math.abs(x[1]));
+    const [a, r] = moves[0];
+    if (Math.abs(r) > 0.04) news('Piyasa: ' + assetName(a) + (r > 0 ? ' yükseldi' : ' düştü'), assetName(a) + ' günü %' + Math.abs(r * 100).toFixed(1) + (r > 0 ? ' artıyla' : ' kayıpla') + ' kapattı.');
+    for (const x of ASSETS) m.open[x] = m.px[x];
+  }
+  // Alış ve satış fiyatı: döviz ve altında kur farkı (makas), hissede komisyon
+  const spreadOf = a => a === 'XAU' ? GOLD.spread : FXP[a] ? FX_SPREAD : COMMISSION;
+  const askPx = a => s.mkt.px[a] * (1 + spreadOf(a) / 2 * (STOCKS[a] ? 2 : 1));
+  const bidPx = a => s.mkt.px[a] * (1 - spreadOf(a) / 2 * (STOCKS[a] ? 2 : 1));
+  const unitName = a => a === 'XAU' ? 'gram' : FXP[a] ? CUR[a].sym : 'lot';
+  function portfolioValue() { let v = s.pf.DEP || 0; for (const a of ASSETS) v += (s.pf[a] || 0) * bidPx(a); return v; }
+  // Tutar (TL) karşılığı alım: döviz ve altın kesirli, hisse tam lot alınır
+  function trade(a, side, amt) {
+    const pf = s.pf;
+    if (a === 'DEP') {
+      if (side === 'buy') { amt = Math.min(amt, s.money); if (amt <= 0) return 0; s.money -= amt; pf.DEP = (pf.DEP || 0) + amt; return amt; }
+      amt = Math.min(amt, pf.DEP || 0); if (amt <= 0) return 0; pf.DEP -= amt; s.money += amt; return amt;
+    }
+    const whole = !!STOCKS[a];
+    if (side === 'buy') {
+      let q = Math.min(amt, s.money) / askPx(a); if (whole) q = Math.floor(q); else q = Math.floor(q * 100) / 100;
+      if (q <= 0) return 0;
+      s.money -= q * askPx(a); pf[a] = (pf[a] || 0) + q;
+      pf.cost[a] = (pf.cost[a] || 0) + q * askPx(a); return q;
+    }
+    let q = Math.min(pf[a] || 0, amt / bidPx(a)); if (whole) q = Math.min(pf[a] || 0, Math.ceil(q)); q = Math.round(q * 100) / 100;
+    if (q <= 0) return 0;
+    const avg = (pf.cost[a] || 0) / (pf[a] || 1), gain = q * (bidPx(a) - avg);
+    s.money += q * bidPx(a); pf.cost[a] -= avg * q; pf[a] -= q; if (pf[a] < 0.005) { pf[a] = 0; pf.cost[a] = 0; }
+    const k = gain >= 0 ? 'Yatırım kârı' : 'Yatırım zararı';
+    if (gain >= 0) { s.today.inc[k] = (s.today.inc[k] || 0) + gain; } else s.today.exp[k] = (s.today.exp[k] || 0) - gain;
+    return q;
+  }
 
   // ---------- Simülasyon ----------
   function step(dt) {
@@ -267,7 +388,7 @@
           if (n > 0) {
             pl.b.acc[p] -= n; const pr = pl.b.prices[p] || retailRef(p);
             add(pl, p, -n); inc('Perakende', n * pr); rentOn(pl, n * pr); pl.last = s.t;
-            s.mult[p] = clamp(s.mult[p] + 0.00001 * P[p].ref * n, 0.6, 1.5);
+            s.mult[p] = clamp(s.mult[p] + 0.00001 * impact(p) * n, 0.6, 1.5);
           }
         }
         continue;
@@ -293,9 +414,9 @@
     }
     // Pazardaki ilanlarım
     for (const l of s.mine) {
-      l.acc += 15 * buySpeed(l.price / price(l.p)) * dt / 60;
+      l.acc += listRate(l.p) * buySpeed(l.price / price(l.p)) * dt / 60;
       const n = Math.min(Math.floor(l.acc), l.qty);
-      if (n > 0) { l.acc -= n; l.qty -= n; const v = n * l.price; inc('Pazar', v); exp('Komisyon', v * COMM); s.mult[l.p] = clamp(s.mult[l.p] - 0.00002 * P[l.p].ref * n, 0.6, 1.5); }
+      if (n > 0) { l.acc -= n; l.qty -= n; const v = n * l.price; inc('Pazar', v); exp('Komisyon', v * COMM); s.mult[l.p] = clamp(s.mult[l.p] - 0.00002 * impact(l.p) * n, 0.6, 1.5); }
     }
     s.mine = s.mine.filter(l => l.qty > 0);
     // Artırmalar
@@ -304,11 +425,12 @@
     while (Math.floor(s.t / 60) > s.lastHour) { s.lastHour++; hourly(s.lastHour); }
     for (let i = 0; i < GOALS.length; i++) if (!s.goals[i] && GOALS[i][1](s)) {
       s.goals[i] = true; reward(GOALS[i][2]);
-      news('Hedef tamamlandı: ' + GOALS[i][0], 'Ödül olarak kasana ' + fmt(GOALS[i][2]) + ' eklendi.', true);
+      news('Hedef tamamlandı: ' + goalText(i), 'Ödül olarak kasana ' + fmt(GOALS[i][2]) + ' eklendi.', true);
     }
   }
 
   function hourly(h) {
+    marketHour(h);
     for (const k of PK) {
       s.mult[k] = clamp(s.mult[k] + (1 - s.mult[k]) * 0.03 + rnd(-0.012, 0.012), 0.6, 1.5);
       if (h % 2 === 0) { s.hist[k].push(s.mult[k]); if (s.hist[k].length > 36) s.hist[k].shift(); }
@@ -335,6 +457,7 @@
   function daily(day) {
     if (s.t >= FREE_UNTIL) for (const pl of s.plots) { const tx = dailyTax(pl); if (tx > 0) exp('Vergi', tx); }
     s.prev = s.today; s.today = emptyStats();
+    marketDay();
     for (const w of s.workers) {
       const pl = plot(w.plot);
       if (!pl || s.t - pl.last > 1440) continue;
@@ -352,7 +475,7 @@
     if (day % 2 === 0) announceEvent();
     if (s.money < 0) {
       const fee = -s.money * DEBT_RATE; exp('Borç faizi', fee);
-      news('Kasan ekside', 'Borcun var: ' + fmt(-s.money) + '. Borca günde %' + DEBT_RATE * 100 + ' faiz işler; bugün ' + fmt(fee) + ' faiz ödendi. Para yetmeyen üretim hatları durur. Mal sat ya da bir arsanı sisteme devret.', true);
+      news('Kasan ekside', 'Borcun var: ' + fmt(-s.money) + '. Borca günde %' + (DEBT_RATE * 100).toLocaleString('tr-TR') + ' faiz işler (yıllık ~%40 ticari kredi); bugün ' + fmt(fee) + ' faiz ödendi. Para yetmeyen üretim hatları durur. Mal sat ya da bir arsanı sisteme devret.', true);
     }
   }
 
@@ -422,6 +545,13 @@
     focus(d) { ui.tab = 'plots'; ui.focusPlot = +d.plot; },
     tab(d) { ui.tab = d.v; if (d.v === 'news') { s.unread = 0; ui.away = null; } },
     awayOk() { ui.away = null; },
+    trade(d) {
+      const tl = d.side === 'sellall' ? Infinity : ui.invTL;
+      if (!(tl > 0)) return toast('Önce bir tutar yaz');
+      const q = trade(d.asset, d.side === 'buy' ? 'buy' : 'sell', tl);
+      if (!q) return toast(d.side === 'buy' ? 'Para yetersiz' : 'Elinde yok');
+      toast(d.asset === 'DEP' ? (d.side === 'buy' ? 'Mevduata yatırıldı' : 'Mevduattan çekildi') : assetName(d.asset) + ': ' + q.toLocaleString('tr-TR', { maximumFractionDigits: 2 }) + ' ' + unitName(d.asset) + (d.side === 'buy' ? ' alındı' : ' satıldı'));
+    },
     speed(d) { s.speed = +d.v; },
     reset() { if (ui.confirmReset) { newGame(); ui.confirmReset = false; ui.tab = 'plots'; } else { ui.confirmReset = true; setTimeout(() => { ui.confirmReset = false; }, 4000); } },
     build(d) {
@@ -450,7 +580,7 @@
       fireCrew(pl, 'bina yıkıldığı için');
       s.money += pl.b.spent * (s.freeSwap ? 1 : 0.5); s.freeSwap = false; pl.b = null;
     },
-    sellw(d) { const pl = plot(+d.plot), q = pl.inv[d.p]; inc('Toptancı', q * price(d.p) * W_SELL); rentOn(pl, q * price(d.p) * W_SELL); s.mult[d.p] = clamp(s.mult[d.p] - 0.00002 * P[d.p].ref * q, 0.6, 1.5); add(pl, d.p, -q); pl.last = s.t; },
+    sellw(d) { const pl = plot(+d.plot), q = pl.inv[d.p]; inc('Toptancı', q * price(d.p) * W_SELL); rentOn(pl, q * price(d.p) * W_SELL); s.mult[d.p] = clamp(s.mult[d.p] - 0.00002 * impact(d.p) * q, 0.6, 1.5); add(pl, d.p, -q); pl.last = s.t; },
     list(d) { const pl = plot(+d.plot), q = pl.inv[d.p]; s.mine.push({ id: s.nextId++, p: d.p, qty: q, price: Math.round(price(d.p) * ui.listMul * 10) / 10, acc: 0 }); add(pl, d.p, -q); pl.last = s.t; },
     unlist(d) { const l = s.mine.find(x => x.id === +d.id), pl = plot(ui.dest) || s.plots.find(p => p.b); if (!pl || !pl.b) return toast('Malı koyacak depon yok'); if (invTotal(pl) + l.qty > cap(pl)) return toast('Hedef depoda yer yok'); addCost(pl, l.p, l.qty, l.price); add(pl, l.p, l.qty); s.mine = s.mine.filter(x => x !== l); },
     move(d) {
@@ -489,7 +619,7 @@
   };
   const C = {
     recipe(el) { const ln = plot(+el.dataset.plot).b.lines[+el.dataset.i]; ln.r = el.value || null; ln.busy = false; ln.prog = 0; },
-    price(el) { const v = parseFloat(el.value.replace(',', '.')), pl = plot(+el.dataset.plot); if (v > 0) { pl.b.prices[el.dataset.p] = v; if (pl.b.rule[el.dataset.p]) pl.b.rule[el.dataset.p].mode = 'elle'; } },
+    price(el) { const v = parseFloat(el.value.replace(',', '.')) * rate(s.cur), pl = plot(+el.dataset.plot); if (v > 0) { pl.b.prices[el.dataset.p] = v; if (pl.b.rule[el.dataset.p]) pl.b.rule[el.dataset.p].mode = 'elle'; } },
     rule(el) { const pl = plot(+el.dataset.plot), p = el.dataset.p, r = pl.b.rule[p] || { mode: 'elle', margin: 0.1 }; r[el.dataset.f] = el.dataset.f === 'mode' ? el.value : +el.value; pl.b.rule[p] = r; applyRule(pl, p); },
     auto(el) { const pl = plot(+el.dataset.plot); pl.b.auto[el.dataset.p] = +el.value; autoRestock(pl, el.dataset.p); },
     lineAuto(el) { const pl = plot(+el.dataset.plot), ln = pl.b.lines[+el.dataset.i]; ln.auto = +el.value; if (ln.auto && ln.r) autoInputs(pl, ln); },
@@ -499,6 +629,8 @@
     dest(el) { ui.dest = +el.value; },
     listMul(el) { ui.listMul = +el.value; },
     sel(el) { ui.sel[el.dataset.k] = el.value; },
+    cur(el) { if (CUR[el.value]) s.cur = el.value; },
+    invAmt(el) { ui.invTL = clamp(parseFloat(el.value.replace(',', '.')) || 0, 0, 1e12) * rate(s.cur); },
   };
   const eligible = c => s.plots.filter(pl => pl.b && pl.region === Object.keys(s.cands).find(r => s.cands[r].includes(c)) && WK[c.type].b.includes(pl.b.type) && crew(pl).length < slots(pl));
   const ic = (k, n) => (window.TezgahArt ? window.TezgahArt.icon(k, n) : '');
@@ -556,7 +688,7 @@
     h += `<p class="small"><span class="muted">Çalışanlar ${cw.length}/${slots(pl)}:</span> ${cw.length ? cw.map(w => WK[w.type].n + ' ' + esc(w.name) + ' ' + stars(w.star)).join(' · ') : '<span class="muted">yok · İşçiler sekmesinden alabilirsin</span>'}</p>`;
     if (prod) h += `<p class="muted small">Parti ${10 * k} birim · ${b.lines.length} hat${parts.length ? ' · ' + (parts.length + 1) + ' arsaya yayılıyor' : ''}</p>`;
     h += '<div class="row wrap">';
-    if (b.level < 3) h += btn(prod ? `Kapasiteyi artır: parti ${10 * (k + 0.5)} birim · ${fmt(bt.cost * b.level)}` : `Yükselt ${fmt(bt.cost * b.level)}`, 'upgrade', { plot: pl.id });
+    if (b.level < 3) h += btn(prod ? `Kapasiteyi artır: parti ${10 * (k + 0.5 * B[b.type].scale)} birim · ${fmt(bt.cost * b.level)}` : `Yükselt ${fmt(bt.cost * b.level)}`, 'upgrade', { plot: pl.id });
     h += btn(`Yık (iade ${fmt(b.spent * (s.freeSwap ? 1 : 0.5))})`, 'demolish', { plot: pl.id }, 'ghost') + '</div>';
     if (prod && b.level >= 3 && b.lines.length < 3) {
       const free = freePlots(pl);
@@ -573,7 +705,7 @@
     if (items.length && others.length) h += `<div class="row small"><label for="mv${pl.id}">Taşıma hedefi</label><select id="mv${pl.id}" data-c="sel" data-k="mv${pl.id}">${others.map(o => `<option value="${o.id}" ${ui.sel['mv' + pl.id] == o.id ? 'selected' : ''}>Arsa ${o.id} · ${R[o.region].n}</option>`).join('')}</select></div>`;
     for (const p of items) {
       const q = pl.inv[p] || 0;
-      h += `<div class="item"><div class="row"><b class="named">${ic(p, 26)}${P[p].n}</b><span class="num">${q} adet</span></div>`;
+      h += `<div class="item"><div class="row"><b class="named">${ic(p, 26)}${P[p].n}</b><span class="num">${q.toLocaleString('tr-TR')} × ${P[p].u}</span></div>`;
       if (b.type === 'dukkan' && P[p].d) h += shopControls(pl, p);
       else if (b.type === 'dukkan') h += '<p class="warn small">Şehir halkı bu ürünü almaz; pazarda sat ya da fabrikaya taşı.</p>';
       else h += outControls(pl, p);
@@ -594,8 +726,8 @@
     const opts = [['', 'Elle yönetirim'], ...otherPlots(pl).map(o => ['ship:' + o.id, `Arsa ${o.id} · ${R[o.region].n} deposuna taşı`]),
       ['list:0.95', 'Pazara koy: piyasanın %5 altı'], ['list:1', 'Pazara koy: piyasa fiyatı'], ['list:1.05', 'Pazara koy: piyasanın %5 üstü']];
     let note = '';
-    if (cur.startsWith('ship:')) { const to = plot(+cur.slice(5)); note = to ? `10 adet birikince taşınır · birim taşıma ${fmt1(trans(1, p, pl.region, to.region))}` : 'Hedef arsa artık yok'; }
-    else if (cur.startsWith('list:')) { const l = s.mine.find(x => x.auto && x.plot === pl.id && x.p === p); note = (l ? `Pazarda ${l.qty} adet, tanesi ${fmt1(l.price)} · ` : 'Üretim çıktıkça ilana eklenir · ') + speedNote(+cur.slice(5)); }
+    if (cur.startsWith('ship:')) { const to = plot(+cur.slice(5)); note = to ? `10 birim birikince taşınır · birim taşıma ${fmt1(trans(1, p, pl.region, to.region))}` : 'Hedef arsa artık yok'; }
+    else if (cur.startsWith('list:')) { const l = s.mine.find(x => x.auto && x.plot === pl.id && x.p === p); note = (l ? `Pazarda ${l.qty} × ${P[p].u}, birimi ${fmt1(l.price)} · ` : 'Üretim çıktıkça ilana eklenir · ') + speedNote(+cur.slice(5)); }
     return `<div class="grid2 small"><label for="ao${id}">Üretim çıkınca</label><select id="ao${id}" data-c="out" data-plot="${pl.id}" data-p="${p}">${opts.map(([v, l]) => `<option value="${v}" ${cur === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>${note ? `<p class="muted small">${note}</p>` : ''}`;
   }
 
@@ -607,7 +739,7 @@
       <div class="grid2 small">
         <label for="rm${id}">Fiyat kuralı</label><select id="rm${id}" data-c="rule" data-f="mode" data-plot="${pl.id}" data-p="${p}">${opt([['elle', 'Elle belirlerim'], ['ucuz', 'En ucuz rakibin %1 altı'], ['ort', 'Bölge ortalaması']], r.mode)}</select>
         <label for="rg${id}">En düşük fiyat</label><select id="rg${id}" data-c="rule" data-f="margin" data-plot="${pl.id}" data-p="${p}">${opt([[0, 'Maliyet kadar'], [0.1, 'Maliyetin %10 üstü'], [0.2, 'Maliyetin %20 üstü']], r.margin)}</select>
-        <label for="pr${id}">Raf fiyatı</label><input id="pr${id}" class="price" inputmode="decimal" data-c="price" data-plot="${pl.id}" data-p="${p}" value="${pr.toFixed(1)}" ${r.mode !== 'elle' ? 'disabled' : ''}>
+        <label for="pr${id}">Raf fiyatı (${sym()})</label><input id="pr${id}" class="price" inputmode="decimal" data-c="price" data-plot="${pl.id}" data-p="${p}" value="${disp(pr).toFixed(2)}" ${r.mode !== 'elle' ? 'disabled' : ''}>
         <label for="au${id}">Stok azalınca</label><select id="au${id}" data-c="auto" data-plot="${pl.id}" data-p="${p}">${opt([[0, 'Elle alırım'], [1, 'Olağan fiyata kadar al'], [1.1, 'Olağanın %10 fazlasına kadar al'], [1.35, 'Toptancı dahil al (%35 fazlası)']], au)}</select>
       </div>
       <p class="small">${speedNote(pr / retailRef(p))} <span class="muted">(piyasa fiyatı ${fmt1(retailRef(p))})</span></p>
@@ -618,7 +750,7 @@
     const out = [];
     const next = GOALS.findIndex((g, i) => !s.goals[i]);
     if (ui.away) out.push(['away', awayCard(ui.away)]);
-    out.push(['goal', next < 0 ? '<div class="goal">Bütün hedefler tamamlandı. Şirketini büyütmeye devam et.</div>' : `<div class="goal"><span class="small">Sıradaki hedef ${next + 1}/${GOALS.length} · ödül ${fmt(GOALS[next][2])}</span><b>${GOALS[next][0]}</b></div>`]);
+    out.push(['goal', next < 0 ? '<div class="goal">Bütün hedefler tamamlandı. Şirketini büyütmeye devam et.</div>' : `<div class="goal"><span class="small">Sıradaki hedef ${next + 1}/${GOALS.length} · ödül ${fmt(GOALS[next][2])}</span><b>${goalText(next)}</b></div>`]);
     const hint = '<p class="muted small maphint">Haritada bir binaya dokununca kartına gidersin. Ünlem işareti, binanın ilgilenilmesi gereken bir durumu olduğunu gösterir.</p>';
     // PixiJS haritası kendi tuvallerini yönetir; buradaki kutu sabit kalır ve render() içinde doldurulur
     if (pixiMap()) out.push(['map', '<div class="map" data-pixi></div>' + hint]);
@@ -642,13 +774,13 @@
   function viewMarket() {
     const out = [], dst = plot(ui.dest) || s.plots[0];
     out.push(['dest', `<div class="card"><div class="row wrap"><label for="dest">Teslim arsası</label><select id="dest" data-c="dest">${s.plots.filter(p => !p.part).map(p => `<option value="${p.id}" ${p.id === dst.id ? 'selected' : ''}>Arsa ${p.id} · ${R[p.region].n}${p.b ? ' · ' + B[p.b.type].n : ' · boş'}</option>`).join('')}</select><label for="qty">Adet</label><input id="qty" class="price" inputmode="numeric" data-c="qty" value="${ui.qty}"></div><p class="muted small">Fiyatlar teslim fiyatıdır: mal bedeli ve ${R[dst.region].n} bölgesine taşıma dahil.${transMult() > 1 ? ' Taşıma ücretleri şu an zamlı.' : ''}</p></div>`]);
-    if (s.mine.length) out.push(['mine', '<div class="card"><h3>İlanlarım</h3>' + s.mine.map(l => `<div class="row"><span>${P[l.p].n} · ${l.qty} adet · ${fmt1(l.price)}${l.auto ? ' · otomatik' : ''}<br><span class="small">${speedNote(l.price / price(l.p))}</span></span>${btn('Geri çek', 'unlist', { id: l.id }, 'ghost')}</div>`).join('') + '<p class="muted small">Satışlardan %3 komisyon kesilir.</p></div>']);
+    if (s.mine.length) out.push(['mine', '<div class="card"><h3>İlanlarım</h3>' + s.mine.map(l => `<div class="row"><span>${P[l.p].n} · ${l.qty} × ${P[l.p].u} · ${fmt1(l.price)}${l.auto ? ' · otomatik' : ''}<br><span class="small">${speedNote(l.price / price(l.p))}</span></span>${btn('Geri çek', 'unlist', { id: l.id }, 'ghost')}</div>`).join('') + '<p class="muted small">Satışlardan %3 komisyon kesilir.</p></div>']);
     for (const k of PK) {
       const wU = price(k) * W_BUY + trans(1, k, dst.region, dst.region);
-      let h = `<div class="card"><div class="row head"><h3 class="named">${ic(k, 28)}${P[k].n}</h3><span class="small">${trend(k)}</span></div><p class="muted small">Olağan fiyat ${fmt1(price(k))} · ${WNAME[P[k].w]} yük</p><div class="row"><span>Sistem toptancısı</span><span class="num">${fmt1(wU)}</span>${btn('Al', 'buy', { p: k })}</div>`;
+      let h = `<div class="card"><div class="row head"><h3 class="named">${ic(k, 28)}${P[k].n}</h3><span class="small">${trend(k)}</span></div><p class="muted small">Olağan fiyat ${fmt1(price(k))} / ${P[k].u} · ${WNAME[P[k].w]} yük</p><div class="row"><span>Sistem toptancısı</span><span class="num">${fmt1(wU)}</span>${btn('Al', 'buy', { p: k })}</div>`;
       for (const l of s.listings.filter(x => x.p === k)) {
         const u = l.price + trans(1, k, l.region, dst.region);
-        h += `<div class="row"><span>${R[l.region].n} ilanı · ${l.qty} adet</span><span class="num ${u < wU ? 'up' : ''}">${fmt1(u)}</span>${btn('Al', 'buy', { p: k, id: l.id })}</div>`;
+        h += `<div class="row"><span>${R[l.region].n} ilanı · ${l.qty} × ${P[k].u}</span><span class="num ${u < wU ? 'up' : ''}">${fmt1(u)}</span>${btn('Al', 'buy', { p: k, id: l.id })}</div>`;
       }
       out.push(['m' + k, h + '</div>']);
     }
@@ -692,9 +824,30 @@
     out.push(['nw', `<div class="card"><div class="row"><span>Net değer</span><b class="num">${fmt(netWorth())}</b></div><div class="row"><span>Kasa</span><span class="num">${fmt(s.money)}</span></div><div class="row"><span>Arsa değeri</span><span class="num">${fmt(landValue())}</span></div>${s.t < FREE_UNTIL ? '<p class="muted small">İlk iki gün kira ve vergi alınmıyor.</p>' : ''}</div>`]);
     out.push(['td', tbl(s.today, 'Bugün')]); out.push(['pv', tbl(s.prev, 'Dün')]);
     out.push(['pr', '<div class="card"><h3>Fiyatlar</h3><div class="scroll"><table class="t prices">' + PK.map(k => `<tr><td>${P[k].n}</td><td>${fmt1(price(k))}</td><td>${trend(k)}</td><td>${spark(k)}</td></tr>`).join('') + '</table></div></div>']);
-    out.push(['gl', '<div class="card"><h3>Hedefler</h3>' + GOALS.map((g, i) => `<div class="row"><span class="${s.goals[i] ? 'done' : ''}">${g[0]}</span><span class="num small ${s.goals[i] ? 'muted' : ''}">${s.goals[i] ? '✓ ' : ''}${fmt(g[2])}</span></div>`).join('') + '</div>']);
+    out.push(['gl', '<div class="card"><h3>Hedefler</h3>' + GOALS.map((g, i) => `<div class="row"><span class="${s.goals[i] ? 'done' : ''}">${goalText(i)}</span><span class="num small ${s.goals[i] ? 'muted' : ''}">${s.goals[i] ? '✓ ' : ''}${fmt(g[2])}</span></div>`).join('') + '</div>']);
     out.push(['credit', '<p class="muted small">Bina, harita ve ürün görselleri bu oyun için üretildi. Bina türü rozetleri: game-icons.net (Lorc, Delapouite ve katkıda bulunanlar), CC BY 3.0. Harita çizimi: PixiJS (MIT).</p>']);
     out.push(['rs', `<div class="row">${btn(ui.confirmReset ? 'Emin misin? Tekrar dokun' : 'Oyunu sıfırla', 'reset', {}, 'ghost')}</div>`]);
+    return out;
+  }
+
+  const sparkVals = h => { if (h.length < 2) return ''; const lo = Math.min(...h), hi = Math.max(...h), r = hi - lo || 1; const pts = h.map((v, i) => `${(i / (h.length - 1) * 78 + 1).toFixed(1)},${(21 - (v - lo) / r * 20).toFixed(1)}`).join(' '); return `<svg class="spark" viewBox="0 0 80 22" width="80" height="22" aria-hidden="true"><polyline points="${pts}" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>`; };
+  const pct = r => `<span class="${r > 0.0005 ? 'up' : r < -0.0005 ? 'down' : 'muted'}">${r > 0 ? '▲' : r < 0 ? '▼' : ''} %${Math.abs(r * 100).toFixed(1)}</span>`;
+  function assetRow(a) {
+    const m = s.mkt, q = s.pf[a] || 0, cost = s.pf.cost[a] || 0, val = q * bidPx(a), pl = val - cost;
+    const sub = a === 'XAU' ? `Ons ${'$' + Math.round(m.px.ons).toLocaleString('tr-TR')} · alış-satış farkı %${GOLD.spread * 100}`
+      : FXP[a] ? `Kur farkı %${(FX_SPREAD * 100).toFixed(1)}` : `${STOCKS[a].sec} · temettü verimi %${(STOCKS[a].div * 100).toFixed(1)} · bağlı ürünler: ${STOCKS[a].ps.map(p => P[p].n).join(', ')}`;
+    return `<div class="item"><div class="row"><span><b>${STOCKS[a] ? a + ' · ' : ''}${assetName(a)}</b><br><span class="small muted">${sub}</span></span><span class="num right">${fmt1(m.px[a])}<br><span class="small">${pct(m.px[a] / m.open[a] - 1)}</span></span></div>`
+      + `<div class="row small"><span class="muted">${q ? `Elinde ${q.toLocaleString('tr-TR', { maximumFractionDigits: 2 })} ${unitName(a)} · ${fmt(val)} · <span class="${pl >= 0 ? 'up' : 'down'}">${pl >= 0 ? '+' : ''}${fmt(pl)}</span>` : 'Elinde yok'}</span>${sparkVals(m.hist[a])}</div>`
+      + `<div class="row wrap">${btn('Al', 'trade', { asset: a, side: 'buy' })}${q ? btn('Sat', 'trade', { asset: a, side: 'sell' }, 'ghost') + btn('Tümünü sat', 'trade', { asset: a, side: 'sellall' }, 'ghost') : ''}</div></div>`;
+  }
+  function viewInvest() {
+    const out = [], m = s.mkt, pv = portfolioValue(), ir = m.idx / m.idxHist[Math.max(0, m.idxHist.length - 13)] - 1;
+    out.push(['sum', `<div class="card"><div class="row"><span>Yatırımların</span><b class="num">${fmt(pv)}</b></div><div class="row"><span>Kasa</span><span class="num">${fmt(s.money)}</span></div>`
+      + `<div class="row wrap small"><label for="invAmt">İşlem tutarı (${sym()})</label><input id="invAmt" class="price" inputmode="decimal" data-c="invAmt" value="${+disp(ui.invTL).toFixed(s.cur === 'TRY' ? 0 : 2)}"></div>`
+      + `<p class="muted small">Al ve Sat düğmeleri bu tutar kadar işlem yapar. Bu piyasa oyun içidir ve gerçek piyasayı izlemez; bir oyun günü piyasada bir haftaya denk gelir.</p></div>`]);
+    out.push(['dep', `<div class="card"><h3>Vadeli mevduat</h3><div class="row"><span>Yıllık faiz %${Math.round(DEPOSIT_RATE * 100)} · %15 stopaj sonrası her gün eklenir</span><b class="num">${fmt(s.pf.DEP || 0)}</b></div><div class="row wrap">${btn('Yatır', 'trade', { asset: 'DEP', side: 'buy' })}${s.pf.DEP > 0 ? btn('Çek', 'trade', { asset: 'DEP', side: 'sell' }, 'ghost') + btn('Tümünü çek', 'trade', { asset: 'DEP', side: 'sellall' }, 'ghost') : ''}</div></div>`]);
+    out.push(['fx', '<div class="card"><h3>Döviz ve altın</h3>' + ['USD', 'EUR', 'XAU'].map(assetRow).join('') + '</div>']);
+    out.push(['st', `<div class="card"><div class="row head"><h3>Tezgâh Borsası</h3><span class="small num">TZ-30 ${Math.round(m.idx).toLocaleString('tr-TR')} ${pct(ir)}</span></div><p class="muted small">Kurgusal şirketler. Hisseler genel piyasayla birlikte hareket eder; bağlı oldukları ürünlerin fiyatı ve gazetedeki olaylar da etkiler. Alımda ve satışta %${(COMMISSION * 100).toFixed(2)} komisyon alınır.</p>` + Object.keys(STOCKS).map(assetRow).join('') + '</div>']);
     return out;
   }
 
@@ -715,8 +868,8 @@
     return out;
   }
 
-  const VIEWS = { crew: viewCrew, plots: viewPlots, market: viewMarket, auction: viewAuction, news: viewNews, report: viewReport };
-  const TABS = [['plots', 'Arsalar'], ['market', 'Pazar'], ['crew', 'İşçiler'], ['auction', 'Artırma'], ['news', 'Gazete'], ['report', 'Rapor']];
+  const VIEWS = { invest: viewInvest, crew: viewCrew, plots: viewPlots, market: viewMarket, auction: viewAuction, news: viewNews, report: viewReport };
+  const TABS = [['plots', 'Arsalar'], ['market', 'Pazar'], ['crew', 'İşçiler'], ['invest', 'Yatırım'], ['auction', 'Artırma'], ['news', 'Gazete'], ['report', 'Rapor']];
   let root, main, hud;
 
   function paint(container, sections) {
@@ -738,7 +891,7 @@
   function render() {
     const bids = s.auctions.filter(a => a.bidder === 'me').reduce((a, x) => a + x.bid, 0);
     paint(hud, [
-      ['top', `<div class="row"><div><span class="brand">Tezgâh</span> <span class="small muted">demo</span></div><div class="small num">${clock()}</div></div>`],
+      ['top', `<div class="row"><div><span class="brand">Tezgâh</span> <span class="small muted">demo</span></div><div class="row small"><label class="sr" for="cur">Para birimi</label><select id="cur" class="cur" data-c="cur">${Object.keys(CUR).map(c => `<option value="${c}" ${s.cur === c ? 'selected' : ''}>${CUR[c].sym} ${c}</option>`).join('')}</select><span class="num">${clock()}</span></div></div>`],
       ['cash', `<div class="row"><div class="cash ${s.money < 0 ? 'down' : ''}">${fmt(s.money)}${bids ? `<span class="small muted"> · teminatta ${fmt(bids)}</span>` : ''}</div><div class="speed" role="group" aria-label="Oyun hızı">${[[0, 'Dur'], [1, '1×'], [2, '2×'], [4, '4×']].map(([v, l]) => `<button type="button" data-a="speed" data-v="${v}" class="${s.speed === v ? 'on' : ''}">${l}</button>`).join('')}</div></div>`],
       ['tabs', `<nav class="tabs">${TABS.map(([k, l]) => `<button type="button" data-a="tab" data-v="${k}" class="${ui.tab === k ? 'on' : ''}">${l}${k === 'news' && s.unread ? `<span class="badge" aria-label="${s.unread} yeni">${s.unread}</span>` : ''}</button>`).join('')}</nav>`],
     ]);

@@ -199,10 +199,14 @@
     update(container, model, onFocus) {
       if (!this.ok || !container) return;
       const dark = matchMedia('(prefers-color-scheme: dark)').matches + (document.documentElement.dataset.theme || '');
+      // Bölge kutuları hemen yerleşir (sayfa kaymasın); sahne görseller yüklenince çizilir
+      for (const key of Object.keys(model.regions)) {
+        const r = regions[key] || (regions[key] = new Region(key));
+        if (r.fig.parentNode !== container) container.append(r.fig);
+      }
       loadTextures().then(() => {
         for (const [key, m] of Object.entries(model.regions)) {
-          const r = regions[key] || (regions[key] = new Region(key));
-          if (r.fig.parentNode !== container) container.append(r.fig);
+          const r = regions[key];
           r.ready.then(() => {
             const sig = JSON.stringify(m) + dark;
             if (sig !== r.sig || theme !== dark) { r.sig = sig; r.build(m, onFocus); }

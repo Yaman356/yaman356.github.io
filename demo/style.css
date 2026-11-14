@@ -120,3 +120,6 @@ input:disabled { opacity: .6; }
 section.flash .card { box-shadow: 0 0 0 2px var(--accent); transition: box-shadow .3s; }
 #toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 8px; font-size: 14px; z-index: 20; max-width: calc(100% - 32px); }
 @media (prefers-reduced-motion: reduce) { .smoke circle { animation: none; opacity: .5; } .bar i { transition: none; } .btn:active { transform: none; } }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+select.cur { font: inherit; font-size: 13px; padding: 2px 4px; border-radius: 6px; }
+.right { text-align: right; }

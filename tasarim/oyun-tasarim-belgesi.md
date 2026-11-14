@@ -188,3 +188,32 @@ python art-src/process.py             # kırpar, boyutlar, WebP yapar, demo/asse
 - Bir görseli yeniden üretmek için `art-src/raw/<anahtar>.png` dosyasını silip `generate.py`'yi yeniden çalıştır.
 - Ham PNG'ler (1024 piksel, her biri ~1 MB) depoya girmez; oyunun kullandığı WebP dosyaları `demo/assets/` içindedir.
 - Boyutlar: binalar 512, harita süsleri 256, ürün ikonları 128 piksel.
+
+## 8. Gerçekçi ekonomi ve yatırım
+
+Tutarlar Kasım 2026 Türkiye fiyatlarına dayanır; kaynaklar ve hangi rakamın tahmin olduğu `reports/Türkiye işletme maliyetleri ve fiyatlar.md` içindedir. Oyun içinde bütün tutarlar Türk lirası olarak tutulur; oyuncu ekranda TL, dolar ya da euro görmeyi seçer (kur, sanal piyasadaki güncel kurdur).
+
+### Ölçek
+
+- **Zaman:** bir oyun günü piyasa ve maaş açısından bir haftaya denk gelir (maaşlar haftalık, mevduat faizi ve borç faizi haftalık oranla işler).
+- **Başlangıç sermayesi:** 2,5 milyon TL. Tarla ya da dükkân kurmaya yeter; maden (4,5 mn) ve fabrika (12 mn) için büyümek gerekir.
+- **Arsalar (referans değer):** Merkez 6 mn, Kırsal 2,5 mn, Dağ 1,5 mn TL.
+- **Ürünler gerçek birimlerle:** buğday 100 kg 1.650 TL (TMO), süt 100 L 2.430 TL (USK), çelik ton 29.700 TL, ekmek 1.000 adet 13.000 TL toptan (rafta 17,5 TL), peynir 100 kg 28.000 TL. Perakende kâr payı %35, sistem toptancısı %12 üstünden satar, %15 altından alır.
+- **Tarifler gerçek dönüşüm oranlarıyla:** 100 kg buğday ≈ 72 kg un, 1 kg peynir ≈ 5 L süt, 1 kg pamuk lifi ≈ 2,3 kg kütlü, 1 t çelik ≈ 1,6 t cevher + 0,6 t kömür.
+- **Fabrika ölçeği:** fabrika partisi tarlanın 5 katı, madeninki 2 katıdır. Büyük ölçekli alım-satım ulusal fiyatı daha az oynatır ve pazarda daha hızlı alıcı bulur.
+- **Taşıma:** ton başına 150 TL sabit + bölge adımı başına 600 TL (≈ 3 TL/ton-km). Ağır ham madde uzağa taşınmaya değmez.
+- **Maaşlar (haftalık):** satış görevlisi 8.200, müdür 12.500, usta 16.500, şoför 15.700 TL (1 yıldız); yıldız arttıkça yükselir.
+- **Borç faizi:** günde %0,8 (ticari kredi yılda ~%40).
+
+Ölçülen geri dönüş süreleri (1. seviye, kendi kendine yeten tek bina, otomatik alım-satım): dükkân 2,5–6 gün (konuma göre), tarla 3–4 gün, maden ~4 gün, fabrika 7–15 gün (ama günlük kârı 3–4 kat). Un fabrikası kasıtlı olarak en düşük marjlı işletmedir, gerçek sektörde de öyledir.
+
+### Yatırım sekmesi (sanal piyasa)
+
+Gerçek piyasayı izlemez; seviye ve oynaklıklar araştırmaya göre ayarlanmış rastgele yürüyüştür.
+
+- **Döviz:** dolar 50,37, euro 55,6 TL'den başlar; TL ayda %1,5–2 değer kaybeder. Banka alış-satış farkı %1.
+- **Gram altın:** ons (3.880 $) × dolar kuru / 31,1; yıllık oynaklık ~%20, alış-satış farkı %3.
+- **Vadeli mevduat:** yıllık %36 brüt, %15 stopaj sonrası her gün eklenir.
+- **Tezgâh Borsası:** TZ-30 endeksi BIST 100 seviyesinden (11.843) başlar. Altı kurgusal şirket (un, süt, tekstil, çelik, madencilik, perakende) endeksle birlikte (beta) ve bağlı oldukları ürünlerin oyun içi fiyatıyla hareket eder; gazete olayları da etkiler. Komisyon binde 2 + %5 BSMV, temettü her gün işler.
+- **Kriz günü:** her gün %3 olasılıkla endeks %6–9 düşer ve devre kesici haberi çıkar; dolar ve altın değer kazanır (Mart 2025 ve Eylül 2026'daki gerçek düşüşler örnek alındı).
+- Yatırım kârı ve zararı, temettü ve faiz rapor ekranında ayrı kalemlerdir ve ticari gelir sayılmaz.
