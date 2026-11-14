@@ -394,6 +394,7 @@
       toast(c.name + ' işe başladı');
     },
     fire(d) { const w = s.workers.find(x => x.id === +d.id); if (!w) return; s.workers = s.workers.filter(x => x !== w); toast(w.name + ' işten çıkarıldı'); },
+    focus(d) { ui.tab = 'plots'; ui.focusPlot = +d.plot; },
     tab(d) { ui.tab = d.v; if (d.v === 'news') s.unread = 0; },
     speed(d) { s.speed = +d.v; },
     reset() { if (ui.confirmReset) { newGame(); ui.confirmReset = false; ui.tab = 'plots'; } else { ui.confirmReset = true; setTimeout(() => { ui.confirmReset = false; }, 4000); } },
@@ -474,6 +475,29 @@
     sel(el) { ui.sel[el.dataset.k] = el.value; },
   };
   const eligible = c => s.plots.filter(pl => pl.b && pl.region === Object.keys(s.cands).find(r => s.cands[r].includes(c)) && WK[c.type].b.includes(pl.b.type) && crew(pl).length < slots(pl));
+  const ic = (k, n) => (window.TezgahArt ? window.TezgahArt.icon(k, n) : '');
+  // Harita için görünüm modeli: her bölgede oyuncunun arsaları ve artırmadaki arsalar
+  function mapModel() {
+    const regions = {};
+    for (const r in R) regions[r] = { name: R[r].n, plots: [], auctions: s.auctions.filter(a => a.region === r && !a.plot) };
+    for (const pl of s.plots) {
+      if (pl.part) continue;
+      const b = pl.b, m = { id: pl.id, label: 'Arsa ' + pl.id + (b ? ' · ' + B[b.type].n : ' · boş') };
+      if (!b) { m.empty = true; regions[pl.region].plots.push(m); continue; }
+      Object.assign(m, { type: b.type, level: b.level, partIds: b.parts || [] });
+      if (b.type === 'dukkan') {
+        const sh = shelf(pl).filter(p => P[p].d);
+        m.customers = Math.min(6, Math.round(sh.reduce((a, p) => a + ((pl.inv[p] || 0) > 0 ? shopRate(pl, p) : 0), 0)));
+        m.warn = !sh.length || sh.some(p => !(pl.inv[p] > 0));
+      } else {
+        m.product = (b.lines.find(l => l.r) || {}).r;
+        m.busy = b.lines.some(l => l.busy);
+        m.warn = b.lines.some(l => l.r && !l.busy) || !b.lines.some(l => l.r);
+      }
+      regions[pl.region].plots.push(m);
+    }
+    return { regions };
+  }
   const otherPlots = pl => s.plots.filter(x => x !== pl && x.b);
 
   // ---------- Görünüm ----------
@@ -494,12 +518,12 @@
     }
     if (!pl.b) {
       h += '<p>Bu arsaya ne kuracaksın?</p><div class="choices">';
-      for (const k in B) h += `<button type="button" class="choice" data-a="build" data-plot="${pl.id}" data-v="${k}"><b>${B[k].n}</b><span>${fmt(B[k].cost)}</span><small>${B[k].hint}${reg.bonus === k ? ' · bölge bonusu' : ''}</small></button>`;
+      for (const k in B) h += `<button type="button" class="choice" data-a="build" data-plot="${pl.id}" data-v="${k}">${ic(k, 28)}<b>${B[k].n}</b><span>${fmt(B[k].cost)}</span><small>${B[k].hint}${reg.bonus === k ? ' · bölge bonusu' : ''}</small></button>`;
       return h + '</div></div>';
     }
     const b = pl.b, bt = B[b.type];
     const k = batch(pl), parts = b.parts || [], prod = b.type !== 'dukkan';
-    h += `<div class="row"><b>${bt.n} · seviye ${b.level}</b><span class="muted small">Depo ${invTotal(pl)}/${cap(pl)}</span></div>`;
+    h += `<div class="row"><b class="named">${ic(b.type, 22)}${bt.n} · seviye ${b.level}</b><span class="muted small">Depo ${invTotal(pl)}/${cap(pl)}</span></div>`;
     const cw = crew(pl);
     h += `<p class="small"><span class="muted">Çalışanlar ${cw.length}/${slots(pl)}:</span> ${cw.length ? cw.map(w => WK[w.type].n + ' ' + esc(w.name) + ' ' + stars(w.star)).join(' · ') : '<span class="muted">yok · İşçiler sekmesinden alabilirsin</span>'}</p>`;
     if (prod) h += `<p class="muted small">Parti ${10 * k} birim · ${b.lines.length} hat${parts.length ? ' · ' + (parts.length + 1) + ' arsaya yayılıyor' : ''}</p>`;
@@ -521,7 +545,7 @@
     if (items.length && others.length) h += `<div class="row small"><label for="mv${pl.id}">Taşıma hedefi</label><select id="mv${pl.id}" data-c="sel" data-k="mv${pl.id}">${others.map(o => `<option value="${o.id}" ${ui.sel['mv' + pl.id] == o.id ? 'selected' : ''}>Arsa ${o.id} · ${R[o.region].n}</option>`).join('')}</select></div>`;
     for (const p of items) {
       const q = pl.inv[p] || 0;
-      h += `<div class="item"><div class="row"><b>${P[p].n}</b><span class="num">${q} adet</span></div>`;
+      h += `<div class="item"><div class="row"><b class="named">${ic(p, 22)}${P[p].n}</b><span class="num">${q} adet</span></div>`;
       if (b.type === 'dukkan' && P[p].d) h += shopControls(pl, p);
       else if (b.type === 'dukkan') h += '<p class="warn small">Şehir halkı bu ürünü almaz; pazarda sat ya da fabrikaya taşı.</p>';
       else h += outControls(pl, p);
@@ -566,6 +590,7 @@
     const out = [];
     const next = GOALS.findIndex((g, i) => !s.goals[i]);
     out.push(['goal', next < 0 ? '<div class="goal">Bütün hedefler tamamlandı. Şirketini büyütmeye devam et.</div>' : `<div class="goal"><span class="small">Sıradaki hedef ${next + 1}/${GOALS.length}</span><b>${GOALS[next][0]}</b></div>`]);
+    if (window.TezgahArt) out.push(['map', window.TezgahArt.map(mapModel()) + '<p class="muted small maphint">Haritada bir binaya dokununca kartına gidersin. Ünlem işareti, binanın ilgilenilmesi gereken bir durumu olduğunu gösterir.</p>']);
     out.push(['lm', `<div class="row small"><label for="listMul">Pazara ilan fiyatı</label><select id="listMul" data-c="listMul"><option value="0.9" ${ui.listMul === 0.9 ? 'selected' : ''}>olağanın %10 altı (%20 daha hızlı satar)</option><option value="1" ${ui.listMul === 1 ? 'selected' : ''}>olağan fiyat</option><option value="1.1" ${ui.listMul === 1.1 ? 'selected' : ''}>olağanın %10 üstü (%20 daha yavaş satar)</option></select></div>`]);
     for (const pl of s.plots) out.push(['p' + pl.id, plotCard(pl)]);
     return out;
@@ -577,7 +602,7 @@
     if (s.mine.length) out.push(['mine', '<div class="card"><h3>İlanlarım</h3>' + s.mine.map(l => `<div class="row"><span>${P[l.p].n} · ${l.qty} adet · ${fmt1(l.price)}${l.auto ? ' · otomatik' : ''}<br><span class="small">${speedNote(l.price / price(l.p))}</span></span>${btn('Geri çek', 'unlist', { id: l.id }, 'ghost')}</div>`).join('') + '<p class="muted small">Satışlardan %3 komisyon kesilir.</p></div>']);
     for (const k of PK) {
       const wU = price(k) * W_BUY + trans(1, k, dst.region, dst.region);
-      let h = `<div class="card"><div class="row head"><h3>${P[k].n}</h3><span class="small">${trend(k)}</span></div><p class="muted small">Olağan fiyat ${fmt1(price(k))} · ${WNAME[P[k].w]} yük</p><div class="row"><span>Sistem toptancısı</span><span class="num">${fmt1(wU)}</span>${btn('Al', 'buy', { p: k })}</div>`;
+      let h = `<div class="card"><div class="row head"><h3 class="named">${ic(k, 24)}${P[k].n}</h3><span class="small">${trend(k)}</span></div><p class="muted small">Olağan fiyat ${fmt1(price(k))} · ${WNAME[P[k].w]} yük</p><div class="row"><span>Sistem toptancısı</span><span class="num">${fmt1(wU)}</span>${btn('Al', 'buy', { p: k })}</div>`;
       for (const l of s.listings.filter(x => x.p === k)) {
         const u = l.price + trans(1, k, l.region, dst.region);
         h += `<div class="row"><span>${R[l.region].n} ilanı · ${l.qty} adet</span><span class="num ${u < wU ? 'up' : ''}">${fmt1(u)}</span>${btn('Al', 'buy', { p: k, id: l.id })}</div>`;
@@ -677,13 +702,19 @@
     main.querySelectorAll('[data-prog]').forEach(el => { const [id, i] = el.dataset.prog.split(':'); const pl = plot(+id), ln = pl && pl.b && pl.b.lines[+i]; el.style.width = ln && ln.busy ? Math.min(100, ln.prog / P[ln.r].t * 100) + '%' : '0%'; });
   }
 
+  function focusCard() {
+    if (!ui.focusPlot) return;
+    const el = main.querySelector(`section[data-k="p${ui.focusPlot}"]`); ui.focusPlot = null;
+    if (el) { el.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }); el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 1200); }
+  }
   function start() {
     root = document.getElementById('app');
     root.innerHTML = '<header id="hud"></header><main id="main"></main><div id="toast" role="status" hidden></div>';
     hud = document.getElementById('hud'); main = document.getElementById('main');
     if (!load()) newGame();
     if (!plot(ui.dest)) ui.dest = s.plots[0].id;
-    root.addEventListener('click', e => { const el = e.target.closest('[data-a]'); if (!el || !A[el.dataset.a]) return; A[el.dataset.a](el.dataset); render(); });
+    root.addEventListener('click', e => { const el = e.target.closest('[data-a]'); if (!el || !A[el.dataset.a]) return; A[el.dataset.a](el.dataset); render(); focusCard(); });
+    root.addEventListener('keydown', e => { const el = e.target.closest('g[data-a]'); if (el && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); A[el.dataset.a](el.dataset); render(); focusCard(); } });
     root.addEventListener('change', e => { const el = e.target.closest('[data-c]'); if (!el || !C[el.dataset.c]) return; C[el.dataset.c](el); el.blur(); render(); });
     setInterval(() => { if (s.speed > 0) step(3.75 * s.speed); render(); }, 250);
     setInterval(save, 8000);
