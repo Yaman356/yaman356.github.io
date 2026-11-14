@@ -1,0 +1,116 @@
+{
+ "Ar-Ge yok (fire %10)": {
+  "rol_getirisi": {
+   "ara mal (Ar-Ge 0)": 227,
+   "dükkân": 1954,
+   "ham madde (Ar-Ge 0)": 594,
+   "son ürün (Ar-Ge 0)": 205
+  },
+  "dukkan_sayisi": 13,
+  "kapsama": 0.4721386859368761,
+  "fiyat_endeksi": {
+   "bugday": 1.23,
+   "sut": 0.74,
+   "pamuk": 2.05,
+   "komur": 0.63,
+   "demir": 0.63,
+   "un": 1.38,
+   "kumas": 2.17,
+   "celik": 2.71,
+   "ekmek": 1.41,
+   "peynir": 0.85,
+   "giysi": 2.0,
+   "alet": 1.85
+  },
+  "ortalama_fiyat": 1.4708333333333332,
+  "tuketici_girisi_firma_gun": 1330.6301277391242,
+  "toptanci_alim_firma_gun": 86.38310446178895
+ },
+ "tüm üreticiler seviye 5": {
+  "rol_getirisi": {
+   "ara mal (Ar-Ge 5)": 216,
+   "dükkân": 2805,
+   "ham madde (Ar-Ge 5)": 381,
+   "son ürün (Ar-Ge 5)": 359
+  },
+  "dukkan_sayisi": 13,
+  "kapsama": 0.6851498509429645,
+  "fiyat_endeksi": {
+   "bugday": 0.74,
+   "sut": 0.59,
+   "pamuk": 0.59,
+   "komur": 0.58,
+   "demir": 0.58,
+   "un": 0.77,
+   "kumas": 0.82,
+   "celik": 1.97,
+   "ekmek": 0.73,
+   "peynir": 0.63,
+   "giysi": 0.98,
+   "alet": 1.99
+  },
+  "ortalama_fiyat": 0.9141666666666667,
+  "tuketici_girisi_firma_gun": 1608.4061877419128,
+  "toptanci_alim_firma_gun": 147.28821069111103
+ },
+ "üreticilerin yarısı seviye 5": {
+  "rol_getirisi": {
+   "ara mal (Ar-Ge 0)": 196,
+   "ara mal (Ar-Ge 5)": 587,
+   "dükkân": 2443,
+   "ham madde (Ar-Ge 0)": 655,
+   "ham madde (Ar-Ge 5)": 390,
+   "son ürün (Ar-Ge 0)": 278,
+   "son ürün (Ar-Ge 5)": 1123
+  },
+  "dukkan_sayisi": 13,
+  "kapsama": 0.6493273949398742,
+  "fiyat_endeksi": {
+   "bugday": 1.13,
+   "sut": 0.61,
+   "pamuk": 0.61,
+   "komur": 0.58,
+   "demir": 0.6,
+   "un": 1.2,
+   "kumas": 0.82,
+   "celik": 1.98,
+   "ekmek": 1.09,
+   "peynir": 0.7,
+   "giysi": 1.33,
+   "alet": 1.98
+  },
+  "ortalama_fiyat": 1.0525,
+  "tuketici_girisi_firma_gun": 1686.987553021378,
+  "toptanci_alim_firma_gun": 103.69958384501473
+ },
+ "üreticilerin yarısı seviye 2": {
+  "rol_getirisi": {
+   "ara mal (Ar-Ge 0)": 13,
+   "ara mal (Ar-Ge 2)": 278,
+   "dükkân": 2274,
+   "ham madde (Ar-Ge 0)": 1046,
+   "ham madde (Ar-Ge 2)": 629,
+   "son ürün (Ar-Ge 0)": 169,
+   "son ürün (Ar-Ge 2)": 523
+  },
+  "dukkan_sayisi": 13,
+  "kapsama": 0.6163130973095521,
+  "fiyat_endeksi": {
+   "bugday": 1.71,
+   "sut": 0.62,
+   "pamuk": 0.73,
+   "komur": 0.61,
+   "demir": 0.62,
+   "un": 1.6,
+   "kumas": 0.8,
+   "celik": 2.79,
+   "ekmek": 1.41,
+   "peynir": 0.71,
+   "giysi": 1.21,
+   "alet": 1.9
+  },
+  "ortalama_fiyat": 1.2258333333333333,
+  "tuketici_girisi_firma_gun": 1602.098982650155,
+  "toptanci_alim_firma_gun": 96.40596084952547
+ }
+}

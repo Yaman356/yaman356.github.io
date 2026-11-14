@@ -236,3 +236,98 @@ Keskin bir eşik yok; duruş %10'dan itibaren artıyor, talebin karşılanması 
 ### Hâlâ eksik olanlar
 
 Boş arsa vergisi, yeniden yatırım, çok arsalı oyuncular, organize gruplar ve yeni oyuncunun ilerlemesi bu turda da modelde yok. Takipçilerin karar kuralı (son üç günün kârı) basit; gerçek oyuncular farklı davranabilir.
+
+## Üçüncü tur: çok arsalı dünya
+
+Model genişletildi: şirketlerin ortak kasası ve birden çok arsası var; sistem her gün arsa artırmaya çıkarıyor (50 firmada günde 2); şirketler kazancını arsaya yatırıp yeni işletme kuruyor; satın alınan arsa dokümandaki vergiye tabi (aktif %1, boşta bina %4, boş %8, haftalık; her ek arsa vergiyi %10 artırır). Kasası üç gün ekside kalan şirket bir arsasını sisteme yarı fiyatına satıyor. Kod: `sim/world.py`. Ham sonuçlar: `sim/world_results.json`. 40 oyun günü, beş tohum, ölçüm 10–40. günler, yaklaşık 13 dükkânlı dağılım. Her koşuda para ve mal defterleri tuttu.
+
+Servet; kasa, stok, binaların yarı değeri ve arsaların güncel referans değerinin toplamıdır. Arsa fiyatı arttıkça arsa sahiplerinin serveti de artar.
+
+### Önce: Ar-Ge testi dengeli dükkân sayısıyla
+
+13 dükkânlı dağılımda tüm üreticiler seviye 5'e çıkınca talebin karşılanması %47'den %68'e çıktı, ortalama fiyat 1,47'den 0,91'e indi. Dükkân kazancı 1.954'ten 2.805'e, son ürün 205'ten 359'a çıktı; ham madde 594'ten 381'e düştü. Yani kazancın bir kısmı yine dükkâna geçiyor ama bu dağılımda Ar-Ge asıl olarak arz kıtlığını gideriyor. Kod: `python3 sim/rd_test.py --dengeli`.
+
+### Yeniden yatırım arsa piyasasını en büyük para yutağı yapıyor
+
+| Senaryo | Talebin karşılanması | Satılan arsa | Arsa fiyatı (başlangıca göre) | Arsa ödemesi / tüketici girişi | Vergi / tüketici girişi |
+|---|---:|---:|---|---:|---:|
+| Yatırım yok | %69 | 0 | 1,0 | %0 | %0 |
+| Yatırım, vergi yok | %90 | 80 | 1,7–3,0 | %36 | %0 |
+| Yatırım, doküman vergisi | %90 | 84 | 1,6–2,7 | %35 | %1,5 |
+| Yatırım, vergi iki kat | %91 | 84 | 1,5–2,6 | %34 | %2,9 |
+
+- Şirketler kazancını yeni işletmelere yatırınca arz artıyor ve talebin karşılanması %69'dan %90'a çıkıyor.
+- Arsa alımları tüketiciden giren paranın üçte birini yutuyor; vergi yalnızca %1–3. Ekonominin asıl para yutağı arsa satışı.
+- Arsa fiyatları 40 günde 1,5–3 katına çıkıyor. Bu, sistemin günde kaç arsa açtığına çok bağlı.
+- Aktif arsa vergisi (%1) üretken şirketi neredeyse hiç etkilemiyor: günde 36 vergiye karşı yaklaşık 1.000 servet artışı.
+
+### Boş arsa vergisi spekülasyonu kârsız kılıyor
+
+60.000 kasalı bir spekülatör arsa toplayıp boş tuttu:
+
+| Vergi | Spekülatörün günlük servet artışı | Normal şirket (ortalama / medyan) | Boş arsa |
+|---|---:|---|---:|
+| Yok | +1.450 | 1.081 / 487 | 5,8 |
+| Doküman (%8) | −290 | 990 / 558 | 3,4 |
+| İki kat | −455 | 981 / 514 | 3,2 |
+
+Vergi yokken arsa toplamak üretimden daha kârlı; doküman vergisiyle zarar ettiriyor. %8 boş arsa vergisi bu modelde yeterli.
+
+### Sonradan gelen oyuncular çok geride kalıyor
+
+10. günden itibaren her gün bir yeni oyuncu katıldı (5.000 sermaye, kiralık başlangıç arsası).
+
+| Senaryo | Yeni oyuncunun ilk 10 günü (günlük) | Aynı dönemde eski şirketler | 10 günde ikinci arsaya ulaşan | Arsa parasına ulaşamayan |
+|---|---:|---:|---:|---:|
+| Destek yok | 141 | 828 | %4 | %99 |
+| Talep oyuncu sayısıyla büyür | 212 | 1.464 | %3 | %98 |
+| Arsa arzı yarıya iner | 163 | 1.087 | %1 | %99 |
+| Başlangıç parası arsa fiyatıyla büyür | 158 | 855 | %7 | %56 |
+| Arsaların %30'u yenilere kiralık | 200 | 896 | %25 | %90 |
+| İkisi birden | 342 | 891 | %63 | %42 |
+| Herkese 10.000 başlangıç parası | 165 | 813 | %1 | %56 |
+
+- Destek olmadan yeni oyuncu, aynı dönemdeki eski şirketlerin altıda biri hızında büyüyor ve neredeyse hiçbiri arsa alamıyor. Eski şirketler ortalama 2,6 arsayla çalışıyor; fark büyük ölçüde ölçek ve erken gelenin ucuz arsası.
+- Tek başına hiçbir önlem yetmiyor. En iyi sonuç ikisinin birlikte uygulanması: yeni oyuncuya sunucu yaşına göre büyüyen başlangıç parası ve sistemden kiralanabilen ikinci arsa. Bu durumda yeni oyuncuların %63'ü ilk 10 günde ikinci arsaya ulaşıyor.
+- Talebin oyuncu sayısıyla büyümesi eski şirketleri yeni gelenlerden daha çok zenginleştiriyor.
+
+### Organize grup arsayı topluyor ama vergi frenliyor
+
+Beş oyuncu kasalarını ve arsalarını birleştirdi:
+
+| Vergi | Grup üyesi başına günlük | Normal şirket (ortalama / medyan) | Grubun arsa sayısı | Arsaların en büyük %10'luk şirketteki payı |
+|---|---:|---|---:|---:|
+| Yok | 1.058 | 873 / 240 | 21 | %60 |
+| Doküman | 995 | 856 / 319 | 21 | %48 |
+
+- Grup üyesi, tipik (medyan) oyuncunun 3–4 katı kazanıyor ve sunucudaki arsaların büyük kısmını tek elde topluyor.
+- Doküman vergisi yoğunlaşmayı %60'tan %48'e indiriyor ama grubu durdurmuyor: 21 arsada çarpan 3 kata çıksa da aktif vergi düşük kalıyor. Daha dik bir çarpan bu turda sınanmadı.
+
+### Tek tedarikçi zinciri kırabiliyor
+
+Bütün çeliği üreten tek şirket fiyatını olağanın 2,5 katına çıkardı:
+
+| Toptancının acil satış fiyatı | Aletin tüketiciye ulaşma oranı | Çelik fiyatı | Tekelin günlük kazancı |
+|---|---:|---:|---:|
+| Tekel yok | %87 | — | — |
+| Piyasa ortalamasını izler | %13 | 2,27 | −7 |
+| Olağan fiyatın %130'unda sabit | %29 | 1,95 | −3 |
+
+- Tekel bu kuralla kâr etmiyor; ama alet zincirini neredeyse tamamen durduruyor.
+- Toptancının acil fiyatı piyasa ortalamasını izlerse tekel fiyatı toptancıyı da yükseltiyor. Fiyatı olağan fiyata bağlamak zararı yarıya indiriyor ama kota küçük olduğu için yetmiyor.
+
+### Başlangıç koşulları
+
+| Oyuncu sayısı | Arsa fiyatı (başlangıca göre) | Yeni oyuncunun ilk 10 günü | Arsa parasına ulaşamayan yeni oyuncu |
+|---:|---|---:|---:|
+| 20 | 1,0–1,6 | 241 | %85 |
+| 50 | 1,0–1,7 | 141 | %99 |
+| 100 | 1,7–2,8 | 419 | %91 |
+
+Her ölçekte yeni oyuncu sorunu sürüyor; büyük sunucuda arsa fiyatları daha hızlı artıyor.
+
+### Bu turun sınırları
+
+- Şirketler basit kurallarla karar veriyor: arsanın değerini son üç günün rol kârlarından tahmin ediyor. Spekülatörün ve tekelin stratejileri de basit; gerçek oyuncular daha akıllı davranabilir.
+- Oyuncular arası arsa satışı, kiraya verme ve arsa sayısı çarpanının daha dik hali modelde yok.
+- Tüketici talebi fiyata tepki vermiyor; sanal gündem olayları ve çoklu hesap hâlâ sınanmadı.

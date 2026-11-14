@@ -1,0 +1,672 @@
+{
+ "not": "Basit karar kurallı şirketler; 40 oyun günü; ölçüm 10-40. günler. Toptancı B, takipçi yok, yaklaşık 13 dükkân.",
+ "tohumlar": [
+  1,
+  2,
+  3,
+  4,
+  5
+ ],
+ "senaryolar": {
+  "yatirim yok": {
+   "kapsama": 0.686,
+   "durus": 0.01,
+   "satilan_arsa": 0,
+   "arsa_fiyati_baslangica_gore": {
+    "merkez": 1.0,
+    "kirsal": 1.0,
+    "dag": 1.0
+   },
+   "isletme_sayisi_son": 50,
+   "bos_arsa_son": 0,
+   "vergi_tuketici_orani": 0.0,
+   "arsa_odemesi_tuketici_orani": 0.0,
+   "sisteme_satis": 0.0,
+   "normal": {
+    "sirket": 50.0,
+    "gunluk_servet_artisi_uye_basina": 1054,
+    "medyan": 191,
+    "alinan_arsa": 0,
+    "gunluk_vergi_uye_basina": 0,
+    "arsa_sayisi": 1
+   },
+   "arsalarin_ilk_yuzde10_payi": null
+  },
+  "yatirim, vergi yok": {
+   "kapsama": 0.904,
+   "durus": 0.039,
+   "satilan_arsa": 80.2,
+   "arsa_fiyati_baslangica_gore": {
+    "merkez": 1.71,
+    "kirsal": 2.97,
+    "dag": 2.05
+   },
+   "isletme_sayisi_son": 130,
+   "bos_arsa_son": 0,
+   "vergi_tuketici_orani": 0.0,
+   "arsa_odemesi_tuketici_orani": 0.356,
+   "sisteme_satis": 1726.89,
+   "normal": {
+    "sirket": 50.0,
+    "gunluk_servet_artisi_uye_basina": 1096,
+    "medyan": 453,
+    "alinan_arsa": 1.6,
+    "gunluk_vergi_uye_basina": 0,
+    "arsa_sayisi": 2.6
+   },
+   "arsalarin_ilk_yuzde10_payi": 0.42
+  },
+  "yatirim, doküman vergisi": {
+   "kapsama": 0.905,
+   "durus": 0.046,
+   "satilan_arsa": 83.6,
+   "arsa_fiyati_baslangica_gore": {
+    "merkez": 1.62,
+    "kirsal": 2.71,
+    "dag": 2.09
+   },
+   "isletme_sayisi_son": 130,
+   "bos_arsa_son": 0,
+   "vergi_tuketici_orani": 0.015,
+   "arsa_odemesi_tuketici_orani": 0.353,
+   "sisteme_satis": 36797.271,
+   "normal": {
+    "sirket": 50.0,
+    "gunluk_servet_artisi_uye_basina": 1042,
+    "medyan": 566,
+    "alinan_arsa": 1.67,
+    "gunluk_vergi_uye_basina": 36,
+    "arsa_sayisi": 2.6
+   },
+   "arsalarin_ilk_yuzde10_payi": 0.4
+  },
+  "yatirim, vergi 2 kat": {
+   "kapsama": 0.909,
+   "durus": 0.048,
+   "satilan_arsa": 84.2,
+   "arsa_fiyati_baslangica_gore": {
+    "merkez": 1.5,
+    "kirsal": 2.64,
+    "dag": 1.95
+   },
+   "isletme_sayisi_son": 130,
+   "bos_arsa_son": 0,
+   "vergi_tuketici_orani": 0.029,
+   "arsa_odemesi_tuketici_orani": 0.34,
+   "sisteme_satis": 40398.773,
+   "normal": {
+    "sirket": 50.0,
+    "gunluk_servet_artisi_uye_basina": 983,
+    "medyan": 491,
+    "alinan_arsa": 1.68,
+    "gunluk_vergi_uye_basina": 69,
+    "arsa_sayisi": 2.6
+   },
+   "arsalarin_ilk_yuzde10_payi": 0.39
+  },
+  "spekulator, vergi yok": {
+   "kapsama": 0.909,
+   "durus": 0.059,
+   "satilan_arsa": 80,
+   "arsa_fiyati_baslangica_gore": {
+    "merkez": 1.74,
+    "kirsal": 2.96,
+    "dag": 2.31
+   },
+   "isletme_sayisi_son": 124.2,
+   "bos_arsa_son": 5.8,
+   "vergi_tuketici_orani": 0.0,
+   "arsa_odemesi_tuketici_orani": 0.368,
+   "sisteme_satis": 0.0,
+   "normal": {
+    "sirket": 50.0,
+    "gunluk_servet_artisi_uye_basina": 1081,
+    "medyan": 487,
+    "alinan_arsa": 1.48,
+    "gunluk_vergi_uye_basina": 0,
+    "arsa_sayisi": 2.48
+   },
+   "spekulator": {
+    "sirket": 1.0,
+    "gunluk_servet_artisi_uye_basina": 1450,
+    "medyan": 1375,
+    "alinan_arsa": 5.8,
+    "gunluk_vergi_uye_basina": 0,
+    "arsa_sayisi": 5.8
+   },
+   "arsalarin_ilk_yuzde10_payi": 0.42
+  },
+  "spekulator, doküman vergisi": {
+   "kapsama": 0.904,
+   "durus": 0.041,
+   "satilan_arsa": 84.6,
+   "arsa_fiyati_baslangica_gore": {
+    "merkez": 1.66,
+    "kirsal": 2.63,
+    "dag": 2.06
+   },
+   "isletme_sayisi_son": 126.6,
+   "bos_arsa_son": 3.4,
+   "vergi_tuketici_orani": 0.022,
+   "arsa_odemesi_tuketici_orani": 0.362,
+   "sisteme_satis": 43762.686,
+   "normal": {
+    "sirket": 50.0,
+    "gunluk_servet_artisi_uye_basina": 990,
+    "medyan": 558,
+    "alinan_arsa": 1.6,
+    "gunluk_vergi_uye_basina": 30,
+    "arsa_sayisi": 2.53
+   },
+   "spekulator": {
+    "sirket": 1.0,
+    "gunluk_servet_artisi_uye_basina": -290,
+    "medyan": -533,
+    "alinan_arsa": 4.8,
+    "gunluk_vergi_uye_basina": 1078,
+    "arsa_sayisi": 3.4
+   },
+   "arsalarin_ilk_yuzde10_payi": 0.36
+  },
+  "spekulator, vergi 2 kat": {
+   "kapsama": 0.913,
+   "durus": 0.056,
+   "satilan_arsa": 82.6,
+   "arsa_fiyati_baslangica_gore": {
+    "merkez": 1.62,
+    "kirsal": 2.73,
+    "dag": 1.87
+   },
+   "isletme_sayisi_son": 126.8,
+   "bos_arsa_son": 3.2,
+   "vergi_tuketici_orani": 0.038,
+   "arsa_odemesi_tuketici_orani": 0.343,
+   "sisteme_satis": 24995.023,
+   "normal": {
+    "sirket": 50.0,
+    "gunluk_servet_artisi_uye_basina": 981,
+    "medyan": 514,
+    "alinan_arsa": 1.59,
+    "gunluk_vergi_uye_basina": 64,
+    "arsa_sayisi": 2.54
+   },
+   "spekulator": {
+    "sirket": 1.0,
+    "gunluk_servet_artisi_uye_basina": -455,
+    "medyan": -481,
+    "alinan_arsa": 3.2,
+    "gunluk_vergi_uye_basina": 1242,
+    "arsa_sayisi": 3.2
+   },
+   "arsalarin_ilk_yuzde10_payi": 0.4
+  },
+  "yeni oyuncu, vergi yok": {
+   "kapsama": 0.917,
+   "durus": 0.021,
+   "satilan_arsa": 80.2,
+   "arsa_fiyati_baslangica_gore": {
+    "merkez": 1.47,
+    "kirsal": 1.99,
+    "dag": 1.21
+   },
+   "isletme_sayisi_son": 151,
+   "bos_arsa_son": 0,
+   "vergi_tuketici_orani": 0.0,
+   "arsa_odemesi_tuketici_orani": 0.322,
+   "sisteme_satis": 1889.369,
+   "normal": {
+    "sirket": 50.0,
+    "gunluk_servet_artisi_uye_basina": 897,
+    "medyan": 300,
+    "alinan_arsa": 1.6,
+    "gunluk_vergi_uye_basina": 0,
+    "arsa_sayisi": 2.6
+   },
+   "arsalarin_ilk_yuzde10_payi": 0.57,
+   "yeni_oyuncu": {
+    "sayi": 21.0,
+    "ilk10_gun_servet_artisi": 134,
+    "kurucularin_ilk10_gunu": 1168,
+    "kurucularin_20_30_gunleri": 871,
+    "arsa_alabilen_orani": 0,
+    "on_gunde_arsa_parasina_ulasamayan": 0.98
+   }
+  },
+  "yeni oyuncu, doküman vergisi": {
+   "kapsama": 0.932,
+   "durus": 0.024,
+   "satilan_arsa": 82.2,
+   "arsa_fiyati_baslangica_gore": {
+    "merkez": 1.38,
+    "kirsal": 1.73,
+    "dag": 1.02
+   },
+   "isletme_sayisi_son": 151,
+   "bos_arsa_son": 0,
+   "vergi_tuketici_orani": 0.012,
+   "arsa_odemesi_tuketici_orani": 0.308,
+   "sisteme_satis": 20248.417,
+   "normal": {
+    "sirket": 50.0,
+    "gunluk_servet_artisi_uye_basina": 836,
+    "medyan": 391,
+    "alinan_arsa": 1.63,
+    "gunluk_vergi_uye_basina": 27,
+    "arsa_sayisi": 2.58
+   },
+   "arsalarin_ilk_yuzde10_payi": 0.37,
+   "yeni_oyuncu": {
+    "sayi": 21.0,
+    "ilk10_gun_servet_artisi": 141,
+    "kurucularin_ilk10_gunu": 1160,
+    "kurucularin_20_30_gunleri": 828,
+    "arsa_alabilen_orani": 0.04,
+    "on_gunde_arsa_parasina_ulasamayan": 0.99
+   }
+  },
+  "yeni oyuncu, talep oyuncu sayisiyla buyur": {
+   "kapsama": 0.928,
+   "durus": 0.027,
+   "satilan_arsa": 82,
+   "arsa_fiyati_baslangica_gore": {
+    "merkez": 2.05,
+    "kirsal": 2.83,
+    "dag": 1.61
+   },
+   "isletme_sayisi_son": 151,
+   "bos_arsa_son": 0,
+   "vergi_tuketici_orani": 0.012,
+   "arsa_odemesi_tuketici_orani": 0.314,
+   "sisteme_satis": 18603.0,
+   "normal": {
+    "sirket": 50.0,
+    "gunluk_servet_artisi_uye_basina": 1261,
+    "medyan": 496,
+    "alinan_arsa": 1.63,
+    "gunluk_vergi_uye_basina": 34,
+    "arsa_sayisi": 2.59
+   },
+   "arsalarin_ilk_yuzde10_payi": 0.43,
+   "yeni_oyuncu": {
+    "sayi": 21.0,
+    "ilk10_gun_servet_artisi": 212,
+    "kurucularin_ilk10_gunu": 1161,
+    "kurucularin_20_30_gunleri": 1464,
+    "arsa_alabilen_orani": 0.03,
+    "on_gunde_arsa_parasina_ulasamayan": 0.98
+   }
+  },
+  "yeni oyuncu, arsa arzi yarim": {
+   "kapsama": 0.904,
+   "durus": 0.014,
+   "satilan_arsa": 40.6,
+   "arsa_fiyati_baslangica_gore": {
+    "merkez": 2.45,
+    "kirsal": 3.25,
+    "dag": 2.19
+   },
+   "isletme_sayisi_son": 111,
+   "bos_arsa_son": 0,
+   "vergi_tuketici_orani": 0.008,
+   "arsa_odemesi_tuketici_orani": 0.241,
+   "sisteme_satis": 5466.247,
+   "normal": {
+    "sirket": 50.0,
+    "gunluk_servet_artisi_uye_basina": 988,
+    "medyan": 301,
+    "alinan_arsa": 0.81,
+    "gunluk_vergi_uye_basina": 18,
+    "arsa_sayisi": 1.8
+   },
+   "arsalarin_ilk_yuzde10_payi": 0.45,
+   "yeni_oyuncu": {
+    "sayi": 21.0,
+    "ilk10_gun_servet_artisi": 163,
+    "kurucularin_ilk10_gunu": 1118,
+    "kurucularin_20_30_gunleri": 1087,
+    "arsa_alabilen_orani": 0.01,
+    "on_gunde_arsa_parasina_ulasamayan": 0.99
+   }
+  },
+  "yeni oyuncu, baslangic parasi arsa fiyatiyla buyur": {
+   "kapsama": 0.931,
+   "durus": 0.024,
+   "satilan_arsa": 82.2,
+   "arsa_fiyati_baslangica_gore": {
+    "merkez": 1.45,
+    "kirsal": 1.77,
+    "dag": 1.07
+   },
+   "isletme_sayisi_son": 151,
+   "bos_arsa_son": 0,
+   "vergi_tuketici_orani": 0.012,
+   "arsa_odemesi_tuketici_orani": 0.306,
+   "sisteme_satis": 20204.58,
+   "normal": {
+    "sirket": 50.0,
+    "gunluk_servet_artisi_uye_basina": 858,
+    "medyan": 425,
+    "alinan_arsa": 1.62,
+    "gunluk_vergi_uye_basina": 27,
+    "arsa_sayisi": 2.57
+   },
+   "arsalarin_ilk_yuzde10_payi": 0.37,
+   "yeni_oyuncu": {
+    "sayi": 21.0,
+    "ilk10_gun_servet_artisi": 158,
+    "kurucularin_ilk10_gunu": 1160,
+    "kurucularin_20_30_gunleri": 855,
+    "arsa_alabilen_orani": 0.07,
+    "on_gunde_arsa_parasina_ulasamayan": 0.56
+   }
+  },
+  "yeni oyuncu, arsalarin %30u yenilere kiralik": {
+   "kapsama": 0.923,
+   "durus": 0.021,
+   "satilan_arsa": 83,
+   "arsa_fiyati_baslangica_gore": {
+    "merkez": 1.44,
+    "kirsal": 1.9,
+    "dag": 1.03
+   },
+   "isletme_sayisi_son": 151,
+   "bos_arsa_son": 0,
+   "vergi_tuketici_orani": 0.011,
+   "arsa_odemesi_tuketici_orani": 0.297,
+   "sisteme_satis": 25017.14,
+   "normal": {
+    "sirket": 50.0,
+    "gunluk_servet_artisi_uye_basina": 832,
+    "medyan": 427,
+    "alinan_arsa": 1.52,
+    "gunluk_vergi_uye_basina": 26,
+    "arsa_sayisi": 2.46
+   },
+   "arsalarin_ilk_yuzde10_payi": 0.36,
+   "yeni_oyuncu": {
+    "sayi": 21.0,
+    "ilk10_gun_servet_artisi": 200,
+    "kurucularin_ilk10_gunu": 1162,
+    "kurucularin_20_30_gunleri": 896,
+    "arsa_alabilen_orani": 0.25,
+    "on_gunde_arsa_parasina_ulasamayan": 0.9
+   }
+  },
+  "yeni oyuncu, ikisi birden": {
+   "kapsama": 0.923,
+   "durus": 0.023,
+   "satilan_arsa": 83.2,
+   "arsa_fiyati_baslangica_gore": {
+    "merkez": 1.52,
+    "kirsal": 1.93,
+    "dag": 1.07
+   },
+   "isletme_sayisi_son": 151,
+   "bos_arsa_son": 0,
+   "vergi_tuketici_orani": 0.011,
+   "arsa_odemesi_tuketici_orani": 0.265,
+   "sisteme_satis": 26922.55,
+   "normal": {
+    "sirket": 50.0,
+    "gunluk_servet_artisi_uye_basina": 823,
+    "medyan": 382,
+    "alinan_arsa": 1.35,
+    "gunluk_vergi_uye_basina": 25,
+    "arsa_sayisi": 2.28
+   },
+   "arsalarin_ilk_yuzde10_payi": 0.37,
+   "yeni_oyuncu": {
+    "sayi": 21.0,
+    "ilk10_gun_servet_artisi": 342,
+    "kurucularin_ilk10_gunu": 1162,
+    "kurucularin_20_30_gunleri": 891,
+    "arsa_alabilen_orani": 0.63,
+    "on_gunde_arsa_parasina_ulasamayan": 0.42
+   }
+  },
+  "grup (5 kisi), vergi yok": {
+   "kapsama": 0.927,
+   "durus": 0.025,
+   "satilan_arsa": 80.2,
+   "arsa_fiyati_baslangica_gore": {
+    "merkez": 1.53,
+    "kirsal": 1.84,
+    "dag": 1.14
+   },
+   "isletme_sayisi_son": 151,
+   "bos_arsa_son": 0,
+   "vergi_tuketici_orani": 0.0,
+   "arsa_odemesi_tuketici_orani": 0.324,
+   "sisteme_satis": 2457.674,
+   "normal": {
+    "sirket": 45.0,
+    "gunluk_servet_artisi_uye_basina": 873,
+    "medyan": 240,
+    "alinan_arsa": 1.42,
+    "gunluk_vergi_uye_basina": 0,
+    "arsa_sayisi": 2.42
+   },
+   "grup": {
+    "sirket": 1.0,
+    "gunluk_servet_artisi_uye_basina": 1058,
+    "medyan": 1074,
+    "alinan_arsa": 16.2,
+    "gunluk_vergi_uye_basina": 0,
+    "arsa_sayisi": 21.2
+   },
+   "arsalarin_ilk_yuzde10_payi": 0.6,
+   "yeni_oyuncu": {
+    "sayi": 21.0,
+    "ilk10_gun_servet_artisi": 136,
+    "kurucularin_ilk10_gunu": 1172,
+    "kurucularin_20_30_gunleri": 908,
+    "arsa_alabilen_orani": 0,
+    "on_gunde_arsa_parasina_ulasamayan": 0.99
+   }
+  },
+  "grup (5 kisi), doküman vergisi": {
+   "kapsama": 0.925,
+   "durus": 0.028,
+   "satilan_arsa": 81.6,
+   "arsa_fiyati_baslangica_gore": {
+    "merkez": 1.49,
+    "kirsal": 1.75,
+    "dag": 1.17
+   },
+   "isletme_sayisi_son": 151,
+   "bos_arsa_son": 0,
+   "vergi_tuketici_orani": 0.014,
+   "arsa_odemesi_tuketici_orani": 0.321,
+   "sisteme_satis": 16643.857,
+   "normal": {
+    "sirket": 45.0,
+    "gunluk_servet_artisi_uye_basina": 856,
+    "medyan": 319,
+    "alinan_arsa": 1.46,
+    "gunluk_vergi_uye_basina": 27,
+    "arsa_sayisi": 2.42
+   },
+   "grup": {
+    "sirket": 1.0,
+    "gunluk_servet_artisi_uye_basina": 995,
+    "medyan": 1167,
+    "alinan_arsa": 15.8,
+    "gunluk_vergi_uye_basina": 86,
+    "arsa_sayisi": 20.8
+   },
+   "arsalarin_ilk_yuzde10_payi": 0.48,
+   "yeni_oyuncu": {
+    "sayi": 21.0,
+    "ilk10_gun_servet_artisi": 127,
+    "kurucularin_ilk10_gunu": 1163,
+    "kurucularin_20_30_gunleri": 903,
+    "arsa_alabilen_orani": 0.01,
+    "on_gunde_arsa_parasina_ulasamayan": 0.99
+   }
+  },
+  "celik tekeli, toptanci piyasayi izler": {
+   "kapsama": 0.841,
+   "durus": 0.021,
+   "satilan_arsa": 81.6,
+   "arsa_fiyati_baslangica_gore": {
+    "merkez": 1.44,
+    "kirsal": 1.95,
+    "dag": 1.54
+   },
+   "isletme_sayisi_son": 129.8,
+   "bos_arsa_son": 0,
+   "vergi_tuketici_orani": 0.015,
+   "arsa_odemesi_tuketici_orani": 0.335,
+   "sisteme_satis": 15705.032,
+   "normal": {
+    "sirket": 49.0,
+    "gunluk_servet_artisi_uye_basina": 848,
+    "medyan": 426,
+    "alinan_arsa": 1.67,
+    "gunluk_vergi_uye_basina": 32,
+    "arsa_sayisi": 2.63
+   },
+   "tekel": {
+    "sirket": 1.0,
+    "gunluk_servet_artisi_uye_basina": -7,
+    "medyan": -33,
+    "alinan_arsa": 0,
+    "gunluk_vergi_uye_basina": 0,
+    "arsa_sayisi": 1
+   },
+   "arsalarin_ilk_yuzde10_payi": 0.39,
+   "alet_kapsama": 0.129,
+   "celik_fiyati": 2.27
+  },
+  "celik tekeli, toptanci fiyati sabit": {
+   "kapsama": 0.864,
+   "durus": 0.022,
+   "satilan_arsa": 81.6,
+   "arsa_fiyati_baslangica_gore": {
+    "merkez": 1.47,
+    "kirsal": 2.1,
+    "dag": 1.29
+   },
+   "isletme_sayisi_son": 130,
+   "bos_arsa_son": 0,
+   "vergi_tuketici_orani": 0.015,
+   "arsa_odemesi_tuketici_orani": 0.317,
+   "sisteme_satis": 12878.987,
+   "normal": {
+    "sirket": 49.0,
+    "gunluk_servet_artisi_uye_basina": 900,
+    "medyan": 435,
+    "alinan_arsa": 1.67,
+    "gunluk_vergi_uye_basina": 32,
+    "arsa_sayisi": 2.63
+   },
+   "tekel": {
+    "sirket": 1.0,
+    "gunluk_servet_artisi_uye_basina": -3,
+    "medyan": -30,
+    "alinan_arsa": 0,
+    "gunluk_vergi_uye_basina": 0,
+    "arsa_sayisi": 1
+   },
+   "arsalarin_ilk_yuzde10_payi": 0.43,
+   "alet_kapsama": 0.287,
+   "celik_fiyati": 1.95
+  },
+  "n=20, doküman vergisi": {
+   "kapsama": 0.85,
+   "durus": 0.043,
+   "satilan_arsa": 41.4,
+   "arsa_fiyati_baslangica_gore": {
+    "merkez": 1.04,
+    "kirsal": 1.61,
+    "dag": 1.08
+   },
+   "isletme_sayisi_son": 68,
+   "bos_arsa_son": 0,
+   "vergi_tuketici_orani": 0.016,
+   "arsa_odemesi_tuketici_orani": 0.308,
+   "sisteme_satis": 8753.37,
+   "normal": {
+    "sirket": 20.0,
+    "gunluk_servet_artisi_uye_basina": 888,
+    "medyan": 287,
+    "alinan_arsa": 2.04,
+    "gunluk_vergi_uye_basina": 30,
+    "arsa_sayisi": 2.99
+   },
+   "arsalarin_ilk_yuzde10_payi": 0.46,
+   "yeni_oyuncu": {
+    "sayi": 8.0,
+    "ilk10_gun_servet_artisi": 241,
+    "kurucularin_ilk10_gunu": 737,
+    "kurucularin_20_30_gunleri": 985,
+    "arsa_alabilen_orani": 0.07,
+    "on_gunde_arsa_parasina_ulasamayan": 0.85
+   }
+  },
+  "n=100, doküman vergisi": {
+   "kapsama": 0.917,
+   "durus": 0.026,
+   "satilan_arsa": 127,
+   "arsa_fiyati_baslangica_gore": {
+    "merkez": 2.14,
+    "kirsal": 2.8,
+    "dag": 1.71
+   },
+   "isletme_sayisi_son": 262,
+   "bos_arsa_son": 0,
+   "vergi_tuketici_orani": 0.012,
+   "arsa_odemesi_tuketici_orani": 0.341,
+   "sisteme_satis": 78721.545,
+   "normal": {
+    "sirket": 100.0,
+    "gunluk_servet_artisi_uye_basina": 903,
+    "medyan": 427,
+    "alinan_arsa": 1.24,
+    "gunluk_vergi_uye_basina": 30,
+    "arsa_sayisi": 2.18
+   },
+   "arsalarin_ilk_yuzde10_payi": 0.37,
+   "yeni_oyuncu": {
+    "sayi": 42.0,
+    "ilk10_gun_servet_artisi": 419,
+    "kurucularin_ilk10_gunu": 1447,
+    "kurucularin_20_30_gunleri": 1077,
+    "arsa_alabilen_orani": 0.05,
+    "on_gunde_arsa_parasina_ulasamayan": 0.91
+   }
+  },
+  "baslangic parasi 10.000": {
+   "kapsama": 0.949,
+   "durus": 0.016,
+   "satilan_arsa": 76.8,
+   "arsa_fiyati_baslangica_gore": {
+    "merkez": 1.48,
+    "kirsal": 1.86,
+    "dag": 1.55
+   },
+   "isletme_sayisi_son": 147.4,
+   "bos_arsa_son": 0,
+   "vergi_tuketici_orani": 0.012,
+   "arsa_odemesi_tuketici_orani": 0.339,
+   "sisteme_satis": 4355.515,
+   "normal": {
+    "sirket": 50.0,
+    "gunluk_servet_artisi_uye_basina": 832,
+    "medyan": 376,
+    "alinan_arsa": 1.53,
+    "gunluk_vergi_uye_basina": 29,
+    "arsa_sayisi": 2.52
+   },
+   "arsalarin_ilk_yuzde10_payi": 0.36,
+   "yeni_oyuncu": {
+    "sayi": 21.0,
+    "ilk10_gun_servet_artisi": 165,
+    "kurucularin_ilk10_gunu": 1120,
+    "kurucularin_20_30_gunleri": 813,
+    "arsa_alabilen_orani": 0.01,
+    "on_gunde_arsa_parasina_ulasamayan": 0.56
+   }
+  }
+ }
+}
