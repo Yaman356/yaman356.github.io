@@ -228,6 +228,20 @@ Kullanım:
 - WebGL açılamazsa oyun eski kodla çizilmiş SVG haritaya (`demo/art.js`) döner.
 - Oyun büyüdükçe kod TypeScript'e taşınacak; Pixi aynı kalır.
 
+### Arayüz düzeni (telefon öncelikli)
+
+Dayanak: `reports/Mobil ticaret oyunu arayüz tasarımı.md`. Raporun altı yüksek öncelikli maddesi uygulandı.
+
+- **Gezinme altta, beş hedef:** Arsalar, Pazar (ürün pazarı, arsa artırması), Şirket (sözleşme ve marka, işçiler), Finans (yatırım, kredi ve vergi, rapor), Rekabet (sezon, gazete). Alt bölümler ekranın üstünde hap biçimli sekmelerdir. Rozet yalnızca oyuncunun bir şey yapması gerektiğinde çıkar: ilgilenilmesi gereken arsa, süresi dolmak üzere olan sözleşme, geciken taksit, okunmamış haber.
+- **Dokunma hedefleri:** düğme, seçim kutusu ve giriş alanı en az 44 px; alt çubuk 58 px; aralıklar en az 8 px. Giriş yazısı 16 px (iOS odakta yakınlaştırmasın).
+- **Onay:** geri alınamaz işlemler (bina yıkma, arsayı sisteme satma, işçi çıkarma, makineli hatta tarif değiştirme, kooperatif kurma ve dağıtma, holdingden ayrılma, oyunu sıfırlama) alttan açılan bir onay sayfası ister. Sayfa neyin kaybedileceğini yazar; düğme sonucu adlandırır ("Binayı yık"). Sıradan alım-satım tek dokunuşta kalır.
+- **Miktar seçimi:** toptancıya satış, ilana koyma ve taşıma stokun ¼'ü, ½'si ya da tamamı için yapılır.
+- **Arsa kartları:** kapalıyken tek satır (bina, durum etiketi, depo doluluğu); aynı anda tek kart açıktır. Haritadan dokunmak ilgili kartı açar.
+- **Pazar:** önce 12 ürünün en ucuz teslim fiyatıyla listesi ve süzgeç (girdilerim, ürettiklerim, bina türüne göre); ürüne dokununca satıcılar ve pazarlık açılır.
+- Para birimi seçimi üst çubuktan Finans > Rapor > Ayarlar'a taşındı.
+
+Henüz yapılmayanlar (raporun orta ve düşük öncelikli maddeleri): devre dışı düğmeler ve "ne kadar eksik" mesajları, metindeki sekme adlarının bağlantıya çevrilmesi, kural paragraflarının katlanması, terimlerin tekleştirilmesi, Capacitor geri tuşu ve klavye ayarları. Arayüz gerçek bir telefonda henüz denenmedi.
+
 ### Görsel üretimi: Codex CLI
 
 Bütün bina, süs ve ürün görselleri Codex CLI'nin yerleşik görsel üretimiyle, aynı üslup cümlesi ve aynı referans görselle (`tarla_1`) üretilir. Komutlar `tasarim/gorsel-uretim-promptlari.md` ile aynıdır.
