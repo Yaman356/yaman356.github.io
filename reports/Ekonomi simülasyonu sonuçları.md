@@ -367,3 +367,33 @@ Aynı çok arsalı modelde, `sim/sector_balance.py` ile. Dükkân fiyat rekabeti
 - Ara mal işletme giderini yarıya indirmek ara mal üreticisini en alt sıradan kurtarıyor. İkisi birlikte dört sektörü 154–213 aralığında, yani en fazla 1,4 kat farkla dengeliyor; yatırım da sektörlere yayılıyor.
 - Bedeli: daha düşük fiyatlar ekonomiye daha az para sokuyor ve talebin karşılanması %91'den %85'e iniyor.
 - Fiyat rekabetinin oyunda gerçekleşmesi için oyuncunun bölgedeki rakip raf fiyatlarını görebilmesi gerekiyor.
+
+## Ek: Yükseltme kuralı karşılaştırması
+
+Kod: `sim/upgrade_test.py`. Ham sonuçlar: `sim/upgrade_results.json`. Çok arsalı model, güncel tasarım ayarlarıyla: dükkânlar fiyat kırar, ara mal işletme gideri yarıya, doküman vergisi, 10. günden itibaren her gün bir yeni oyuncu. 40 gün, beş tohum. Şirketler, son üç günü kârlı olan ve ek kapasitesi 20 günde bedelini çıkaracak bir üretim işletmesini yükseltiyor; yeni kuralda 3. seviyedeki işletme, aynı bölgede kazanılan arsaya genişleyerek hat ekliyor.
+
+| | Yükseltme yok | Eski kural (seviye = hat) | Yeni kural (seviye = parti) |
+|---|---:|---:|---:|
+| Talebin karşılanması | %91 | %89 | %90 |
+| Yükseltme / genişleme | 0 / 0 | 81 / 0 | 70 / 12 |
+| Satılan arsa | 99 | 78 | 79 |
+| Toplam üretim ölçeği (ham madde, ara mal, son ürün) | 43 / 31 / 53 | 80 / 35 / 64 | 71 / 26 / 55 |
+| Arsa başına günlük kâr (ham madde / ara mal / son ürün / dükkân) | 159 / 153 / 124 / 133 | 200 / 128 / 166 / 158 | 164 / 169 / 151 / 142 |
+| Şirket servet artışı (ortalama / medyan) | 146 / 122 | 168 / 94 | 175 / 113 |
+| Yeni oyuncunun ilk 10 günü | 190 | 148 | 164 |
+
+- Yeni kural üretim kapasitesini eski kurala göre yaklaşık %13 azaltıyor, ama talebin karşılanması değişmiyor; eski kuraldaki fazla kapasite fiyatları aşağı itiyordu.
+- Yeni kuralda sektör kârları daha dengeli (142–169, eski kuralda 128–200) ve medyan şirket biraz daha iyi.
+- Beklenenin aksine arsa talebi artmadı: satılan arsa sayısı iki kuralda aynı (78–79). 40 günde yalnızca 12 genişleme oldu; çoğu şirket 3. seviyeye ulaşmadan kapasite yetiyor.
+- Yeni oyuncuya etkisi küçük ve olumlu.
+
+### Güncel ayarlarda arsa fiyatları düşüyor
+
+Dükkân fiyat rekabeti ve ara mal ayarıyla kârlar daha düşük olduğu için arsa teklifleri de düşük. Sistem artırmasının taban fiyatı arsanın güncel referans değerinin yarısı olduğundan, her düşük satış referansı aşağı çekiyor ve fiyatlar 40 günde başlangıcın %20–70'ine iniyor.
+
+| Artırma tabanı | Arsa fiyatı (başlangıca göre) | Satılan arsa | Yeni oyuncunun arsa alabilme oranı | Karşılama |
+|---|---|---:|---:|---:|
+| Güncel değerin yarısı (kayan) | 0,3–0,7 | 79 | %30 | %90 |
+| Sabit başlangıç değerinin %60'ı | 0,6–1,0 | 46 | %6 | %87 |
+
+Taban sabitlenince fiyatlar korunuyor ama arsalar satılmıyor ve yeni oyuncu arsa alamıyor. Arsa fiyat seviyesi, yeni oyuncu erişimiyle doğrudan bağlantılı; bu bir tasarım kararı.

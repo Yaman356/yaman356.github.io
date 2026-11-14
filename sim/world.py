@@ -52,13 +52,16 @@ class PFirm(E.Firm):
 class World(E.Sim):
     def __init__(s, n=50, seed=1, days=40, tax_scale=1.0, invest=True, joiners=0.0, group=0, spec_cash=0,
                  monopoly=False, cap_wholesale=False, shop_w=16, followers=0.0, wmode='B', start_cash=E.START_CASH,
-                 release=None, demand_follows=False, joiner_boost=False, reserve=0.0, **kw):
+                 release=None, demand_follows=False, joiner_boost=False, reserve=0.0, upgrades=None, base_floor=0.0, **kw):
         super().__init__(n=n, seed=seed, wmode=wmode, followers=followers, days=days, shop_w=shop_w, **kw)
         s.tax_scale, s.invest, s.joiners, s.start_cash = tax_scale, invest, joiners, start_cash
         s.ref = dict(E.LAND); s.queue = []; s.land_log = []; s.next_id = 1000; s.join_acc = 0.0
         s.release = max(1, round(n * 0.03)) if release is None else release
         s.monopoly = monopoly; s.demand_follows = demand_follows; s.n0 = n
         s.joiner_boost, s.reserve = joiner_boost, reserve
+        s.upgrades = upgrades  # None: yükseltme yok; 'eski': seviye yeni hat açar; 'yeni': seviye partiyi büyütür, hat için arsaya genişlenir
+        s.n_upgrades = 0; s.n_expand = 0
+        s.base_floor = base_floor  # >0: sistem artırmasının taban fiyatı, bölgenin sabit taban değerinin bu oranı
         base, s.firms, s.companies = s.firms, [], []
         for f in base:
             co = s.new_company(start_cash, 'normal', 0)
@@ -108,19 +111,43 @@ class World(E.Sim):
     def end_day(s, day):
         super().end_day(day)
         s.land_tax(); s.debts(); s.join(day)
+        if s.upgrades: s.do_upgrades(day)
         if s.invest: s.auction(day)
         s.record(day)
 
     def active(s, f):
         return f.made > f.made_prev + 1e-9 if f.prod else sum(f.rate.values()) > 0.2
 
+    @staticmethod
+    def set_scale(f, rule):
+        if rule == 'yeni':
+            f.m = (1 + 0.5 * (f.level - 1)) * f.lines; f.capmul = f.level + f.lines - 1
+        else:
+            f.m = float(f.level); f.capmul = float(f.level)
+
+    def do_upgrades(s, day):
+        """Günde şirket başına en fazla bir yükseltme: son üç günü kârlı bir üretim işletmesi, ek kapasitenin
+        getirisi 20 günde bedelini karşılıyorsa yükseltilir."""
+        for c in s.companies:
+            best = None
+            for f in c.plots:
+                if f.btype == 'dukkan' or f.level >= 3 or len(f.hist) < 3: continue
+                prof = st.mean(f.hist[-3:])
+                if prof <= 50: continue
+                old = f.m; f.level += 1; s.set_scale(f, s.upgrades); gain = prof * (f.m / old - 1); f.level -= 1; s.set_scale(f, s.upgrades)
+                cost = E.BCOST[f.btype] * f.level
+                if gain * PAYBACK >= cost and c.cash >= cost + BUFFER and (best is None or gain / cost > best[0]): best = (gain / cost, f, cost)
+            if best:
+                _, f, cost = best
+                c.cash -= cost; s.money['insaat'] += cost; f.level += 1; s.set_scale(f, s.upgrades); s.n_upgrades += 1
+
     def land_tax(s):
         for c in s.companies:
             owned = [f for f in c.plots if f.owned]
-            k = len(owned) + len(c.vacant)
+            k = len(owned) + len(c.vacant) + sum(f.lines - 1 for f in c.plots)
             if not k: continue
             mult = 1 + 0.1 * (k - 1)
-            x = sum(s.ref[f.region] * (TAX['aktif'] if s.active(f) else TAX['atil']) for f in owned)
+            x = sum(s.ref[f.region] * (TAX['aktif'] if s.active(f) else TAX['atil']) * (f.lines if f.owned else f.lines - 1) for f in c.plots)
             x += sum(s.ref[r] * TAX['bos'] for r in c.vacant)
             x *= mult * s.tax_scale / 7
             c.cash -= x; s.money['vergi'] += x; c.tax_paid += x
@@ -137,7 +164,8 @@ class World(E.Sim):
                 owned = [f for f in c.plots if f.owned]
                 if not owned: continue
                 f = min(owned, key=lambda f: st.mean(f.hist[-3:]) if f.hist else 0)
-                r = f.region; pay = 0.5 * s.ref[r] + 0.5 * E.BCOST[f.btype]
+                r = f.region; pay = 0.5 * s.ref[r] * f.lines + 0.5 * E.BCOST[f.btype]
+                s.queue += [(r, False)] * (f.lines - 1)
                 for p, q in f.inv.items():
                     pay += 0.5 * q * E.P[p]['ref']; s.goods[p]['sisteme'] += q
                 f.inv.clear(); c.plots.remove(f); s.firms.remove(f)
@@ -208,7 +236,7 @@ class World(E.Sim):
                 res = False
             elig = [c for c in s.companies if c.id not in won]
             bids = sorted(((s.bid(c, region, vals[region]), c) for c in elig), key=lambda x: -x[0])
-            floor = 0.5 * s.ref[region]
+            floor = max(0.5 * s.ref[region], s.base_floor * E.LAND[region])
             if not bids or bids[0][0] < floor: left.append((region, res)); continue
             amount, c = bids[0]
             price = max(floor, bids[1][0] if len(bids) > 1 else floor)
@@ -216,7 +244,14 @@ class World(E.Sim):
             s.ref[region] = 0.8 * s.ref[region] + 0.2 * price
             s.land_log.append((day, region, price, c.kind, res))
             if c.kind == 'spekulator': c.vacant.append(region)
-            else: s.build(c, vals[region][0], region, owned=True)
+            else:
+                # yeni kural: aynı bölgede 3. seviyede kârlı bir üretim işletmesi varsa arsaya genişleyip hat ekler
+                cand = [f for f in c.plots if s.upgrades == 'yeni' and f.btype != 'dukkan' and f.region == region and f.level >= 3
+                        and f.lines < 3 and len(f.hist) >= 3 and st.mean(f.hist[-3:]) > 0]
+                if cand:
+                    f = max(cand, key=lambda f: st.mean(f.hist[-3:]))
+                    c.cash -= E.BCOST[f.btype]; s.money['insaat'] += E.BCOST[f.btype]; f.lines += 1; s.set_scale(f, 'yeni'); s.n_expand += 1
+                else: s.build(c, vals[region][0], region, owned=True)
         s.queue = left[-10:]
 
     def company_wealth(s, c):
@@ -224,6 +259,7 @@ class World(E.Sim):
         for f in c.plots:
             w += sum(q * E.P[p]['ref'] * 0.75 for p, q in f.inv.items()) + 0.5 * E.BCOST[f.btype]
             if f.owned: w += s.ref[f.region]
+            w += (f.lines - 1) * s.ref[f.region]
         return w + sum(s.ref[r] for r in c.vacant)
 
     def record(s, day):

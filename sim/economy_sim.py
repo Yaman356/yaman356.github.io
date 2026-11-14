@@ -74,7 +74,8 @@ class Firm:
         s.rate = defaultdict(float)  # dükkân: saatlik satış tahmini
         s.busy = 0.0; s.down_until = 0; s.last_switch = -99
         s.incost = {p: float(P[p]['ref']) for p in PK}
-        s.rd = 0; s.outq = 10.0  # girdiye ödenen teslim fiyatı (üstel ortalama)
+        s.rd = 0; s.outq = 10.0
+        s.m = 1.0; s.capmul = 1.0; s.level = 1; s.lines = 1  # üretim ölçeği: parti büyüklüğü x hat sayısı  # girdiye ödenen teslim fiyatı (üstel ortalama)
         s.offered = defaultdict(float); s.sold = defaultdict(float)
         s.wealth0 = s.cash; s.hist = []; s.capital = []; s.made = 0.0
         s.hours = 0; s.halt_in = 0.0; s.halt_cash = 0.0
@@ -220,16 +221,17 @@ class Sim:
             if f.busy > 0:
                 d = min(f.busy, minutes); f.busy -= d; minutes -= d
                 if f.busy <= 1e-9:
-                    q = f.outq * (1.25 if BONUS.get(f.region) == f.btype else 1.0)
+                    q = f.outq * f.m * (1.25 if BONUS.get(f.region) == f.btype else 1.0)
                     f.inv[f.prod] += q; s.goods[f.prod]['uretilen'] += q; f.busy = 0; f.made += q
                 continue
-            if any(f.inv[k] < q - 1e-9 for k, q in rc['inp'].items()):
+            m = f.m
+            if any(f.inv[k] < q * m - 1e-9 for k, q in rc['inp'].items()):
                 f.halt_in += minutes / 60; s.day['halt_in'] += minutes / 60 if f.btype == 'fabrika' else 0; break
-            if f.cash < rc['op']:
+            if f.cash < rc['op'] * m:
                 f.halt_cash += minutes / 60; s.day['halt_cash'] += minutes / 60; break
-            if f.stock() + 13 > CAP[f.btype] + sum(rc['inp'].values()): break
-            for k, q in rc['inp'].items(): f.inv[k] -= q; s.goods[k]['recete'] += q
-            f.cash -= rc['op']; s.money['uretim'] += rc['op']; f.busy = rc['t'] / (1 + VERIM[f.rd])
+            if f.stock() + 13 * m > CAP[f.btype] * f.capmul + sum(rc['inp'].values()) * m: break
+            for k, q in rc['inp'].items(): f.inv[k] -= q * m; s.goods[k]['recete'] += q * m
+            f.cash -= rc['op'] * m; s.money['uretim'] += rc['op'] * m; f.busy = rc['t'] / (1 + VERIM[f.rd])
         if f.btype == 'fabrika': s.day['fab_hours'] += 1
 
     def hour(s):
@@ -254,7 +256,7 @@ class Sim:
                 budget = (1 - COMM - (0 if f.owned else RENT)) * f.ask[f.prod] * 10 - rc['op']
                 vsum = sum(P[k]['ref'] * q for k, q in rc['inp'].items())
                 for k, q in rc['inp'].items():
-                    want = 3 * q - f.inv[k]
+                    want = 3 * q * f.m - f.inv[k]
                     if want > 0 and budget > 0: s.buy(f, k, want, budget * P[k]['ref'] / vsum)
             else:
                 for p in PK:
@@ -292,13 +294,13 @@ class Sim:
         for f in s.firms:
             if f.btype == 'dukkan': continue
             for p in set(f.offered) | ({f.prod} if f.prod else set()):
-                target = 4 * RATE[p]
+                target = 4 * RATE[p] * (f.m if p == f.prod else 1)
                 f.ask[p] *= 1 + 0.02 * max(-1.0, min(1.0, 1 - f.inv[p] / target))
                 floor = f.unit_cost(p) * 1.05 / (1 - COMM - (0 if f.owned else RENT)) if p == f.prod else 0.4 * P[p]['ref']
                 if s.W.mode == 'A' or s.W.budget[p] > 1: floor = max(floor, s.W.buy_price(p))
                 f.ask[p] = min(3 * P[p]['ref'], max(floor, f.ask[p]))
             f.offered.clear(); f.sold.clear()
-            if f.prod and f.inv[f.prod] > 0.7 * CAP[f.btype]: s.w_buy(f, f.prod, f.inv[f.prod] - 0.5 * CAP[f.btype])
+            if f.prod and f.inv[f.prod] > 0.7 * CAP[f.btype] * f.capmul: s.w_buy(f, f.prod, f.inv[f.prod] - 0.5 * CAP[f.btype] * f.capmul)
         if s.hoarder: s.hoarder.offered.clear(); s.hoarder.sold.clear()
         for p in PK:
             if s.vol[p] > 0: s.ema[p] = 0.8 * s.ema[p] + 0.2 * s.val[p] / s.vol[p]

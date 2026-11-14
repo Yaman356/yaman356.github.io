@@ -1,0 +1,242 @@
+{
+ "yukseltme yok": {
+  "kapsama": 0.91,
+  "durus": 0.029,
+  "satilan_arsa": 98.6,
+  "arsa_fiyati_baslangica_gore": {
+   "merkez": 0.22,
+   "kirsal": 0.46,
+   "dag": 0.42
+  },
+  "arsa_odemesi_tuketici_orani": 0.197,
+  "arsalarin_ilk_yuzde10_payi": 0.35,
+  "normal_sirket": {
+   "sirket": 50.0,
+   "gunluk_servet_artisi_uye_basina": 146,
+   "medyan": 122,
+   "alinan_arsa": 1.89,
+   "gunluk_vergi_uye_basina": 12,
+   "arsa_sayisi": 2.52
+  },
+  "yeni_oyuncu": {
+   "sayi": 21.0,
+   "ilk10_gun_servet_artisi": 190,
+   "kurucularin_ilk10_gunu": 618,
+   "kurucularin_20_30_gunleri": 152,
+   "arsa_alabilen_orani": 0.18,
+   "on_gunde_arsa_parasina_ulasamayan": 0.31
+  },
+  "yukseltme": 0,
+  "genisleme": 0,
+  "isletme_sayisi": 151,
+  "uretim_olcegi_toplam": {
+   "ham madde": 43.4,
+   "ara mal": 31.2,
+   "dükkân": 23.8,
+   "son ürün": 52.6
+  },
+  "arsa_basina_gunluk_kar": {
+   "ham madde": 159,
+   "ara mal": 153,
+   "dükkân": 133,
+   "son ürün": 124
+  },
+  "seviye_dagilimi": {
+   "1": 1.0,
+   "2": 0.0,
+   "3": 0.0
+  }
+ },
+ "eski kural (seviye = hat)": {
+  "kapsama": 0.893,
+  "durus": 0.036,
+  "satilan_arsa": 78.4,
+  "arsa_fiyati_baslangica_gore": {
+   "merkez": 0.72,
+   "kirsal": 0.19,
+   "dag": 0.18
+  },
+  "arsa_odemesi_tuketici_orani": 0.08,
+  "arsalarin_ilk_yuzde10_payi": 0.39,
+  "normal_sirket": {
+   "sirket": 50.0,
+   "gunluk_servet_artisi_uye_basina": 168,
+   "medyan": 94,
+   "alinan_arsa": 1.34,
+   "gunluk_vergi_uye_basina": 4,
+   "arsa_sayisi": 1.9
+  },
+  "yeni_oyuncu": {
+   "sayi": 21.0,
+   "ilk10_gun_servet_artisi": 148,
+   "kurucularin_ilk10_gunu": 393,
+   "kurucularin_20_30_gunleri": 171,
+   "arsa_alabilen_orani": 0.38,
+   "on_gunde_arsa_parasina_ulasamayan": 0.64
+  },
+  "yukseltme": 81,
+  "genisleme": 0,
+  "isletme_sayisi": 123.6,
+  "uretim_olcegi_toplam": {
+   "ham madde": 79.6,
+   "ara mal": 35.2,
+   "dükkân": 21.4,
+   "son ürün": 64.4
+  },
+  "arsa_basina_gunluk_kar": {
+   "ham madde": 200,
+   "ara mal": 128,
+   "dükkân": 158,
+   "son ürün": 166
+  },
+  "seviye_dagilimi": {
+   "1": 0.43,
+   "2": 0.39,
+   "3": 0.18
+  }
+ },
+ "yeni kural (seviye = parti, hat = arsa)": {
+  "kapsama": 0.903,
+  "durus": 0.025,
+  "satilan_arsa": 79.2,
+  "arsa_fiyati_baslangica_gore": {
+   "merkez": 0.7,
+   "kirsal": 0.32,
+   "dag": 0.28
+  },
+  "arsa_odemesi_tuketici_orani": 0.1,
+  "arsalarin_ilk_yuzde10_payi": 0.4,
+  "normal_sirket": {
+   "sirket": 50.0,
+   "gunluk_servet_artisi_uye_basina": 175,
+   "medyan": 113,
+   "alinan_arsa": 1.44,
+   "gunluk_vergi_uye_basina": 5,
+   "arsa_sayisi": 1.81
+  },
+  "yeni_oyuncu": {
+   "sayi": 21.0,
+   "ilk10_gun_servet_artisi": 164,
+   "kurucularin_ilk10_gunu": 383,
+   "kurucularin_20_30_gunleri": 172,
+   "arsa_alabilen_orani": 0.3,
+   "on_gunde_arsa_parasina_ulasamayan": 0.62
+  },
+  "yukseltme": 69.8,
+  "genisleme": 11.6,
+  "isletme_sayisi": 117.8,
+  "uretim_olcegi_toplam": {
+   "ham madde": 71.4,
+   "ara mal": 26.4,
+   "dükkân": 21.4,
+   "son ürün": 55.0
+  },
+  "arsa_basina_gunluk_kar": {
+   "ham madde": 164,
+   "ara mal": 169,
+   "dükkân": 142,
+   "son ürün": 151
+  },
+  "seviye_dagilimi": {
+   "1": 0.47,
+   "2": 0.37,
+   "3": 0.16
+  }
+ },
+ "yeni kural, arsa arzi 1,5 kat": {
+  "kapsama": 0.867,
+  "durus": 0.034,
+  "satilan_arsa": 104,
+  "arsa_fiyati_baslangica_gore": {
+   "merkez": 0.84,
+   "kirsal": 0.17,
+   "dag": 0.1
+  },
+  "arsa_odemesi_tuketici_orani": 0.092,
+  "arsalarin_ilk_yuzde10_payi": 0.34,
+  "normal_sirket": {
+   "sirket": 50.0,
+   "gunluk_servet_artisi_uye_basina": 158,
+   "medyan": 91,
+   "alinan_arsa": 1.84,
+   "gunluk_vergi_uye_basina": 4,
+   "arsa_sayisi": 2.04
+  },
+  "yeni_oyuncu": {
+   "sayi": 21.0,
+   "ilk10_gun_servet_artisi": 161,
+   "kurucularin_ilk10_gunu": 363,
+   "kurucularin_20_30_gunleri": 143,
+   "arsa_alabilen_orani": 0.44,
+   "on_gunde_arsa_parasina_ulasamayan": 0.69
+  },
+  "yukseltme": 69.4,
+  "genisleme": 12.4,
+  "isletme_sayisi": 131.8,
+  "uretim_olcegi_toplam": {
+   "ham madde": 77.6,
+   "ara mal": 34.1,
+   "dükkân": 21.6,
+   "son ürün": 55.9
+  },
+  "arsa_basina_gunluk_kar": {
+   "ham madde": 130,
+   "ara mal": 186,
+   "dükkân": 139,
+   "son ürün": 145
+  },
+  "seviye_dagilimi": {
+   "1": 0.54,
+   "2": 0.32,
+   "3": 0.14
+  }
+ },
+ "yeni kural, artirma tabani sabit degerin %60i": {
+  "kapsama": 0.869,
+  "durus": 0.015,
+  "satilan_arsa": 46,
+  "arsa_fiyati_baslangica_gore": {
+   "merkez": 0.97,
+   "kirsal": 0.62,
+   "dag": 0.65
+  },
+  "arsa_odemesi_tuketici_orani": 0.097,
+  "arsalarin_ilk_yuzde10_payi": 0.5,
+  "normal_sirket": {
+   "sirket": 50.0,
+   "gunluk_servet_artisi_uye_basina": 197,
+   "medyan": 118,
+   "alinan_arsa": 0.9,
+   "gunluk_vergi_uye_basina": 5,
+   "arsa_sayisi": 1.56
+  },
+  "yeni_oyuncu": {
+   "sayi": 21.0,
+   "ilk10_gun_servet_artisi": 144,
+   "kurucularin_ilk10_gunu": 383,
+   "kurucularin_20_30_gunleri": 183,
+   "arsa_alabilen_orani": 0.06,
+   "on_gunde_arsa_parasina_ulasamayan": 0.97
+  },
+  "yukseltme": 65.8,
+  "genisleme": 8.4,
+  "isletme_sayisi": 99.8,
+  "uretim_olcegi_toplam": {
+   "ham madde": 61.2,
+   "ara mal": 25.5,
+   "dükkân": 20.2,
+   "son ürün": 41.6
+  },
+  "arsa_basina_gunluk_kar": {
+   "ham madde": 170,
+   "ara mal": 198,
+   "dükkân": 137,
+   "son ürün": 164
+  },
+  "seviye_dagilimi": {
+   "1": 0.4,
+   "2": 0.39,
+   "3": 0.2
+  }
+ }
+}
