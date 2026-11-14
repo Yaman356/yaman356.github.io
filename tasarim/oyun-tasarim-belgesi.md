@@ -217,3 +217,15 @@ Gerçek piyasayı izlemez; seviye ve oynaklıklar araştırmaya göre ayarlanmı
 - **Tezgâh Borsası:** TZ-30 endeksi BIST 100 seviyesinden (11.843) başlar. Altı kurgusal şirket (un, süt, tekstil, çelik, madencilik, perakende) endeksle birlikte (beta) ve bağlı oldukları ürünlerin oyun içi fiyatıyla hareket eder; gazete olayları da etkiler. Komisyon binde 2 + %5 BSMV, temettü her gün işler.
 - **Kriz günü:** her gün %3 olasılıkla endeks %6–9 düşer ve devre kesici haberi çıkar; dolar ve altın değer kazanır (Mart 2025 ve Eylül 2026'daki gerçek düşüşler örnek alındı).
 - Yatırım kârı ve zararı, temettü ve faiz rapor ekranında ayrı kalemlerdir ve ticari gelir sayılmaz.
+
+### Arsa bedelleri
+
+- Her arsanın büyüklüğü ve birim fiyatı vardır; değer = büyüklük × birim fiyat × konum çarpanı (±%20: yol kenarı, köşe, eğim).
+  - **Merkez:** 350–700 m², 12.000 TL/m² (Ankara ~5.300, İzmir ~12.400, İstanbul ~19.400 TL/m²; büyükşehir ortası).
+  - **Kırsal:** 6–16 dönüm tarım arazisi, 250.000 TL/dönüm (Konya ~190 bin, Çanakkale ~470 bin). Başlangıçtaki kiralık arsa 10 dönümdür.
+  - **Dağ:** 25–60 dönüm dağlık arazi ve ruhsat sahası, 37.500 TL/dönüm (tahmin).
+- Bina bedeli araziden ayrıdır: tarla kurulumu traktör ve ekipmandır, maden kurulumu ruhsat ve iş makinesidir.
+- Arsa değerleri her oyun günü (bir hafta) yılda %20 hızla artar; 2025'te arsa %20, tarla %17 arttı, enflasyonun altında.
+- **Emlak vergisi (büyükşehir):** arsa binde 6, tarla ve arazi binde 2, işyeri binde 4, yıllık; her oyun günü 52'de biri alınır. Boş ya da son günde çalışmamış arsaya oyun kuralı olarak 5 kat atıl arsa vergisi uygulanır; arsa sayısı çarpanı (%10/arsa) sürer.
+- **Tapu harcı:** alıcı ve satıcı %2 öder; satıcı ayrıca %1 ilan ücreti öder.
+- **Kira:** kiralık arsada kira cironun %5'idir (ortakçılık usulü). Gerçek tarla kirası (yılda 4.000–6.000 TL/dönüm) üretim gelirinin yanında çok küçük kaldığı için oyunda ciroya bağlı tutuldu.

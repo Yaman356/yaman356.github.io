@@ -22,21 +22,30 @@
   };
   const PK = Object.keys(P);
   const WNAME = { 0.5: 'hafif', 1: 'orta', 2: 'ağır' };
+  // Arsalar: büyüklük (size, birimi u) × birim fiyat (up, TL) × konum çarpanı. Kaynak: Endeksa Ekim-Aralık 2025, %20 yıllık artışla 2026'ya taşındı.
+  // Merkez: büyükşehir ticari arsası (Ankara ~5.300, İzmir ~12.400, İstanbul ~19.400 TL/m²; ortası alındı).
+  // Kırsal: tarım arazisi (Konya ~190 bin, Çanakkale ~470 bin TL/dönüm). Dağ: dağlık arazi + maden ruhsat sahası (tahmin).
+  // tax: yıllık emlak vergisi oranı (büyükşehir: arsa binde 6, tarla/arazi binde 2, işyeri binde 4).
   const R = {
-    merkez: { n: 'Merkez', dm: 1.6, land: 6000000, note: 'Tüketici talebi en yüksek bölge' },
-    kirsal: { n: 'Kırsal', dm: 1.0, land: 2500000, bonus: 'tarla', note: 'Tarlalar %25 fazla ürün verir' },
-    dag: { n: 'Dağ', dm: 0.7, land: 1500000, bonus: 'maden', note: 'Madenler %25 fazla ürün verir' },
+    merkez: { n: 'Merkez', dm: 1.6, u: 'm²', size: [350, 700], up: 12000, tax: 0.006, note: 'Tüketici talebi en yüksek bölge' },
+    kirsal: { n: 'Kırsal', dm: 1.0, u: 'dönüm', size: [6, 16], up: 250000, tax: 0.002, bonus: 'tarla', note: 'Tarlalar %25 fazla ürün verir' },
+    dag: { n: 'Dağ', dm: 0.7, u: 'dönüm', size: [25, 60], up: 37500, tax: 0.002, bonus: 'maden', note: 'Madenler %25 fazla ürün verir' },
   };
+  const LAND_GROWTH = 0.20, TAX_BUILT = 0.004, IDLE_TAX = 5, DEED = 0.02, LIST_FEE = 0.01;  // arsa değeri yılda %20 artar; tapu harcı alıcı ve satıcıya %2
+  const midSize = r => Math.round((R[r].size[0] + R[r].size[1]) / 2);
+  const landBase = r => midSize(r) * R[r].up * ((s && s.landIdx) || 1);
+  const sizeOf = pl => pl.size || midSize(pl.region);
+  const landTxt = pl => `${sizeOf(pl).toLocaleString('tr-TR')} ${R[pl.region].u} · ${R[pl.region].u === 'm²' ? 'm²' : 'dönümü'} ${fmt(pl.ref / sizeOf(pl))}`;
   const DIST = {
     merkez: { merkez: 0, kirsal: 1, dag: 2 },
     kirsal: { merkez: 1, kirsal: 0, dag: 1 },
     dag: { merkez: 2, kirsal: 1, dag: 0 },
   };
   const B = {
-    dukkan: { n: 'Dükkân', cost: 1200000, cap: 150, scale: 1, hint: 'Mal alır, şehir halkına perakende satar' },
-    tarla: { n: 'Tarla', cost: 1600000, cap: 200, scale: 1, hint: 'Buğday, süt ve pamuk üretir' },
-    maden: { n: 'Maden', cost: 4500000, cap: 400, scale: 2, hint: 'Kömür ve demir cevheri çıkarır' },
-    fabrika: { n: 'Fabrika', cost: 12000000, cap: 1250, scale: 5, hint: 'Ham maddeyi işleyip ürün yapar' },
+    dukkan: { n: 'Dükkân', cost: 1200000, cap: 150, scale: 1, hint: 'Raf, soğutucu, kasa ve ruhsat · mal alır, perakende satar' },
+    tarla: { n: 'Tarla', cost: 1600000, cap: 200, scale: 1, hint: 'Traktör, ekipman ve ahır · buğday, süt, pamuk üretir' },
+    maden: { n: 'Maden', cost: 4500000, cap: 400, scale: 2, hint: 'Ruhsat, ekskavatör ve kamyon · kömür ve cevher çıkarır' },
+    fabrika: { n: 'Fabrika', cost: 12000000, cap: 1250, scale: 5, hint: 'Bina, üretim hattı ve makineler · ham maddeyi işler' },
   };
   const EVENTS = {
     festival: { title: 'Merkez’de hasat festivali', body: 'Festival boyunca Merkez’de ekmek ve peynir talebi %50 artacak.', d: { region: 'merkez', ps: ['ekmek', 'peynir'], m: 1.5 } },
@@ -102,8 +111,8 @@
   function emptyStats() { return { inc: {}, exp: {} }; }
   function newGame() {
     s = {
-      v: 3, cur: 'TRY', money: START_MONEY, t: 8 * 60, lastHour: 8, speed: 1, nextId: 100, nextPlot: 2, totalIncome: 0,
-      plots: [{ id: 1, region: 'kirsal', rented: true, ref: R.kirsal.land, b: null, inv: {}, last: -1e9, paid: 0 }],
+      v: 3, cur: 'TRY', landIdx: 1, money: START_MONEY, t: 8 * 60, lastHour: 8, speed: 1, nextId: 100, nextPlot: 2, totalIncome: 0,
+      plots: [{ id: 1, region: 'kirsal', rented: true, size: 10, ref: 10 * R.kirsal.up, b: null, inv: {}, last: -1e9, paid: 0 }],
       mult: {}, hist: {}, rivals: {}, unread: 0, workers: [], cands: {}, listings: [], mine: [], auctions: [], events: [], news: [],
       today: emptyStats(), prev: emptyStats(), goals: [], freeSwap: true, lastEvent: '', nextListAt: 0,
     };
@@ -269,12 +278,15 @@
     for (const a of s.auctions) { if (a.bidder === 'me') v += a.bid; if (a.plot) v += a.plot.ref; }
     return v;
   }
+  // Yıllık emlak vergisi oranı. Boş ya da son günde üretim/satış yapmamış arsaya oyun kuralı olarak 5 kat atıl arsa vergisi uygulanır.
   function taxRate(pl) {
-    if (pl.part) { const m = plot(pl.part); return m && s.t - m.last < 1440 ? 0.01 : 0.04; }
-    return !pl.b ? 0.08 : (s.t - pl.last < 1440 ? 0.01 : 0.04);
+    const base = R[pl.region].tax, built = pl.region === 'merkez' ? TAX_BUILT : base;
+    if (pl.part) { const m = plot(pl.part); return m && s.t - m.last < 1440 ? built : built * IDLE_TAX; }
+    return !pl.b ? base * IDLE_TAX : (s.t - pl.last < 1440 ? built : built * IDLE_TAX);
   }
   function taxFactor() { const n = s.plots.filter(p => !p.rented).length; return 1 + 0.1 * Math.max(0, n - 1); }
-  const dailyTax = pl => pl.rented ? 0 : pl.ref * taxRate(pl) * taxFactor() / 7;
+  // Bir oyun günü bir hafta sayıldığı için vergi yıllık tutarın 52'de biridir
+  const dailyTax = pl => pl.rented ? 0 : pl.ref * taxRate(pl) * taxFactor() / 52;
 
   // ---------- Sanal piyasa: döviz, altın, mevduat, hisse ----------
   // Gerçek piyasa değildir; oranlar araştırma raporundaki seviye ve oynaklıklara göre ayarlanmış rastgele yürüyüştür.
@@ -458,6 +470,7 @@
     if (s.t >= FREE_UNTIL) for (const pl of s.plots) { const tx = dailyTax(pl); if (tx > 0) exp('Vergi', tx); }
     s.prev = s.today; s.today = emptyStats();
     marketDay();
+    landDay();
     for (const w of s.workers) {
       const pl = plot(w.plot);
       if (!pl || s.t - pl.last > 1440) continue;
@@ -499,26 +512,37 @@
     s.nextListAt = s.t + 240;
   }
 
+  // Arsa değerleri enflasyonla birlikte artar (yılda ~%20, enflasyonun altında). Bir oyun günü bir hafta.
+  function landDay() {
+    const g = 1 + LAND_GROWTH * 7 / 365;
+    s.landIdx = (s.landIdx || 1) * g;
+    for (const pl of s.plots) pl.ref *= g;
+    for (const a of s.auctions) { a.ref *= g; a.npc = a.npc.map(x => x * g); if (a.plot) a.plot.ref *= g; }
+  }
+
   function spawnAuction(pl) {
     const region = pl ? pl.region : pick(Object.keys(R));
-    const ref = pl ? pl.ref : Math.round(R[region].land * rnd(0.9, 1.1) / 100) * 100;
-    // Artırma tabanı: güncel değerin yarısı, ama bölgenin başlangıç değerinin %40'ından az değil
-    s.auctions.push({ id: s.nextId++, region, ref, start: Math.round(Math.max(ref * 0.5, R[region].land * 0.4)), bid: 0, bidder: null, end: s.t + 720, npc: [0, 0, 0].map(() => ref * rnd(0.6, 1.1)) });
+    // Yeni arsa: bölgenin büyüklük aralığından, konum çarpanı (yol kenarı, köşe, eğim) ±%20
+    const size = pl ? sizeOf(pl) : Math.round(rnd(R[region].size[0], R[region].size[1]) / (region === 'merkez' ? 10 : 1)) * (region === 'merkez' ? 10 : 1);
+    const ref = pl ? pl.ref : Math.round(size * R[region].up * (s.landIdx || 1) * rnd(0.8, 1.2) / 1000) * 1000;
+    // Artırma tabanı: güncel değerin yarısı, ama bölgenin ortalama değerinin %40'ından az değil
+    s.auctions.push({ id: s.nextId++, region, size, ref, start: Math.round(Math.max(ref * 0.5, landBase(region) * 0.4)), bid: 0, bidder: null, end: s.t + 720, npc: [0, 0, 0].map(() => ref * rnd(0.6, 1.1)) });
   }
 
   function endAuction(a) {
     const name = R[a.region].n + ' arsası';
     if (a.plot) {
       if (a.bidder === 'npc') {
-        const gross = Math.min(a.bid, a.ref * 1.5), net = gross * 0.95;
+        const gross = Math.min(a.bid, a.ref * 1.5), net = gross * (1 - DEED - LIST_FEE);
         inc('Arsa satışı', net);
-        news('Arsan satıldı', name + ' ' + fmt(a.bid) + ' teklifle satıldı. Komisyon sonrası eline geçen: ' + fmt(net) + '.');
+        news('Arsan satıldı', name + ' ' + fmt(a.bid) + ' teklifle satıldı. Tapu harcı (%2) ve ilan ücreti (%1) sonrası eline geçen: ' + fmt(net) + '.');
       } else { s.plots.push(a.plot); news('Arsana teklif gelmedi', name + ' satılamadı ve sana geri döndü.'); }
     } else if (a.bidder === 'me') {
       const id = s.nextPlot++;
-      s.plots.push({ id, region: a.region, rented: false, ref: a.ref, b: null, inv: {}, last: -1e9, paid: a.bid });
+      s.plots.push({ id, region: a.region, rented: false, size: a.size, ref: a.ref, b: null, inv: {}, last: -1e9, paid: a.bid });
       s.today.exp['Arsa alımı'] = (s.today.exp['Arsa alımı'] || 0) + a.bid;
-      news('Artırmayı kazandın', name + ' ' + fmt(a.bid) + ' karşılığında senin oldu.', true);
+      exp('Tapu harcı', a.bid * DEED);
+      news('Artırmayı kazandın', name + ' ' + fmt(a.bid) + ' karşılığında senin oldu. Tapu harcı olarak ' + fmt(a.bid * DEED) + ' ödendi.', true);
     } else if (a.bidder === 'npc') news('Arsa satışı', name + ' isimsiz bir alıcıya ' + fmt(a.bid) + ' bedelle satıldı.');
   }
 
@@ -613,7 +637,7 @@
     auctionMine(d) {
       const pl = plot(+d.plot); if (pl.part) return toast('Bu arsa bir binanın parçası'); if (pl.b || invTotal(pl) > 0) return toast('Önce binayı yık ve depoyu boşalt');
       s.plots = s.plots.filter(x => x !== pl);
-      s.auctions.push({ id: s.nextId++, region: pl.region, ref: pl.ref, start: Math.round(pl.ref * 0.7), bid: 0, bidder: null, end: s.t + 720, npc: [0, 0, 0].map(() => pl.ref * rnd(0.6, 1.25)), plot: pl });
+      s.auctions.push({ id: s.nextId++, region: pl.region, size: sizeOf(pl), ref: pl.ref, start: Math.round(pl.ref * 0.7), bid: 0, bidder: null, end: s.t + 720, npc: [0, 0, 0].map(() => pl.ref * rnd(0.6, 1.25)), plot: pl });
       if (ui.dest === pl.id) ui.dest = s.plots[0].id;
     },
   };
@@ -671,7 +695,7 @@
 
   function plotCard(pl) {
     const reg = R[pl.region];
-    let h = `<div class="card"><div class="row head"><h3>Arsa ${pl.id} · ${reg.n}</h3><span class="tag ${pl.rented ? '' : 'own'}">${pl.rented ? 'Kiralık' : 'Senin'}</span></div><p class="muted small">${reg.note}</p>`;
+    let h = `<div class="card"><div class="row head"><h3>Arsa ${pl.id} · ${reg.n}</h3><span class="tag ${pl.rented ? '' : 'own'}">${pl.rented ? 'Kiralık' : 'Senin'}</span></div><p class="muted small">${reg.note}</p><p class="small">${landTxt(pl)} · ${pl.rented ? 'kira: cironun %' + RENT * 100 + '’i (ortakçılık usulü)' : 'değeri ' + fmt(pl.ref) + ' · emlak vergisi ' + fmt(dailyTax(pl)) + '/gün'}</p>`;
     if (pl.part) {
       const m = plot(pl.part);
       return h + `<p class="small">Bu arsa, Arsa ${pl.part}’deki ${m && m.b ? B[m.b.type].n.toLocaleLowerCase('tr-TR') : 'binanın'} genişlemesi; ek üretim hattı burada çalışıyor. Ayrı kullanılamaz; bina yıkılınca boşalır.</p></div>`;
@@ -789,19 +813,19 @@
 
   function viewAuction() {
     const out = [];
-    out.push(['info', '<p class="muted small">Arsalar yalnızca isimsiz açık artırmayla satılır. Teklifin kadar para teminat olarak bloke edilir; geçilirsen iade edilir. Son saatte gelen teklif süreyi uzatır.</p>']);
+    out.push(['info', '<p class="muted small">Arsalar yalnızca isimsiz açık artırmayla satılır. Teklifin kadar para teminat olarak bloke edilir; geçilirsen iade edilir. Son saatte gelen teklif süreyi uzatır. Arsa değerleri yılda yaklaşık %20 artar; alıcı ve satıcı %2 tapu harcı öder.</p>']);
     for (const a of s.auctions) {
       const next = Math.ceil(Math.max(a.start, a.bid * 1.05));
       const who = a.plot ? 'Senin ilanın' : a.bidder === 'me' ? 'En yüksek teklif sende' : a.bidder ? 'Başka bir teklif önde' : 'Henüz teklif yok';
-      out.push(['a' + a.id, `<div class="card"><div class="row head"><h3>${R[a.region].n} arsası</h3><span class="tag ${a.bidder === 'me' ? 'own' : ''}">${who}</span></div><p class="muted small">${R[a.region].note} · referans değer ${fmt(a.ref)} · <span class="${a.end - s.t < 60 ? 'warn' : ''}">kalan süre ${hoursLeft(a)}</span></p><div class="row"><span>Güncel teklif</span><span class="num">${a.bid ? fmt(a.bid) : '—'}</span>${a.plot || a.bidder === 'me' ? '' : btn('Teklif ver ' + fmt(next), 'bid', { id: a.id })}</div></div>`]);
+      out.push(['a' + a.id, `<div class="card"><div class="row head"><h3>${R[a.region].n} arsası</h3><span class="tag ${a.bidder === 'me' ? 'own' : ''}">${who}</span></div><p class="muted small">${R[a.region].note} · ${landTxt(a)} · referans değer ${fmt(a.ref)} · <span class="${a.end - s.t < 60 ? 'warn' : ''}">kalan süre ${hoursLeft(a)}</span></p><div class="row"><span>Güncel teklif</span><span class="num">${a.bid ? fmt(a.bid) : '—'}</span>${a.plot || a.bidder === 'me' ? '' : btn('Teklif ver ' + fmt(next), 'bid', { id: a.id })}</div>${a.plot ? '' : `<p class="muted small">Kazanırsan teklifin üstüne %2 tapu harcı (${fmt(Math.max(next, a.bid) * DEED)}) ödersin.</p>`}</div>`]);
     }
     if (!s.auctions.length) out.push(['none', '<p class="muted">Şu an açık artırma yok. Yenisi gün başında açılır.</p>']);
     const owned = s.plots.filter(p => !p.rented);
     if (owned.length) out.push(['hd', '<h2>Arsalarını sat</h2>']);
     for (const pl of owned) {
-      if (pl.part || (pl.b && (pl.b.parts || []).length)) { out.push(['s' + pl.id, `<div class="card"><div class="row head"><h3>Arsa ${pl.id} · ${R[pl.region].n}</h3><span class="muted small">günlük vergi ${fmt(dailyTax(pl))}</span></div><p class="muted small">Bu arsa birden çok arsaya yayılan bir binanın parçası. Satmak için önce binayı yık.</p></div>`]); continue; }
+      if (pl.part || (pl.b && (pl.b.parts || []).length)) { out.push(['s' + pl.id, `<div class="card"><div class="row head"><h3>Arsa ${pl.id} · ${R[pl.region].n}</h3><span class="muted small">emlak vergisi ${fmt(dailyTax(pl))}/gün</span></div><p class="muted small">Bu arsa birden çok arsaya yayılan bir binanın parçası. Satmak için önce binayı yık.</p></div>`]); continue; }
       const mv = +(ui.sel['ss' + pl.id] || 0), q = systemSaleQuote(pl, mv), others = otherPlots(pl);
-      let h = `<div class="card"><div class="row head"><h3>Arsa ${pl.id} · ${R[pl.region].n}</h3><span class="muted small">günlük vergi ${fmt(dailyTax(pl))}</span></div><table class="t"><tr><td>Arsa (referans ${fmt(pl.ref)})</td><td>${fmt(q.land)}</td></tr><tr><td>Bina, harcananın yarısı</td><td>${fmt(q.bld)}</td></tr>`;
+      let h = `<div class="card"><div class="row head"><h3>Arsa ${pl.id} · ${R[pl.region].n}</h3><span class="muted small">emlak vergisi ${fmt(dailyTax(pl))}/gün</span></div><table class="t"><tr><td>Arsa (referans ${fmt(pl.ref)})</td><td>${fmt(q.land)}</td></tr><tr><td>Bina, harcananın yarısı</td><td>${fmt(q.bld)}</td></tr>`;
       if (invTotal(pl)) h += mv ? `<tr><td>Malların taşınması</td><td>${fmt(-q.tr)}</td></tr>` : `<tr><td>Depodaki mal, değerinin yarısı</td><td>${fmt(q.goods)}</td></tr>`;
       h += `<tr><th>Eline geçecek</th><th>${fmt(q.total)}</th></tr></table>`;
       if (invTotal(pl) && others.length) h += `<div class="row small"><label for="ss${pl.id}">Depodaki mallar</label><select id="ss${pl.id}" data-c="sel" data-k="ss${pl.id}"><option value="0">Sisteme bırak</option>${others.map(o => `<option value="${o.id}" ${mv === o.id ? 'selected' : ''}>Arsa ${o.id}’e taşı</option>`).join('')}</select></div>`;
