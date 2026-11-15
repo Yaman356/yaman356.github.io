@@ -21,6 +21,11 @@
     alet: { n: 'Alet', u: '100 adet', kg: 80, ref: 35000, w: 1, b: 'fabrika', t: 240, op: 233000, in: { celik: 1 }, d: 2 },
   };
   const PK = Object.keys(P);
+  // Oyun dengesi: gerçek işletme giderleri (op) toptancı fiyatı (×0,85), kira (%5) ve mevsim verimiyle birlikte ham maddede
+  // kâr payını %0–8'e indiriyordu; ilkbahar ya da kuraklıkta üretim zarara dönüyordu. Giderler %20 indirildi:
+  // toptancıya satışta kiralık arsada ham madde ~%25–35, fabrika ürünleri ~%15–35 kâr bırakır.
+  const OP_SCALE = 0.8;
+  for (const k of PK) P[k].op = Math.round(P[k].op * OP_SCALE);
   const WNAME = { 0.5: 'hafif', 1: 'orta', 2: 'ağır' };
   // Arsalar: büyüklük (size, birimi u) × birim fiyat (up, TL) × konum çarpanı. Kaynak: Endeksa Ekim-Aralık 2025, %20 yıllık artışla 2026'ya taşındı.
   // Merkez: büyükşehir ticari arsası (Ankara ~5.300, İzmir ~12.400, İstanbul ~19.400 TL/m²; ortası alındı).
@@ -264,6 +269,23 @@
     });
   }
   function fireCrew(pl, why) { const c = crew(pl); if (c.length) { s.workers = s.workers.filter(w => w.plot !== pl.id); news('İşçiler ayrıldı', c.map(w => w.name).join(', ') + ' ' + why + ' işten ayrıldı.'); } }
+  // Kârı görünür kılmak için: bir arsadaki malın yaklaşık birim maliyeti (üretilen mal: parti gideri + girdilerin piyasa değeri)
+  function unitCost(pl, p) {
+    if (!pl || !pl.b) return null;
+    if (pl.b.type === 'dukkan') return pl.b.cost[p] || null;
+    const ln = pl.b.lines.find(l => l.r === p); if (!ln) return null;
+    const k = batch(pl), out = Math.max(1, Math.round(10 * k * yieldMult(pl.region, pl.b.type, p)));
+    const inCost = Object.entries(P[p].in).reduce((a, [x, q]) => a + q * k * price(x), 0);
+    return (P[p].op * k * (1 - wEff(pl, 'mudur')) + inCost) / out;
+  }
+  // Üretim arsasının yaklaşık günlük kârı (toptancıya satış fiyatıyla, kira dahil)
+  function dayProfit(pl) {
+    if (!pl.b || pl.b.type === 'dukkan') return null;
+    let v = 0;
+    for (const ln of pl.b.lines) { if (!ln.r) continue; const c = unitCost(pl, ln.r), k = batch(pl), out = Math.round(10 * k * yieldMult(pl.region, pl.b.type, ln.r)), ws = wSell(pl, ln.r) * (pl.rented ? 1 - RENT : 1); v += (ws - c) * out * 1440 / (P[ln.r].t / (1 + wEff(pl, 'usta'))); }
+    return v;
+  }
+  const fmtFull = n => (n < 0 ? '−' : '') + sym() + Math.round(Math.abs(disp(n))).toLocaleString('tr-TR');
   function addCost(pl, p, q, unit) { if (!pl.b || pl.b.type !== 'dukkan') return; const old = pl.inv[p] || 0; pl.b.cost[p] = (old * (pl.b.cost[p] || unit) + q * unit) / (old + q); }
   function purchase(to, p, q, l) {
     const unit = (l ? l.price : price(p) * wBuy() * (1 - wEff(to, 'mudur'))), tu = trans(1, p, l ? l.region : to.region, to.region) * (1 - wEff(to, 'sofor'));
@@ -540,6 +562,7 @@
   }
 
   function daily(day) {
+    s.nwDay = netWorth();
     if (s.t >= FREE_UNTIL) for (const pl of s.plots) { const tx = dailyTax(pl); if (tx > 0) exp('Vergi', tx); }
     s.prev = s.today; s.today = emptyStats();
     marketDay();
@@ -755,7 +778,8 @@
       fireCrew(pl, 'bina yıkıldığı için');
       s.money += pl.b.spent * (s.freeSwap ? 1 : 0.5); s.freeSwap = false; pl.b = null;
     },
-    sellw(d) { const pl = plot(+d.plot), q = d.q ? Math.min(Math.floor(+d.q), pl.inv[d.p] || 0) : part(pl.inv[d.p]); if (!(q > 0)) return; sold(d.p, q); inc('Toptancı', q * wSell(pl, d.p)); rentOn(pl, q * wSell(pl, d.p)); s.mult[d.p] = clamp(s.mult[d.p] - 0.00002 * impact(d.p) * q, 0.6, 1.5); add(pl, d.p, -q); pl.last = s.t; },
+    sellw(d) { const pl = plot(+d.plot), q = d.q ? Math.min(Math.floor(+d.q), pl.inv[d.p] || 0) : part(pl.inv[d.p]); if (!(q > 0)) return;
+      { const c = unitCost(pl, d.p), net = q * wSell(pl, d.p) * (pl.rented ? 1 - RENT : 1); toast('Toptancıya sattın: +' + fmtFull(net) + (c ? (net - c * q >= 0 ? ' · kâr ' : ' · zarar ') + fmtFull(Math.abs(net - c * q)) : '')); } sold(d.p, q); inc('Toptancı', q * wSell(pl, d.p)); rentOn(pl, q * wSell(pl, d.p)); s.mult[d.p] = clamp(s.mult[d.p] - 0.00002 * impact(d.p) * q, 0.6, 1.5); add(pl, d.p, -q); pl.last = s.t; },
     list(d) { const pl = plot(+d.plot), q = part(pl.inv[d.p]); s.mine.push({ id: s.nextId++, p: d.p, qty: q, price: Math.round(price(d.p) * qPrem(d.p) * ui.listMul * 10) / 10, acc: 0, plot: pl.id }); add(pl, d.p, -q); pl.last = s.t; },
     unlist(d) { const l = s.mine.find(x => x.id === +d.id); if (!l) return; const home = plot(l.plot), pl = home && home.b && invTotal(home) + l.qty <= cap(home) ? home : s.plots.find(x => x.b && !x.part && invTotal(x) + l.qty <= cap(x)) || home; if (!pl || !pl.b) return toast('Malı koyacak depon yok'); if (invTotal(pl) + l.qty > cap(pl)) return toast('Hedef depoda yer yok'); addCost(pl, l.p, l.qty, l.price); add(pl, l.p, l.qty); s.mine = s.mine.filter(x => x !== l); },
     move(d) {
@@ -899,6 +923,7 @@
     const img = b ? A2[b.type + '_' + Math.min(3, b.level)] : null;
     let h = `<div class="qp card"><div class="qph">${img ? `<img src="${img}" alt="">` : '<span class="qlot"></span>'}<span class="qpt"><b>Arsa ${pl.id} · ${b ? B[b.type].n + ' ' + b.level : 'Boş arsa'}</b><small>${R[pl.region].n} · ${pl.rented ? 'Kiralık' : 'Senin'}</small><span class="small ${cls}">${esc(st)}</span></span>${wide() ? '' : `<button type="button" class="x" data-a="qclose" aria-label="Kapat">✕</button>`}</div>`;
     if (b && b.type !== 'dukkan') {
+      const dp = dayProfit(pl); if (dp != null && b.lines.some(l => l.r)) h += `<p class="small qprofit">Tahmini günlük kâr <b class="${dp < 0 ? 'down' : 'up'}">${dp < 0 ? '−' : ''}${fmt(Math.abs(dp))}</b> <span class="muted">(toptancıya satış fiyatıyla${pl.rented ? ', kira dahil' : ''})</span></p>`;
       for (const [i, ln] of b.lines.entries()) if (ln.r) h += `<div class="qline"><span class="small">${ic(ln.r, 20)} ${pname(ln.r)}</span><div class="bar"><i data-prog="${pl.id}:${i}"></i></div></div>`;
     }
     const acts = [];
@@ -1065,7 +1090,7 @@
     out.push(['dest', `<div class="card"><div class="row wrap"><label for="dest">Teslim arsası</label><select id="dest" data-c="dest">${s.plots.filter(p => !p.part).map(p => `<option value="${p.id}" ${p.id === dst.id ? 'selected' : ''}>Arsa ${p.id} · ${R[p.region].n}${p.b ? ' · ' + B[p.b.type].n : ' · boş'}</option>`).join('')}</select><label for="qty">Miktar (birim)</label><input id="qty" class="price" inputmode="numeric" data-c="qty" value="${ui.qty}"></div><p class="muted small">Fiyatlar teslim fiyatıdır: mal bedeli ve ${R[dst.region].n} bölgesine taşıma dahil.${transMult() > 1 ? ' Taşıma ücretleri şu an zamlı.' : ''}</p></div>`]);
     const card = k => {
       const wU = price(k) * wBuy() + trans(1, k, dst.region, dst.region);
-      let h = `<div class="card"><div class="row head"><h3 class="named">${ic(k, 28)}${P[k].n}</h3><span class="small">${trend(k)}</span></div><p class="muted small">Olağan fiyat ${fmt1(price(k))} / ${P[k].u} · ${WNAME[P[k].w]} yük · 1. seviye ${B[P[k].b].n.toLocaleLowerCase('tr-TR')}: ${qtyTxt(k, 10 * B[P[k].b].scale)} / ${durTxt(P[k].t)}${Object.keys(P[k].in).length ? ' (' + Object.entries(P[k].in).map(([x, q]) => qtyTxt(x, q * B[P[k].b].scale) + ' ' + P[x].n.toLocaleLowerCase('tr-TR')).join(' + ') + ')' : ''}${MACH[k] ? ' · makineler ' + fmt(MACH[k]) + ' (bina ' + fmt(B.fabrika.cost) + ' ayrı)' : ''}</p><div class="row"><span>Sistem toptancısı</span><span class="num">${fmt1(wU)}</span>${btn('Al', 'buy', { p: k })}</div>`;
+      let h = `<div class="card"><div class="row head"><h3 class="named">${ic(k, 28)}${P[k].n}</h3><span class="small">${trend(k)}</span></div><p class="muted small">Olağan fiyat ${fmt1(price(k))} / ${P[k].u} · ${WNAME[P[k].w]} yük · 1. seviye ${B[P[k].b].n.toLocaleLowerCase('tr-TR')}: ${qtyTxt(k, 10 * B[P[k].b].scale)} / ${durTxt(P[k].t)}${Object.keys(P[k].in).length ? ' (' + Object.entries(P[k].in).map(([x, q]) => qtyTxt(x, q * B[P[k].b].scale) + ' ' + P[x].n.toLocaleLowerCase('tr-TR')).join(' + ') + ')' : ''}${MACH[k] ? ' · makineler ' + fmt(MACH[k]) + ' (bina ' + fmt(B.fabrika.cost) + ' ayrı)' : ''}</p>${(() => { const bu = price(k) * wBuy(), se = price(k) * (1 - COMM); return `<p class="small warn alsat">Toptancıdan ${fmt1(bu)}'e alıp pazarda satarsan eline en fazla ${fmt1(se)} geçer: birimde ${fmt1(bu - se)} zarar. Al-sat kârı; piyasanın altındaki ilanlardan, fiyat düşükken alıp yükselince satmaktan ya da malı fabrikada işlemekten gelir.</p>`; })()}<div class="row"><span>Sistem toptancısı</span><span class="num">${fmt1(wU)}</span>${btn('Al', 'buy', { p: k })}</div>`;
       for (const l of s.listings.filter(x => x.p === k)) {
         const u = l.price + trans(1, k, l.region, dst.region);
         h += `<div class="row"><span>${esc(l.from || R[l.region].n + ' satıcısı')} · ${R[l.region].n} · ${l.qty} × ${P[k].u} (${qtyTxt(k, l.qty)})${l.hg ? ' <span class="small muted">· pazarlık yapıldı</span>' : ''}</span><span class="num ${u < wU ? 'up' : ''}">${fmt1(u)}</span>${btn('Al', 'buy', { p: k, id: l.id })}</div>${l.hg || !adv() ? '' : `<div class="row wrap small haggle"><span class="muted">Pazarlık:</span>${btn('%5 indirim iste', 'haggle', { id: l.id, v: 0.05 }, 'ghost')}${btn('%10 indirim iste', 'haggle', { id: l.id, v: 0.1 }, 'ghost')}</div>`}`;
@@ -1664,7 +1689,7 @@
     h += `<div class="step"><span class="stepn">3</span><label for="sq">Miktar</label><div class="row wrap"><input id="sq" class="price" inputmode="numeric" data-c="sq" value="${q}" aria-describedby="sqh"><span id="sqh" class="small muted">× ${P[p].u} = ${qtyTxt(p, q)} (depoda ${qtyTxt(p, have)})</span></div><div class="seg" role="group" aria-label="Hazır miktar">${[[0.25, '¼'], [0.5, '½'], [1, 'Tümü']].map(([v, l]) => `<button type="button" data-a="sqf" data-v="${v}" class="${q === Math.max(1, Math.ceil(have * v)) ? 'on' : ''}">${l}</button>`).join('')}</div></div>`;
     h += `<div class="step"><span class="stepn">4</span><span class="lbl">Fiyat <span class="muted small">· piyasa ${fmt1(price(p) * qPrem(p))} / ${P[p].u}</span></span><div class="opts">${PRICE_OPT.map(([v, n, sub]) => { const u = Math.round(price(p) * qPrem(p) * v * 10) / 10, on = +ui.sm === v || (!ui.sm && v === 1); return `<button type="button" class="opt ${on ? 'on' : ''}" data-a="sm" data-v="${v}" aria-pressed="${on}"><b>${n}</b><span class="num">${fmt1(u)}</span><small>${sub}<br>${longDur(sellMinNew(p, q, u))}</small></button>`; }).join('')}</div>`;
     if (adv()) h += `<div class="row wrap small"><label for="spc">Kendi fiyatım (${sym()})</label><input id="spc" class="price" inputmode="decimal" data-c="spc" value="${ui.sm === 'c' && ui.spc ? +disp(ui.spc).toFixed(2) : ''}" placeholder="${+disp(price(p) * qPrem(p)).toFixed(2)}">${ui.sm === 'c' ? `<span class="small">${speedNote(unit / (price(p) * qPrem(p)))}</span>` : ''}</div>`;
-    h += `</div><table class="t"><tr><td>Satış tutarı (${q.toLocaleString('tr-TR')} × ${fmt1(unit)})</td><td>${fmt(gross)}</td></tr><tr><td>Komisyon (%${COMM * 100})</td><td class="down">${fmt(-comm)}</td></tr><tr><th>Eline geçecek</th><th>${fmt(gross - comm)}</th></tr><tr><td>Tahmini satış süresi</td><td>${longDur(sellMinNew(p, q, unit))}</td></tr></table>`;
+    h += `</div><table class="t"><tr><td>Satış tutarı (${q.toLocaleString('tr-TR')} × ${fmt1(unit)})</td><td>${fmt(gross)}</td></tr><tr><td>Komisyon (%${COMM * 100})</td><td class="down">${fmt(-comm)}</td></tr><tr><th>Eline geçecek</th><th>${fmt(gross - comm)}</th></tr>${(() => { const c = unitCost(pl, p); if (!c) return ''; const k2 = gross - comm - (pl.rented ? gross * RENT : 0) - c * q; return `<tr><td>Kârın (birim maliyet ≈${fmt1(c)}${pl.rented ? ', kira %' + RENT * 100 + ' düşüldü' : ''})</td><td class="${k2 < 0 ? 'down' : 'up'}">${k2 < 0 ? 'zarar ' : 'kâr '}${fmt(Math.abs(k2))}</td></tr>`; })()}<tr><td>Tahmini satış süresi</td><td>${longDur(sellMinNew(p, q, unit))}</td></tr></table>`;
     h += `<div class="row wrap">${btn('Pazara koy', 'sellList')}${btn('Toptancıya hemen sat ' + fmt(q * ws), 'sellw', { plot: pl.id, p, q }, 'ghost')}</div><p class="muted small">Toptancı hemen öder ama birimi ${fmt1(ws)}; pazarda ${fmt1(unit * (1 - COMM))} kalır. Süreler oyun saatidir.</p>`;
     if (pl.b && pl.b.type !== 'dukkan' && !lineInputs(pl).has(p)) {
       const r = (pl.b.out || {})[p] || '', fixd = ui.sm === 'c' && ui.spc > 0;
@@ -1711,7 +1736,7 @@
     const bids = s.auctions.filter(a => a.bidder === 'me').reduce((a, x) => a + x.bid, 0);
     paint(hud, [
       ['top', `<div class="row"><div><span class="brand">Tezgâh</span> <span class="small muted">demo</span></div><span class="num small">${clock()}</span></div>`],
-      ['cash', `<div class="row"><div class="cash ${s.money < 0 ? 'down' : ''}">${fmt(s.money)}${bids ? `<span class="small muted"> · teminatta ${fmt(bids)}</span>` : ''}</div><div class="speed" role="group" aria-label="Oyun hızı">${[[0, 'Dur'], [1, '1×'], [2, '2×'], [4, '4×']].map(([v, l]) => `<button type="button" data-a="speed" data-v="${v}" class="${s.speed === v ? 'on' : ''}">${l}</button>`).join('')}</div></div>`],
+      ['cash', `<div class="row"><div class="cash ${s.money < 0 ? 'down' : ''}">${Math.abs(s.money) < 1e9 ? fmtFull(s.money) : fmt(s.money)}${(() => { if (s.nwDay == null) s.nwDay = netWorth(); const d = netWorth() - s.nwDay; return `<span class="today ${d < 0 ? 'down' : 'up'}" title="Bugün net değerdeki değişim">bugün ${d < 0 ? '▼' : '▲'} ${fmtFull(Math.abs(d))}</span>`; })()}${bids ? `<span class="small muted"> · teminatta ${fmt(bids)}</span>` : ''}</div><div class="speed" role="group" aria-label="Oyun hızı">${[[0, 'Dur'], [1, '1×'], [2, '2×'], [4, '4×']].map(([v, l]) => `<button type="button" data-a="speed" data-v="${v}" class="${s.speed === v ? 'on' : ''}">${l}</button>`).join('')}</div></div>`],
       ['rank', rankBar()],
     ]);
     const sub = subTabs();

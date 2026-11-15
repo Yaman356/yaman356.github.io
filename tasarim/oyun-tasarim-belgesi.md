@@ -523,6 +523,19 @@ Statik incelemede bulunan beş madde koda karşı kontrol edildi:
 
 **Henüz test edilmeyen:** demo tek oyunculu; rakipler, ilanlar ve toptancı stoğu formülle üretiliyor ve toptancı stoğu sınırsız. Gerçek oyuncular arasında kıtlık, ara mal piyasasını yönlendirme ve karşı tedarik zinciri kurma ancak ortak pazar prototipinde ve sunucu doğrulamalı para/stok işlemleriyle test edilebilir. Önerilen yön: sistem desteği kalsın ama toptancı stoğu ve yenilenmesi sınırlı olsun.
 
+### Kâr payı ayarı (Kasım 2026)
+Oyuncu geri bildirimi: "buğday üretip satıyorum ama param artmıyor". Ölçüm (6 oyun günü, kiralık kırsal tarla, buğday):
+- Gerçek işletme giderleriyle toptancıya satışta kâr payı ham maddede kira sonrası %0–8'di (süt başa baş). İlkbaharda ve olaylarda üretim zarara dönüyordu; testte 100 kg buğdayın maliyeti ₺1.771, piyasa ₺1.736 çıktı.
+- Tarla günde ~₺98 bin kazandırıyordu; kasa ₺2,12 mn gibi yuvarlak gösterildiği için artış birkaç saniyede bir görünüyordu.
+- Aynı bölgede toptancıdan alıp pazarda satmak birimde ~%13 zarar (alış ×1,12, satış −%3 komisyon). Bu bilinçli ama oyuncuya anlatılmıyordu.
+
+Yapılan:
+- Bütün işletme giderleri %20 indirildi (`OP_SCALE = 0.8`). Toptancıya satışta ham madde ~%25–35, fabrika ürünleri ~%15–35 kâr bırakır. Aynı testte tarla günde ~₺173 bin kazandırıyor.
+- Kasa tam rakamla gösterilir; altında "bugün ▲/▼" net değer değişimi yazar.
+- Sat formunda birim maliyet ve kâr/zarar satırı; toptancıya satışta "+₺X · kâr ₺Y" bildirimi; arsa panelinde tahmini günlük kâr.
+- Pazar ürün kartında al-sat uyarısı: toptancıdan alıp satmanın zararı ve kârın nereden geldiği.
+- Denge testleri (bot simülasyonu) bu ayardan sonra yeniden koşulmalı.
+
 ### Test planı
 1. **Çekirdek ekonomi:** görev, hedef, holding, yatırım ve kooperatif kapalı. Yalnızca üretim–ticaret. Dört yol aynı koşullarda ayrı bot olarak oynar: üretici (tarla, maden), tüccar (yalnızca al-sat ve dükkân), sanayici (fabrika), kooperatifçi (zinciri paylaşan 3 bot).
 2. **Avantajları tek tek aç:** her bonusu açıp çekirdekle farkını ölç.

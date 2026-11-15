@@ -317,3 +317,7 @@ body::before { background: var(--navy); }
   #main.worldmode > section[data-k="todo"] .todo { flex-direction: column; overflow: visible; padding-top: 0; }
   #main.worldmode > section[data-k="todo"] .tdi { min-width: 0; max-width: none; }
 }
+.cash .today { display: block; font: 600 12px var(--body); letter-spacing: 0; margin-top: 1px; }
+#hud .cash .today.up { color: #8fe0a0; } #hud .cash .today.down { color: #ff9f8f; }
+.alsat { background: #d9822b1a; border-left: 3px solid #d9822b; padding: 6px 10px; border-radius: 6px; margin: 6px 0; }
+.qprofit { margin: 0; }
