@@ -439,8 +439,17 @@ h2, h3 { font-weight: 700; }
 .row > .btn { flex: none; white-space: nowrap; }
 
 /* Tüccarlar Kulübü: bowling pisti ve skor tablosu */
-.lanebox { display: flex; justify-content: center; padding: 6px 0 12px; }
-.lanebox canvas { display: block; width: min(100%, 340px, calc((100dvh - 190px) * 268 / 640)); min-width: 220px; aspect-ratio: 268 / 640; border-radius: 12px; border: 3px solid var(--gold); box-shadow: 0 6px 18px rgba(29, 48, 71, .3); touch-action: none; user-select: none; -webkit-user-select: none; }
+.bowlfs { position: fixed; inset: 0; z-index: 18; display: flex; flex-direction: column; background: radial-gradient(120% 70% at 50% 0%, var(--navy2), var(--navy)); padding: calc(8px + env(safe-area-inset-top, 0px)) max(8px, env(safe-area-inset-right, 0px)) calc(8px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px)); }
+.bfs-top { background: var(--surface); border: 1.5px solid var(--gold); border-radius: 12px; padding: 6px 8px; flex: none; }
+.bfs-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 14px; color: var(--navy); }
+.bfs-head .btn { min-height: 34px; padding: 4px 14px; }
+.bfs-top .bowltab { margin: 2px 0 0; font-size: 12px; }
+.bfs-top .bowltab th, .bfs-top .bowltab td { padding: 1px 3px; }
+.lanebox { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding-top: 8px; }
+.lanebox canvas { display: block; aspect-ratio: 268 / 640; border-radius: 12px; border: 3px solid var(--gold); box-shadow: 0 6px 18px rgba(0, 0, 0, .35); touch-action: none; user-select: none; -webkit-user-select: none; }
+body.bowling { overflow: hidden; }
+body.bowling #nav, body.bowling #hud { visibility: hidden; }
+body.bowling #toast { top: 42%; bottom: auto; font-size: 18px; font-weight: 700; }
 .bowltab { font-size: 13px; text-align: center; }
 .bowltab th, .bowltab td { padding: 4px 3px; text-align: center; min-width: 34px; }
 .bowltab th:first-child { text-align: left; max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

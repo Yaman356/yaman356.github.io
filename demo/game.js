@@ -1828,8 +1828,9 @@
     const b = ui.bowl;
     if (b) {
       const head = b.rv ? `${esc(b.rv.n)} ile maç · bahis ${fmt(b.stake)}` : 'Antrenman';
-      out.push(['bs', `<div class="card"><div class="row head"><h3>${head}</h3>${b.done ? '' : btn('Bırak', 'bowlQuit', {}, 'ghost')}</div>${bowlTable(b)}${b.done ? bowlResult(b) : ''}</div>`]);
-      if (!b.done) out.push(['lane', `<div class="lanebox"><canvas id="bowlCv" aria-label="Bowling pisti. Topu parmağınla yukarı kaydırarak at; kaydırırken yolu kıvırırsan top falso alır."></canvas></div>`]);
+      if (b.done) { out.push(['bs', `<div class="card"><div class="row head"><h3>${head}</h3></div>${bowlTable(b)}${bowlResult(b)}</div>`]); return out; }
+      // Maç sırasında pist tam ekran açılır; üstteki skor şeridi mountBowl içinde güncellenir ki tuval yeniden kurulmasın
+      out.push(['lane', `<div class="bowlfs" role="dialog" aria-modal="true" aria-label="${head}"><div class="bfs-top"></div><div class="lanebox"><canvas id="bowlCv" aria-label="Bowling pisti. Topu parmağınla yukarı kaydırarak at; kaydırırken yolu kıvırırsan top falso alır."></canvas></div></div>`]);
       return out;
     }
     const left = CLUB_DAILY - c.n, st = ui.stake || STAKES[0];
@@ -1843,8 +1844,17 @@
     const t = b.res === 'p' ? `Skorun <b class="num">${me}</b>.` : b.res === 'w' ? `<span class="up">Kazandın!</span> ${fmt(b.stake * 2)} kasaya girdi.` : b.res === 'd' ? 'Berabere. Bahsin geri döndü.' : `<span class="down">Kaybettin.</span> ${fmt(b.stake)} bahis gitti.`;
     return `<p>${t}</p><div class="row">${btn('Kulübe dön', 'bowlBack', {}, 'ghost')}${b.rv ? '' : btn('Bir daha', 'bowlGo', { v: 'p' })}</div>`;
   }
+  const bowlTop = b => `<div class="bfs-head"><b>${b.rv ? esc(b.rv.n) + ' · bahis ' + fmt(b.stake) : 'Antrenman'}</b>${btn('Bırak', 'bowlQuit', {}, 'ghost')}</div>${bowlTable(b)}`;
+  function fitBowl() {
+    const cv = main.querySelector('#bowlCv'), box = cv && cv.parentElement; if (!box) return;
+    const r = box.getBoundingClientRect(), w = Math.max(160, Math.min(r.width - 8, (r.height - 8) * 268 / 640));
+    cv.style.width = Math.floor(w) + 'px';
+  }
   function mountBowl() {
+    const top = main.querySelector('.bfs-top');
+    if (top && ui.bowl) { const h = bowlTop(ui.bowl); if (top._h !== h) { top.innerHTML = h; top._h = h; fitBowl(); } }
     const cv = main.querySelector('#bowlCv'); if (!cv || cv._bw || !window.TezgahBowling) return;
+    fitBowl();
     const bw = cv._bw = window.TezgahBowling.mount(cv, {
       onRoll(n, standing) {
         bw.setEnabled(false); bowlRoll(n, standing); render();
@@ -1852,7 +1862,6 @@
       },
     });
     bw.setPins(ui.bowl.standing);
-    if (!ui.bowl.me.length) requestAnimationFrame(() => cv.scrollIntoView({ block: 'end', behavior: 'smooth' }));
   }
 
   const VIEWS = { club: viewClub, sell: viewSell, bank: () => viewCompany().filter(x => x[0] === 'loan' || x[0] === 'tax'), company: () => viewCompany().filter(x => x[0] !== 'loan' && x[0] !== 'tax'), compete: viewCompete, invest: viewInvest, crew: viewCrew, plots: viewPlots, market: viewMarket, auction: viewAuction, news: viewNews, report: viewReport };
@@ -1899,6 +1908,7 @@
       else { const el = w1.querySelector('.wplot.on') || w1.querySelector('.wplot'); if (el) w1.scrollLeft = el.offsetLeft - w1.clientWidth / 2; ui.wcenter = false; }
     }
     if (ui.tab === 'club') mountBowl();
+    document.body.classList.toggle('bowling', !!(ui.tab === 'club' && ui.bowl && !ui.bowl.done));
     paint(nav, [['n', navBar()]]);
     const qpl = !ui.confirm && ui.tab === 'plots' && worldOk() && !wide() && plot(ui.sheetPlot);
     paint(sheet, ui.confirm ? [['c', confirmSheet()]] : qpl ? [['q', `<div class="qsheet">${quickPanel(qpl)}</div>`]] : []);
@@ -1926,6 +1936,7 @@
       if (document.hidden) { hiddenAt = Date.now(); save(); }
       else if (hiddenAt) { const ms = Date.now() - hiddenAt; hiddenAt = 0; catchUp(ms); render(); }
     });
+    window.addEventListener('resize', fitBowl);
     root.addEventListener('click', e => { const el = e.target.closest('[data-a]'); if (!el || !A[el.dataset.a]) return; A[el.dataset.a](el.dataset); render(); focusCard(); });
     root.addEventListener('keydown', e => { const el = e.target.closest('g[data-a]'); if (el && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); A[el.dataset.a](el.dataset); render(); focusCard(); } });
     root.addEventListener('change', e => { const el = e.target.closest('[data-c]'); if (!el || !C[el.dataset.c]) return; C[el.dataset.c](el); el.blur(); render(); });
