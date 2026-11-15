@@ -190,3 +190,4 @@ input[type="checkbox"] { min-height: 0; width: 22px; height: 22px; padding: 0; a
 .advhint { flex-wrap: wrap; justify-content: flex-start; padding-top: 10px; border-top: 1px dashed var(--line); }
 .seg .btn { min-height: 40px; border-radius: 0; border: 0; }
 .sell .step .seg { align-self: flex-start; }
+.autobox { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--line); display: flex; flex-direction: column; gap: 6px; }
