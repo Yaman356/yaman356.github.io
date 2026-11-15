@@ -266,3 +266,54 @@ body::before { background: var(--navy); }
   #main.worldmode > section[data-k^="p"]:has(.card.sum) { display: none; }
 }
 @media (min-width: 900px) { #main:not(.worldmode) { width: 100%; max-width: 960px; margin-inline: auto; } }
+
+/* ---------- Kullanım kolaylığı: yapılacaklar şeridi, hızlı eylem paneli, sade üst çubuk ---------- */
+.todo { display: flex; gap: 8px; overflow-x: auto; padding: 10px 0 4px; scroll-snap-type: x proximity; scrollbar-width: none; }
+.todo::-webkit-scrollbar { display: none; }
+.todo.empty { padding: 10px 0; }
+.tdi { flex: 0 0 auto; scroll-snap-align: start; display: flex; align-items: center; gap: 8px; min-width: 230px; max-width: 280px; padding: 8px 8px 8px 10px; background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 12px; box-shadow: 0 2px 0 #00000010; }
+.tdi.warn { border-left-color: #d9822b; }
+.tdi.build { border-left-color: var(--gold); }
+.tdic { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 10px; background: var(--soft); flex: none; font: 700 20px var(--display); color: var(--accent); }
+.tdt { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.25; }
+.tdt b { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tdt small { color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tdi .btn { flex: none; min-height: 44px; padding: 0 16px; }
+.btn.warnbtn { background: #d9822b; border-color: #d9822b; color: #fff; }
+
+.qp { display: flex; flex-direction: column; gap: 10px; }
+.qph { display: flex; align-items: center; gap: 12px; }
+.qph img { width: 72px; height: 72px; object-fit: contain; flex: none; filter: drop-shadow(0 3px 3px #0004); }
+.qlot { width: 64px; height: 32px; flex: none; clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); background: #c9a36b; }
+.qpt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.qpt b { font: 700 17px var(--display); }
+.qpt small { color: var(--muted); }
+.qp .x { flex: none; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--soft); color: var(--fg); font-size: 18px; cursor: pointer; }
+.qline { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 10px; }
+.qline .small { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+.qacts { display: flex; gap: 8px; flex-wrap: wrap; }
+.qacts .btn { flex: 1 1 140px; min-height: 50px; font-size: 16px; }
+.qbuild { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.qbuild button { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 2px; border: 2px solid var(--line); border-radius: 12px; background: var(--soft); color: var(--fg); font: inherit; cursor: pointer; min-height: 44px; }
+.qbuild button:hover, .qbuild button:focus-visible { border-color: var(--accent); }
+.qbuild img { width: 100%; max-width: 64px; aspect-ratio: 1; object-fit: contain; }
+.qbuild b { font-size: 13px; }
+.qbuild small { font-size: 11px; color: var(--accent); font-weight: 600; }
+.qsheet { position: fixed; left: 0; right: 0; bottom: calc(58px + env(safe-area-inset-bottom, 0px)); z-index: 14; padding: 0 max(8px, env(safe-area-inset-left, 0px)) 8px; animation: qup .18s ease-out; }
+.qsheet .qp { max-width: 560px; margin: 0 auto; border-radius: 18px; border: 2px solid var(--gold); box-shadow: 0 -6px 24px -6px #0006; }
+@keyframes qup { from { transform: translateY(20px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .qsheet { animation: none; } }
+
+@media (max-width: 899px) {
+  #hud { gap: 4px; padding-top: 6px; padding-bottom: 6px; }
+  #hud section[data-k="top"] .brand { font-size: 16px; }
+  #hud .cash { font-size: 22px; }
+  #hud .speed button { min-height: 38px; padding: 0 10px; }
+  #hud .rank .row { display: none; }
+  #hud .rank .bar { height: 4px; margin: 0; }
+  .wplot { min-width: 56px; }
+}
+@media (min-width: 900px) {
+  #main.worldmode > section[data-k="todo"] .todo { flex-direction: column; overflow: visible; padding-top: 0; }
+  #main.worldmode > section[data-k="todo"] .tdi { min-width: 0; max-width: none; }
+}

@@ -644,7 +644,9 @@
     focus(d) { ui.tab = 'plots'; ui.open = +d.plot; ui.focusPlot = +d.plot; },
     tab(d) { ui.tab = d.v; ui.last[navOf(d.v)[0]] = d.v; if (d.v === 'news') { s.unread = 0; ui.away = null; } window.scrollTo(0, 0); },
     nav(d) { const g = NAV.find(n => n[0] === d.v); if (g) A.tab({ v: ui.last[g[0]] || g[2][0] }); },
-    wopen(d) { ui.open = +d.plot; if (!matchMedia('(min-width: 900px)').matches) ui.focusPlot = ui.open; },
+    wopen(d) { ui.open = +d.plot; ui.sheetPlot = wide() ? null : +d.plot; },
+    qclose() { ui.sheetPlot = null; },
+    qdetail(d) { ui.sheetPlot = null; ui.open = +d.plot; ui.focusPlot = +d.plot; },
     openPlot(d) { ui.open = ui.open === +d.plot ? null : +d.plot || null; if (ui.open) ui.focusPlot = ui.open; },
     frac(d) { ui.frac = +d.v; },
     mode(d) { s.mode = d.v === 'adv' ? 'adv' : 'basit'; toast(adv() ? 'Gelişmiş görünüm: otomasyon ve fiyat kuralları açık' : 'Basit görünüm: yalnızca temel kontroller'); },
@@ -862,6 +864,55 @@
     metropol: [[75, 66], [86, 69], [79, 75]], metropol_lab: [71, 55],
   };
   const wPos = (r, i) => { const sl = WSLOT[r] || [[50, 50]]; if (i < sl.length) return sl[i]; const b = sl[sl.length - 1], k = i - sl.length + 1; return [b[0] + 5 * k, b[1] + 3 * k]; };
+  // ---------- Kullanım kolaylığı: yapılacaklar şeridi ve seçili arsa için hızlı eylem paneli ----------
+  const wide = () => matchMedia('(min-width: 900px)').matches;
+  const pname = p => P[p].n;
+  // Depoda satılabilir ürünler (girdi olarak kullanılanlar ve otomatik satılanlar hariç), çoktan aza
+  const sellable = pl => { if (!pl.b || pl.b.type === 'dukkan') return []; const ins = lineInputs(pl); return Object.keys(pl.inv).filter(k => P[k] && pl.inv[k] > 0 && !ins.has(k) && !outAuto((pl.b.out || {})[k])).sort((a, b) => pl.inv[b] - pl.inv[a]); };
+  const missingIn = pl => { if (!pl.b || pl.b.type === 'dukkan') return null; const k = batch(pl); for (const ln of pl.b.lines) { if (!ln.r || ln.busy) continue; const e = Object.entries(P[ln.r].in).find(([x, q]) => (pl.inv[x] || 0) < q * k); if (e) return e[0]; } return null; };
+  // Bir arsa için en önemli tek eylem: [ikon anahtarı, başlık, alt yazı, düğme, eylem, veri, sınıf]
+  function plotTodo(pl) {
+    if (pl.part) return null;
+    const b = pl.b, n = 'Arsa ' + pl.id;
+    if (!b) return [null, n + ' boş', R[pl.region].n, 'Bina kur', 'wopen', { plot: pl.id }, 'build'];
+    if (b.type === 'dukkan') {
+      const sh = shelf(pl).filter(p => P[p].d);
+      if (!sh.length) return ['dukkan', 'Raf boş', n, 'Ürün ekle', 'qdetail', { plot: pl.id }, 'warn'];
+      const out = sh.find(p => !(pl.inv[p] > 0)); if (out) return [out, pname(out) + ' bitti', n + ' · dükkân', 'Al', 'goBuy', { v: out, plot: pl.id }, 'warn'];
+      return null;
+    }
+    if (!b.lines.some(l => l.r)) return [b.type, 'Ne üretilecek?', n, 'Tarif seç', 'qdetail', { plot: pl.id }, 'warn'];
+    const miss = missingIn(pl); if (miss) return [miss, pname(miss) + ' gerekli', n + ' · üretim durdu', 'Al', 'goBuy', { v: miss, plot: pl.id }, 'warn'];
+    const sl = sellable(pl);
+    if (b.lines.some(l => l.st === 'Depo dolu') && sl.length) return [sl[0], 'Depo dolu', n + ' · ' + pname(sl[0]), 'Sat', 'goSell', { plot: pl.id, p: sl[0] }, 'warn'];
+    if (sl.length && pl.inv[sl[0]] >= 10) return [sl[0], pname(sl[0]) + ' hazır', qtyTxt(sl[0], pl.inv[sl[0]]), 'Sat', 'goSell', { plot: pl.id, p: sl[0] }, 'ok'];
+    return null;
+  }
+  const dataAttrs = d => Object.entries(d).map(([k, v]) => `data-${k}="${esc(String(v))}"`).join(' ');
+  function todoStrip() {
+    const list = s.plots.map(plotTodo).filter(Boolean).sort((a, b) => (a[6] === 'warn' ? 0 : 1) - (b[6] === 'warn' ? 0 : 1)).slice(0, 6);
+    if (!list.length) return `<div class="todo empty"><span class="small muted">Her şey yolunda; üretim sürüyor.</span></div>`;
+    return `<div class="todo" role="list" aria-label="Şimdi yapılacaklar">${list.map(([k, t, sub, bl, a, d, cls]) => `<div class="tdi ${cls}" role="listitem"><span class="tdic">${k ? ic(k, 30) : '<b>+</b>'}</span><span class="tdt"><b>${esc(t)}</b><small>${esc(sub)}</small></span><button type="button" class="btn ${cls === 'warn' ? 'warnbtn' : ''}" data-a="${a}" ${dataAttrs(d)}>${bl}</button></div>`).join('')}</div>`;
+  }
+  function quickPanel(pl) {
+    const b = pl.b, A2 = window.TezgahAssets || {}, [st, cls] = plotStatus(pl);
+    const img = b ? A2[b.type + '_' + Math.min(3, b.level)] : null;
+    let h = `<div class="qp card"><div class="qph">${img ? `<img src="${img}" alt="">` : '<span class="qlot"></span>'}<span class="qpt"><b>Arsa ${pl.id} · ${b ? B[b.type].n + ' ' + b.level : 'Boş arsa'}</b><small>${R[pl.region].n} · ${pl.rented ? 'Kiralık' : 'Senin'}</small><span class="small ${cls}">${esc(st)}</span></span>${wide() ? '' : `<button type="button" class="x" data-a="qclose" aria-label="Kapat">✕</button>`}</div>`;
+    if (b && b.type !== 'dukkan') {
+      for (const [i, ln] of b.lines.entries()) if (ln.r) h += `<div class="qline"><span class="small">${ic(ln.r, 20)} ${pname(ln.r)}</span><div class="bar"><i data-prog="${pl.id}:${i}"></i></div></div>`;
+    }
+    const acts = [];
+    if (!b) {
+      h += `<div class="qbuild">${Object.keys(B).map(k => `<button type="button" data-a="build" data-plot="${pl.id}" data-v="${k}">${A2[k + '_1'] ? `<img src="${A2[k + '_1']}" alt="">` : ic(k, 34)}<b>${B[k].n}</b><small>${fmt(B[k].cost)}</small></button>`).join('')}</div>`;
+    } else {
+      const t = plotTodo(pl); if (t) acts.push([t[3] + (t[4] === 'goSell' ? ' · ' + pname(t[5].p) : t[4] === 'goBuy' ? ' · ' + pname(t[5].v) : ''), t[4], t[5], '']);
+      if (b.type !== 'dukkan') { const sl = sellable(pl); if (sl.length && !(t && t[4] === 'goSell')) acts.push(['Sat · ' + pname(sl[0]), 'goSell', { plot: pl.id, p: sl[0] }, t ? 'ghost' : '']); }
+      else acts.push(['Mal al', 'tab', { v: 'market' }, t ? 'ghost' : '']);
+    }
+    if (!wide() && !acts.some(a => a[1] === 'qdetail')) acts.push(['Ayrıntılar', 'qdetail', { plot: pl.id }, 'ghost']);
+    if (acts.length) h += `<div class="qacts">${acts.map(([l, a, d, c]) => `<button type="button" class="btn ${c}" data-a="${a}" ${dataAttrs(d)}>${l}</button>`).join('')}</div>`;
+    return h + '</div>';
+  }
   function worldMap() {
     const A2 = window.TezgahAssets, open = new Set(openR()), m = mapModel();
     let h = '<div class="world" role="group" aria-label="Harita"><div class="world-in"><img class="world-bg" src="' + A2.harita + '" alt="" draggable="false">';
@@ -984,7 +1035,8 @@
     const out = [];
     const next = GOALS.findIndex((g, i) => !s.goals[i]);
     if (worldOk() && !plot(ui.open) && matchMedia('(min-width: 900px)').matches) ui.open = (s.plots.find(p => !p.part) || {}).id;
-    if (worldOk()) out.push(['world', worldMap()]);
+    if (worldOk()) { out.push(['world', worldMap()]); out.push(['todo', todoStrip()]); }
+    if (worldOk() && wide() && plot(ui.open)) out.push(['qp', quickPanel(plot(ui.open))]);
     if (ui.away) out.push(['away', awayCard(ui.away)]);
     if (tutOn()) out.push(['tut', tutCard()]);
     else out.push(['goal', next < 0 ? `<div class="goal"><span class="small">Sıradaki unvan</span><b>${RANKS[rankNow() + 1] ? RANKS[rankNow() + 1].n + ' ol: net değer ' + fmt(RANKS[rankNow() + 1].at) : 'En üst unvandasın. Büyümeye devam et'}</b></div>` : `<div class="goal"><span class="small">Sıradaki hedef ${next + 1}/${GOALS.length} · ödül ${fmt(GOALS[next][2])}</span><b>${goalText(next)}</b></div>`]);
@@ -1672,10 +1724,11 @@
       else { const el = w1.querySelector('.wplot.on') || w1.querySelector('.wplot'); if (el) w1.scrollLeft = el.offsetLeft - w1.clientWidth / 2; ui.wcenter = false; }
     }
     paint(nav, [['n', navBar()]]);
-    paint(sheet, ui.confirm ? [['c', confirmSheet()]] : []);
+    const qpl = !ui.confirm && ui.tab === 'plots' && worldOk() && !wide() && plot(ui.sheetPlot);
+    paint(sheet, ui.confirm ? [['c', confirmSheet()]] : qpl ? [['q', `<div class="qsheet">${quickPanel(qpl)}</div>`]] : []);
     if (ui.confirm && !sheet.contains(document.activeElement)) { const b = sheet.querySelector('.btn'); if (b) b.focus(); }
     if (ui.tab === 'plots' && pixiMap() && !worldOk()) window.TezgahMap.update(main.querySelector('[data-pixi]'), mapModel(), focusFromMap);
-    main.querySelectorAll('[data-prog]').forEach(el => { const [id, i] = el.dataset.prog.split(':'); const pl = plot(+id), ln = pl && pl.b && pl.b.lines[+i]; el.style.width = ln && ln.busy ? Math.min(100, ln.prog / P[ln.r].t * 100) + '%' : '0%'; });
+    [...main.querySelectorAll('[data-prog]'), ...sheet.querySelectorAll('[data-prog]')].forEach(el => { const [id, i] = el.dataset.prog.split(':'); const pl = plot(+id), ln = pl && pl.b && pl.b.lines[+i]; el.style.width = ln && ln.busy ? Math.min(100, ln.prog / P[ln.r].t * 100) + '%' : '0%'; });
   }
 
   function focusCard() {
