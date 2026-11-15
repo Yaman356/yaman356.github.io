@@ -1589,13 +1589,21 @@
   // ---------- Gezinme: altta beş hedef, her hedefin içinde alt sekmeler ----------
   // Dayanak: reports/Mobil ticaret oyunu arayüz tasarımı.md (alt çubukta 3-5 hedef, 44-48 px dokunma hedefi).
   const NAV = [
-    ['plots', 'Arsalar', ['plots']],
-    ['market', 'Pazar', ['market', 'sell', 'auction']],
+    ['plots', 'Arsam', ['plots']],
+    ['market', 'Piyasa', ['market', 'sell', 'auction']],
     ['company', 'Şirket', ['company', 'crew']],
     ['finance', 'Finans', ['invest', 'bank', 'report']],
     ['compete', 'Rekabet', ['compete', 'news']],
   ];
   const SUB = { plots: 'Arsalar', market: 'Al', sell: 'Sat', auction: 'Arsa artırması', company: 'Sözleşme ve marka', crew: 'İşçiler', invest: 'Yatırım', bank: 'Kredi ve vergi', report: 'Rapor', compete: 'Sezon', news: 'Gazete' };
+  // Boyalı sekme başlıkları (konsept tasarım): her bölümün üstünde manzara görseli ve lacivert başlık şeridi
+  const HERO = { plots: [null, 'Arsa ve Bölgeler'], market: ['pazar', 'Piyasa ve Tedarik'], sell: ['pazar', 'Malını Sat'], auction: ['artirma', 'Arsa Açık Artırması'], company: ['sirket', 'Şirket ve Sözleşmeler'], crew: ['uretim', 'Üretim ve İşçiler'], invest: ['finans', 'Yatırımlar'], bank: ['finans', 'Kredi ve Vergi'], report: ['sirket', 'Finans Raporu'], compete: ['rekabet', 'Kooperatif ve Rekabet'], news: ['pazar', 'Kasaba Gazetesi'] };
+  const WHEAT = '<svg class="wheat" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M5 21C9 15 13 10 20 4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/><g fill="currentColor"><ellipse cx="9" cy="14" rx="1.6" ry="3.2" transform="rotate(40 9 14)"/><ellipse cx="12.5" cy="10.5" rx="1.6" ry="3.2" transform="rotate(40 12.5 10.5)"/><ellipse cx="16" cy="7" rx="1.6" ry="3.2" transform="rotate(40 16 7)"/><ellipse cx="7" cy="11" rx="1.4" ry="2.8" transform="rotate(-50 7 11)"/><ellipse cx="10.5" cy="7.5" rx="1.4" ry="2.8" transform="rotate(-50 10.5 7.5)"/></g></svg>';
+  const ribbon = t => `<h2 class="ribbon">${WHEAT}<span>${t}</span>${WHEAT}</h2>`;
+  function heroBanner(tab) {
+    const [k, t] = HERO[tab] || [null, ''], img = k && window.TezgahAssets && window.TezgahAssets['bas_' + k];
+    return `<div class="hero ${img ? '' : 'noimg'}">${img ? `<img src="${img}" alt="" draggable="false">` : ''}${ribbon(t)}</div>`;
+  }
   const navOf = tab => NAV.find(n => n[2].includes(tab)) || NAV[0];
   const NAV_IC = {
     plots: '<path d="M3 11l9-7 9 7v9h-6v-6H9v6H3z"/>',
@@ -1735,14 +1743,14 @@
   function render() {
     const bids = s.auctions.filter(a => a.bidder === 'me').reduce((a, x) => a + x.bid, 0);
     paint(hud, [
-      ['top', `<div class="row"><div><span class="brand">Tezgâh</span> <span class="small muted">demo</span></div><span class="num small">${clock()}</span></div>`],
-      ['cash', `<div class="row"><div class="cash ${s.money < 0 ? 'down' : ''}">${Math.abs(s.money) < 1e9 ? fmtFull(s.money) : fmt(s.money)}${(() => { if (s.nwDay == null) s.nwDay = netWorth(); const d = netWorth() - s.nwDay; return `<span class="today ${d < 0 ? 'down' : 'up'}" title="Bugün net değerdeki değişim">bugün ${d < 0 ? '▼' : '▲'} ${fmtFull(Math.abs(d))}</span>`; })()}${bids ? `<span class="small muted"> · teminatta ${fmt(bids)}</span>` : ''}</div><div class="speed" role="group" aria-label="Oyun hızı">${[[0, 'Dur'], [1, '1×'], [2, '2×'], [4, '4×']].map(([v, l]) => `<button type="button" data-a="speed" data-v="${v}" class="${s.speed === v ? 'on' : ''}">${l}</button>`).join('')}</div></div>`],
-      ['rank', rankBar()],
+      ['top', `<div class="logo">${WHEAT}<span class="brand">Tezgâh</span>${WHEAT}</div>`],
+      ['cash', `<div class="pills"><div class="pill cashpill"><svg class="pic" viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><g fill="#c9922e" stroke="#7a5418" stroke-width="1"><ellipse cx="9" cy="17" rx="6" ry="2.4"/><ellipse cx="9" cy="14" rx="6" ry="2.4"/><ellipse cx="15" cy="11" rx="6" ry="2.4"/><ellipse cx="15" cy="8" rx="6" ry="2.4"/></g></svg><div class="cash ${s.money < 0 ? 'down' : ''}">${Math.abs(s.money) < 1e9 ? fmtFull(s.money) : fmt(s.money)}${(() => { if (s.nwDay == null) s.nwDay = netWorth(); const d = netWorth() - s.nwDay; return `<span class="today ${d < 0 ? 'down' : 'up'}" title="Bugün net değerdeki değişim">bugün ${d < 0 ? '▼' : '▲'} ${fmtFull(Math.abs(d))}</span>`; })()}${bids ? `<span class="today muted">teminatta ${fmt(bids)}</span>` : ''}</div></div><div class="pill daypill"><svg class="pic" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M7 14h2M11 14h2M15 14h2M7 17h2M11 17h2"/></svg><span><b>${Math.floor(s.t / 1440) + 1}. Gün</b><small>${curSeason().n} · ${String(Math.floor(s.t / 60) % 24).padStart(2, '0')}:00</small></span></div></div>`],
+      ['rank', `<div class="rankrow"><div class="speed" role="group" aria-label="Oyun hızı">${[[0, '❚❚'], [1, '1×'], [2, '2×'], [4, '4×']].map(([v, l]) => `<button type="button" data-a="speed" data-v="${v}" class="${s.speed === v ? 'on' : ''}" aria-label="${v ? 'Hız ' + v + '×' : 'Durdur'}" aria-pressed="${s.speed === v}">${l}</button>`).join('')}</div>${rankBar()}</div>`],
     ]);
     const sub = subTabs();
     const w0 = main.querySelector('.world'), sx = w0 ? w0.scrollLeft : null;
     main.dataset.tab = ui.tab; main.classList.toggle('worldmode', ui.tab === 'plots' && worldOk());
-    paint(main, sub ? [['sub', sub], ...VIEWS[ui.tab]()] : VIEWS[ui.tab]());
+    paint(main, [['hero', heroBanner(ui.tab)], ...(sub ? [['sub', sub]] : []), ...VIEWS[ui.tab]()]);
     const w1 = main.querySelector('.world');
     if (w1) {
       if (sx != null && !ui.wcenter) w1.scrollLeft = sx;

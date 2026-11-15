@@ -37,5 +37,11 @@ window.TezgahAssets = {
   "tarla_1": "assets/tarla_1.webp",
   "tarla_2": "assets/tarla_2.webp",
   "tarla_3": "assets/tarla_3.webp",
-  "un": "assets/un.webp"
+  "un": "assets/un.webp",
+  "bas_artirma": "assets/basliklar/artirma.webp",
+  "bas_finans": "assets/basliklar/finans.webp",
+  "bas_pazar": "assets/basliklar/pazar.webp",
+  "bas_rekabet": "assets/basliklar/rekabet.webp",
+  "bas_sirket": "assets/basliklar/sirket.webp",
+  "bas_uretim": "assets/basliklar/uretim.webp"
 };

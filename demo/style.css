@@ -321,3 +321,119 @@ body::before { background: var(--navy); }
 #hud .cash .today.up { color: #8fe0a0; } #hud .cash .today.down { color: #ff9f8f; }
 .alsat { background: #d9822b1a; border-left: 3px solid #d9822b; padding: 6px 10px; border-radius: 6px; margin: 6px 0; }
 .qprofit { margin: 0; }
+
+/* ---------- Konsept tasarım (Kasım 2026): lacivert-altın üst çubuk, krem haplar, boyalı sekme başlıkları, bakır düğmeler, krem kartlar ---------- */
+:root {
+  --bg: #efe4cb; --surface: #fbf4e4; --fg: #22201b; --muted: #6e6555; --line: #e2d3b1; --soft: #f4ead3;
+  --navy: #1d3047; --navy2: #284260; --on-navy: #f8efd9; --gold: #d9a441; --gold2: #f0c867;
+  --accent: #2f7d3b; --copper: #b8642f; --copper2: #8f4319; --on-copper: #fff6e6; --cream: #f6ecd6;
+  --display: 'Bitter', Georgia, 'Times New Roman', serif;
+  --body: 'Bitter', Georgia, 'Times New Roman', serif;
+  --logo: 'Cinzel', 'Bitter', Georgia, serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg: #161b22; --surface: #222a33; --fg: #efe6d2; --muted: #b0a690; --line: #3a4552; --soft: #2a333e; --cream: #2a333e; --navy: #0f1a27; --navy2: #1e3048; --copper: #c8763f; --copper2: #9c5224; }
+}
+:root[data-theme="dark"] { --bg: #161b22; --surface: #222a33; --fg: #efe6d2; --muted: #b0a690; --line: #3a4552; --soft: #2a333e; --cream: #2a333e; --navy: #0f1a27; --navy2: #1e3048; --copper: #c8763f; --copper2: #9c5224; }
+body { font-size: 15px; }
+h2, h3 { font-weight: 700; }
+
+/* Üst çubuk */
+#hud { background: radial-gradient(120% 140% at 50% -20%, var(--navy2), var(--navy) 70%); border-bottom: 0; box-shadow: 0 3px 0 var(--gold), 0 8px 18px -8px #0008; border-radius: 0 0 18px 18px; padding-top: 6px; gap: 6px; }
+.logo { display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--gold2); }
+.logo .brand { font: 800 26px/1.1 var(--logo); letter-spacing: .06em; text-transform: uppercase; color: var(--on-navy); text-shadow: 0 2px 0 #0007; }
+.logo .wheat:last-child { transform: scaleX(-1); }
+.pills { display: flex; align-items: center; gap: 8px; }
+.pill { display: flex; align-items: center; gap: 8px; background: linear-gradient(#fbf3e1, #ecdcb9); color: #22201b; border-radius: 14px; padding: 5px 12px; box-shadow: inset 0 -2px 0 #0000001f, 0 2px 4px #0005; min-height: 46px; }
+.pill .pic { flex: none; }
+.cashpill { flex: 1; min-width: 0; }
+.cashpill .cash { font: 700 21px/1.1 var(--display); color: #22201b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cashpill .cash.down { color: var(--bad); }
+#hud .cash .today { font: 600 11px var(--body); }
+#hud .cash .today.up { color: #2f7d3b; } #hud .cash .today.down { color: #b3372c; }
+#hud .cash .today.muted { color: #6e6555; }
+.daypill { flex: none; padding-inline: 10px; color: #22201b; }
+.daypill span { display: flex; flex-direction: column; line-height: 1.1; }
+.daypill b { font: 700 16px var(--display); white-space: nowrap; }
+.daypill small { font-size: 10px; color: #6e6555; white-space: nowrap; }
+#hud .speed { flex-direction: column; border: 1.5px solid #ffffff33; border-radius: 12px; background: var(--navy); }
+#hud .speed button { min-height: 0; min-width: 40px; padding: 2px 6px; font: 600 11px var(--body); border: 0; background: none; color: #d8cfb9; }
+#hud .speed button.on { background: var(--gold); color: var(--navy); }
+#hud .rank .bar { background: #ffffff22; }
+
+/* Sekme başlığı: boyalı görsel + lacivert şerit */
+.hero { position: relative; margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); margin-top: -14px; padding-top: 14px; }
+.hero img { display: block; width: 100%; max-width: none; height: clamp(150px, 42vw, 240px); object-fit: cover; object-position: 50% 55%; -webkit-mask-image: linear-gradient(#000 80%, #0000); mask-image: linear-gradient(#000 80%, #0000); }
+.ribbon { position: relative; display: flex; align-items: center; justify-content: center; gap: 10px; width: fit-content; max-width: calc(100% - 32px); margin: -34px auto 0; padding: 8px 22px; background: linear-gradient(var(--navy2), var(--navy)); color: var(--on-navy); border: 2px solid var(--gold); border-radius: 14px; box-shadow: inset 0 0 0 2px #0004, 0 4px 10px -2px #0007; font: 700 clamp(18px, 5vw, 24px)/1.15 var(--display); text-align: center; }
+.ribbon .wheat { flex: none; color: var(--gold2); }
+.ribbon .wheat:last-child { transform: scaleX(-1); }
+.hero.noimg .ribbon { margin-top: 0; }
+#main[data-tab="plots"] > section[data-k="hero"]:has(.noimg) { position: relative; z-index: 3; margin-bottom: -38px; }
+
+/* Alt sekmeler */
+.subtabs { gap: 6px; padding: 2px 0; }
+.subtabs button { flex: 1 0 auto; min-height: 44px; border-radius: 12px; border: 2px solid var(--line); background: linear-gradient(#fbf3e1, #efe1c2); color: #22201b; font: 700 15px var(--display); box-shadow: inset 0 -2px 0 #0000001a; }
+.subtabs button.on { background: linear-gradient(var(--navy2), var(--navy)); border-color: var(--gold); color: var(--on-navy); box-shadow: inset 0 -3px 0 var(--copper); }
+
+/* Kartlar: krem panel, başlık lacivert şerit */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 3px 0 #0000000d, 0 8px 18px -12px #0006; }
+.card > h3:first-child { margin: -14px -14px 2px; padding: 10px 16px; background: linear-gradient(var(--navy2), var(--navy)); color: var(--on-navy); border-radius: 15px 15px 0 0; font-size: 17px; box-shadow: inset 0 -2px 0 #0003; }
+.card > h3:first-child .muted, .card > h3:first-child small { color: #cfc4ab; }
+.card.sum { border-left: 5px solid var(--gold); }
+.goal { background: linear-gradient(var(--navy2), var(--navy)); color: var(--on-navy); border: 2px solid var(--gold); border-radius: 16px; }
+.goal b { color: var(--gold2); }
+
+/* Düğmeler: bakır birincil, krem ikincil */
+.btn { border-radius: 12px; font-weight: 600; font-family: var(--display); }
+.btn:not(.ghost):not(.danger):not(.warnbtn) { background: linear-gradient(var(--copper), var(--copper2)); border: 1px solid #6e3210; color: var(--on-copper); box-shadow: inset 0 1px 0 #ffffff40, inset 0 -3px 0 #0000002e, 0 2px 4px -1px #0005; text-shadow: 0 1px 0 #0004; }
+.btn.ghost { background: linear-gradient(#fbf3e1, #efe1c2); border: 1.5px solid #c9b48a; color: #8f4319; }
+.goal .btn.ghost, .goal.tut .btn { background: transparent; color: var(--on-navy); border-color: var(--gold); }
+.seg { border-radius: 12px; }
+.seg button.on { background: var(--navy); color: var(--on-navy); }
+.tag.own { background: var(--navy); color: var(--on-navy); }
+.bar { height: 8px; border-radius: 4px; background: #d8ccb2; }
+.bar i { background: linear-gradient(#4fae4a, #2f7d3b); border-radius: 4px; }
+.sell .stepn { background: var(--navy); color: var(--gold2); }
+.chips button.on, .opt.on { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold) inset; background: #f7e7bf; color: #22201b; }
+.tdi { border-radius: 14px; border-left-width: 5px; }
+
+/* Alt gezinme: krem kutucuklar, seçili lacivert */
+#nav { background: linear-gradient(#0000, var(--bg) 35%); border-top: 0; padding-top: 6px; }
+#nav section { gap: 6px; padding: 0 8px 6px; }
+#nav button { min-height: 60px; border-radius: 14px; background: linear-gradient(#fbf3e1, #ecdcb9); border: 1px solid #d8c59c; color: #3b3125; font: 700 12.5px var(--display); box-shadow: inset 0 -2px 0 #0000001a, 0 2px 4px -1px #0004; }
+#nav button svg { color: #8f4319; }
+#nav button.on { background: linear-gradient(var(--navy2), var(--navy)); color: var(--on-navy); border-color: var(--gold); }
+#nav button.on svg { color: var(--gold2); }
+#nav button.on::before { top: auto; bottom: 5px; left: 24%; right: 24%; height: 3px; border-radius: 3px; background: var(--copper); }
+.qsheet { bottom: calc(72px + env(safe-area-inset-bottom, 0px)); }
+#toast { background: var(--navy); color: var(--on-navy); border: 1.5px solid var(--gold); border-radius: 12px; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
+
+@media (max-width: 899px) {
+  #hud .cash { font-size: 20px; }
+  #hud section[data-k="top"] .brand { font-size: 22px; }
+}
+@media (max-width: 380px) { .daypill small { display: none; } .logo .brand { font-size: 20px; } }
+@media (min-width: 900px) {
+  #hud { border-radius: 0; flex-direction: row; align-items: center; }
+  #hud section[data-k="top"] { flex: 0 0 auto; }
+  #hud section[data-k="cash"] { flex: 1 1 520px; max-width: 640px; margin-left: auto; }
+  #hud .speed { flex-direction: row; }
+  #hud .speed button { min-height: 40px; padding: 0 10px; font-size: 13px; }
+  #nav { background: var(--navy); box-shadow: 0 2px 0 var(--gold); padding-top: 0; }
+  #nav section { padding: 6px 0; }
+  #nav button { min-height: 44px; flex-direction: row; padding: 0 18px; font-size: 14px; }
+  #nav button.on::before { bottom: 3px; }
+  .hero { margin-inline: 0; margin-top: 0; padding-top: 0; }
+  .hero img { height: 220px; border-radius: 18px; -webkit-mask-image: none; mask-image: none; border: 2px solid var(--gold); }
+  #main.worldmode > section[data-k="hero"] { display: none; }
+}
+.rankrow { display: flex; align-items: center; gap: 10px; }
+.rankrow .rank { flex: 1; min-width: 0; padding: 0; }
+#hud .rankrow .speed { flex-direction: row; flex: none; border-radius: 10px; }
+#hud .rankrow .speed button { min-height: 32px; min-width: 40px; padding: 0 8px; font-size: 12px; }
+@media (min-width: 900px) { #hud section[data-k="rank"] { flex-basis: 100%; } #hud .rankrow .speed button { min-height: 36px; } }
+.card > .row:first-child:has(> h3), .card > .row:first-child:has(> span > h3) { margin: -14px -14px 2px; padding: 10px 16px; background: linear-gradient(var(--navy2), var(--navy)); color: var(--on-navy); border-radius: 15px 15px 0 0; box-shadow: inset 0 -2px 0 #0003; }
+.card > .row:first-child:has(> h3) .muted, .card > .row:first-child:has(> h3) .small { color: #d8cdb3; }
+.card > .row:first-child:has(> h3) .tag { background: #ffffff1f; color: var(--on-navy); }
+.card > .row:first-child:has(> h3) .btn.ghost { min-height: 36px; padding: 4px 12px; }
+.row > .btn { flex: none; white-space: nowrap; }

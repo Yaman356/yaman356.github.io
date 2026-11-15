@@ -39,7 +39,7 @@ css = (DEMO / 'style.css').read_text(encoding='utf-8')
 html = (
     '<title>Tezgâh Demo</title>\n'
     '<meta name="claude:viewport-fit-sides" content="cover">\n'
-    '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">\n'
+    '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800&family=Bitter:wght@400;500;600;700&display=swap">\n'
     f'<style>\n{css}\n</style>\n'
     '<div id="app"></div>\n'
     + script('icons.js')
