@@ -43,5 +43,6 @@ window.TezgahAssets = {
   "bas_pazar": "assets/basliklar/pazar.webp",
   "bas_rekabet": "assets/basliklar/rekabet.webp",
   "bas_sirket": "assets/basliklar/sirket.webp",
-  "bas_uretim": "assets/basliklar/uretim.webp"
+  "bas_uretim": "assets/basliklar/uretim.webp",
+  "bas_kulup": "assets/basliklar/kulup.webp"
 };

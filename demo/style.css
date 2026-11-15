@@ -437,3 +437,13 @@ h2, h3 { font-weight: 700; }
 .card > .row:first-child:has(> h3) .tag { background: #ffffff1f; color: var(--on-navy); }
 .card > .row:first-child:has(> h3) .btn.ghost { min-height: 36px; padding: 4px 12px; }
 .row > .btn { flex: none; white-space: nowrap; }
+
+/* Tüccarlar Kulübü: bowling pisti ve skor tablosu */
+.lanebox { display: flex; justify-content: center; padding: 6px 0 12px; }
+.lanebox canvas { display: block; width: min(100%, 340px, calc((100dvh - 190px) * 268 / 640)); min-width: 220px; aspect-ratio: 268 / 640; border-radius: 12px; border: 3px solid var(--gold); box-shadow: 0 6px 18px rgba(29, 48, 71, .3); touch-action: none; user-select: none; -webkit-user-select: none; }
+.bowltab { font-size: 13px; text-align: center; }
+.bowltab th, .bowltab td { padding: 4px 3px; text-align: center; min-width: 34px; }
+.bowltab th:first-child { text-align: left; max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bowltab td .mk { display: block; font-size: 11px; color: var(--muted, #6b5a44); letter-spacing: .5px; }
+.bowltab td b { display: block; }
+.bowltab .tot { font-weight: 700; font-size: 15px; }

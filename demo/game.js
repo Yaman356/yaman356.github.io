@@ -664,6 +664,28 @@
       toast(c.name + ' işe başladı');
     },
     fire(d) { const w = s.workers.find(x => x.id === +d.id); if (!w) return; if (!d.ok) return confirmAsk('fire', d, w.name + ' işten çıkarılsın mı?', WK[w.type].n + ' ' + esc(w.name) + ' (' + w.star + ' yıldız) ayrılır; kazandığı yıldızlar ve deneyim kaybolur. Geri alınamaz.', 'İşten çıkar'); s.workers = s.workers.filter(x => x !== w); toast(w.name + ' işten çıkarıldı'); },
+    clubJoin(d) {
+      if (club().member || rankNow() < CLUB_RANK) return;
+      if (s.money < CLUB_FEE) return toast('Kasa üyelik ücretine yetmiyor');
+      if (!d.ok) return confirmAsk('clubJoin', d, 'Kulübe üye olunsun mu?', 'Üyelik ücreti ' + fmt(CLUB_FEE) + ' kasadan bir kez düşer ve geri alınmaz. Üyelik yeni sezona da taşınır.', 'Üye ol');
+      exp('Kulüp', CLUB_FEE); club().member = true; news('Tüccarlar Kulübü', 'Kulübe üye oldun. Akşamları pistte rakiplerine meydan okuyabilirsin.'); toast('Kulübe hoş geldin');
+    },
+    stake(d) { ui.stake = +d.v; },
+    bowlGo(d) {
+      const c = club(); if (!c.member) return;
+      if (d.v === 'p') { bowlStart(null, 0); return window.scrollTo(0, 0); }
+      const st = ui.stake || STAKES[0];
+      if (c.n >= CLUB_DAILY) return toast('Bugünkü maç hakkın bitti');
+      if (s.money < st) return toast('Kasa bahse yetmiyor');
+      c.n++; exp('Kulüp', st); bowlStart(+d.v, st); window.scrollTo(0, 0);
+    },
+    bowlQuit(d) {
+      const b = ui.bowl; if (!b) return;
+      if (b.rv && !b.done && !d.ok) return confirmAsk('bowlQuit', d, 'Maç bırakılsın mı?', 'Maçı yarıda bırakırsan ' + fmt(b.stake) + ' bahsi kaybedersin.', 'Maçı bırak');
+      if (b.rv && !b.done) { club().played++; club().streak = 0; }
+      ui.bowl = null;
+    },
+    bowlBack() { ui.bowl = null; },
     focus(d) { ui.tab = 'plots'; ui.open = +d.plot; ui.focusPlot = +d.plot; },
     tab(d) { ui.tab = d.v; ui.last[navOf(d.v)[0]] = d.v; if (d.v === 'news') { s.unread = 0; ui.away = null; } window.scrollTo(0, 0); },
     nav(d) { const g = NAV.find(n => n[0] === d.v); if (g) A.tab({ v: ui.last[g[0]] || g[2][0] }); },
@@ -1211,7 +1233,7 @@
     const k = keep || {};
     s.comp = {
       season: k.season || 1, start: Math.floor(s.t / 1440), badges: k.badges || [], best: k.best || null,
-      holding: k.holding || null, coop: k.coop || null, kings: [],
+      holding: k.holding || null, coop: k.coop || null, club: k.club || null, kings: [],
       npc: NPC.map(([n, h, f]) => ({ n, h, f, nw: START_MONEY * rnd(0.9, 1.1), skill: rnd(0.7, 1.3), vol: {} })),
       sold: {}, week: null,
     };
@@ -1307,7 +1329,7 @@
     const c = s.comp, b = board(), place = b.findIndex(x => x.me) + 1, nw = netWorth();
     const badge = { season: c.season, place, of: b.length, nw, rank: RANKS[rankNow()].n, kings: c.kings.map(p => KING[p]) };
     const badges = [...c.badges, badge], best = !c.best || place < c.best.place || (place === c.best.place && nw > c.best.nw) ? badge : c.best;
-    const keep = { season: c.season + 1, badges, best, holding: c.holding, coop: c.coop }, cur = s.cur;
+    const keep = { season: c.season + 1, badges, best, holding: c.holding, coop: c.coop, club: c.club }, cur = s.cur;
     newGame(); s.cur = cur; s.news = []; initComp(keep);
     news('Sezon ' + badge.season + ' bitti: ' + place + '. oldun', (place <= 3 ? MEDAL[place - 1] + ' rozet kazandın. ' : '') + 'Net değerin ' + fmt(nw) + ', unvanın ' + badge.rank + ' idi. Yeni sezonda paran, arsaların ve binaların sıfırlanır; herkes ' + fmt(START_MONEY) + ' ile başlar. Rozetlerin, holding üyeliğin ve kooperatifin (ayrıcalıklarıyla birlikte) yeni sezona taşınır.', true);
   }
@@ -1497,7 +1519,7 @@
   // Gider sayılmayanlar: inşaat (yerine yıllık %10 amortisman), arsa alım-satımı, kredi anaparası, KDV, kooperatif sermayesi.
   // KDV yalnızca perakende satışta, katma değer (satış − maliyet) üzerinden: temel gıda %1, tekstil %10, diğerleri %20.
   const CORP_TAX = 0.25, AMORT = 0.10;
-  const NOTAX = new Set(['Arsa satışı', 'İnşaat', 'Makine', 'Kooperatif', 'Kurumlar vergisi', 'Kredi anapara', 'KDV']);
+  const NOTAX = new Set(['Kulüp', 'Kulüp ödülü', 'Arsa satışı', 'İnşaat', 'Makine', 'Kooperatif', 'Kurumlar vergisi', 'Kredi anapara', 'KDV']);
   const KDV = { bugday: 0.01, sut: 0.01, un: 0.01, ekmek: 0.01, peynir: 0.01, kumas: 0.10, giysi: 0.10 };
   const kdvRate = p => KDV[p] || 0.20;
   function kdv(pl, p, n, pr) { const v = (pr - shopCost(pl, p)) * n * kdvRate(p) / (1 + kdvRate(p)); if (v > 0) exp('KDV', v); }
@@ -1593,11 +1615,11 @@
     ['market', 'Piyasa', ['market', 'sell', 'auction']],
     ['company', 'Şirket', ['company', 'crew']],
     ['finance', 'Finans', ['invest', 'bank', 'report']],
-    ['compete', 'Rekabet', ['compete', 'news']],
+    ['compete', 'Rekabet', ['compete', 'news', 'club']],
   ];
-  const SUB = { plots: 'Arsalar', market: 'Al', sell: 'Sat', auction: 'Arsa artırması', company: 'Sözleşme ve marka', crew: 'İşçiler', invest: 'Yatırım', bank: 'Kredi ve vergi', report: 'Rapor', compete: 'Sezon', news: 'Gazete' };
+  const SUB = { plots: 'Arsalar', market: 'Al', sell: 'Sat', auction: 'Arsa artırması', company: 'Sözleşme ve marka', crew: 'İşçiler', invest: 'Yatırım', bank: 'Kredi ve vergi', report: 'Rapor', compete: 'Sezon', news: 'Gazete', club: 'Kulüp' };
   // Boyalı sekme başlıkları (konsept tasarım): her bölümün üstünde manzara görseli ve lacivert başlık şeridi
-  const HERO = { plots: [null, 'Arsa ve Bölgeler'], market: ['pazar', 'Piyasa ve Tedarik'], sell: ['pazar', 'Malını Sat'], auction: ['artirma', 'Arsa Açık Artırması'], company: ['sirket', 'Şirket ve Sözleşmeler'], crew: ['uretim', 'Üretim ve İşçiler'], invest: ['finans', 'Yatırımlar'], bank: ['finans', 'Kredi ve Vergi'], report: ['sirket', 'Finans Raporu'], compete: ['rekabet', 'Kooperatif ve Rekabet'], news: ['pazar', 'Kasaba Gazetesi'] };
+  const HERO = { plots: [null, 'Arsa ve Bölgeler'], market: ['pazar', 'Piyasa ve Tedarik'], sell: ['pazar', 'Malını Sat'], auction: ['artirma', 'Arsa Açık Artırması'], company: ['sirket', 'Şirket ve Sözleşmeler'], crew: ['uretim', 'Üretim ve İşçiler'], invest: ['finans', 'Yatırımlar'], bank: ['finans', 'Kredi ve Vergi'], report: ['sirket', 'Finans Raporu'], compete: ['rekabet', 'Kooperatif ve Rekabet'], news: ['pazar', 'Kasaba Gazetesi'], club: ['kulup', 'Tüccarlar Kulübü'] };
   const WHEAT = '<svg class="wheat" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M5 21C9 15 13 10 20 4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/><g fill="currentColor"><ellipse cx="9" cy="14" rx="1.6" ry="3.2" transform="rotate(40 9 14)"/><ellipse cx="12.5" cy="10.5" rx="1.6" ry="3.2" transform="rotate(40 12.5 10.5)"/><ellipse cx="16" cy="7" rx="1.6" ry="3.2" transform="rotate(40 16 7)"/><ellipse cx="7" cy="11" rx="1.4" ry="2.8" transform="rotate(-50 7 11)"/><ellipse cx="10.5" cy="7.5" rx="1.4" ry="2.8" transform="rotate(-50 10.5 7.5)"/></g></svg>';
   const ribbon = t => `<h2 class="ribbon">${WHEAT}<span>${t}</span>${WHEAT}</h2>`;
   function heroBanner(tab) {
@@ -1713,7 +1735,126 @@
     return out;
   }
 
-  const VIEWS = { sell: viewSell, bank: () => viewCompany().filter(x => x[0] === 'loan' || x[0] === 'tax'), company: () => viewCompany().filter(x => x[0] !== 'loan' && x[0] !== 'tax'), compete: viewCompete, invest: viewInvest, crew: viewCrew, plots: viewPlots, market: viewMarket, auction: viewAuction, news: viewNews, report: viewReport };
+
+  // ---------- Tüccarlar Kulübü: Tüccar unvanından sonra açılır, bowling maçları ----------
+  // Üyelik bir kez alınır ve yeni sezona taşınır. Bahisli maç günde CLUB_DAILY kez; antrenman sınırsız ve ücretsiz.
+  // Rakiplerin isabet olasılıkları: q1 ilk atışta her lobutu, q2 ikinci atışta kalan her lobutu devirme olasılığı.
+  const CLUB_RANK = 2, CLUB_FEE = 2000000, CLUB_DAILY = 3, BOWL_N = 5, STAKES = [100000, 500000, 2000000];
+  const BOWL_RIVALS = [{ lvl: 'Kolay', q1: 0.72, q2: 0.5 }, { lvl: 'Orta', q1: 0.8, q2: 0.62 }, { lvl: 'Zor', q1: 0.87, q2: 0.74 }];
+  const club = () => { ensureComp(); if (!s.comp.club) s.comp.club = { member: false, day: -1, n: 0, played: 0, won: 0, best: 0, streak: 0 }; const c = s.comp.club, d = Math.floor(s.t / 1440); if (c.day !== d) { c.day = d; c.n = 0; } return c; };
+  const clubOpen = () => club().member || rankNow() >= CLUB_RANK;
+  const binom = (n, q) => { let k = 0; for (let i = 0; i < n; i++) if (Math.random() < q) k++; return k; };
+  function rivalFrames(q1, q2) {
+    const out = [];
+    for (let f = 0; f < BOWL_N; f++) {
+      const a = binom(10, q1);
+      if (f < BOWL_N - 1) { out.push(a === 10 ? [10] : [a, binom(10 - a, q2)]); continue; }
+      if (a === 10) { const b = binom(10, q1); out.push([10, b, b === 10 ? binom(10, q1) : binom(10 - b, q2)]); }
+      else { const b = binom(10 - a, q2); out.push(a + b === 10 ? [a, b, binom(10, q1)] : [a, b]); }
+    }
+    return out;
+  }
+  const lastF = i => i === BOWL_N - 1;
+  function frameDone(fr, i) {
+    if (!lastF(i)) return fr[0] === 10 || fr.length === 2;
+    return fr.length === 3 || (fr.length === 2 && fr[0] + fr[1] < 10);
+  }
+  // Birikimli skor: atış eksikse o frame'in skoru henüz hesaplanamaz (null)
+  function bowlScore(frames) {
+    const rolls = frames.flat(), out = []; let ri = 0, tot = 0;
+    for (let i = 0; i < frames.length; i++) {
+      const fr = frames[i]; let v = null;
+      if (lastF(i)) v = frameDone(fr, i) ? fr.reduce((a, b) => a + b, 0) : null;
+      else if (fr[0] === 10) v = rolls.length > ri + 2 ? 10 + rolls[ri + 1] + rolls[ri + 2] : null;
+      else if (fr.length === 2) v = fr[0] + fr[1] === 10 ? (rolls.length > ri + 2 ? 10 + rolls[ri + 2] : null) : fr[0] + fr[1];
+      ri += fr.length;
+      if (v == null) { out.push(null); for (let j = i + 1; j < frames.length; j++) out.push(null); break; }
+      tot += v; out.push(tot);
+    }
+    return out;
+  }
+  const bowlTotal = fr => { const sc = bowlScore(fr); return sc.length ? sc[sc.length - 1] || 0 : 0; };
+  // Atış işaretleri: X strike, / spare, - hiç
+  function marks(fr) {
+    let full = true, prev = 0;
+    return fr.map(v => {
+      if (full && v === 10) return 'X';
+      if (!full && prev + v === 10) { full = true; return '/'; }
+      if (full) { full = false; prev = v; } else full = true;
+      return v ? String(v) : '-';
+    }).join(' ');
+  }
+  function bowlStart(rv, stake) {
+    const r = rv == null ? null : { ...BOWL_RIVALS[rv], n: s.comp.npc[rv % s.comp.npc.length].n };
+    ui.bowl = { rv: r, stake, me: [], them: r ? rivalFrames(r.q1, r.q2) : [], standing: 'all', done: false, res: null };
+  }
+  // Pistten gelen atış sonucu: frame'e işle, lobutları yeniden diz ya da kalanları bırak
+  function bowlRoll(n, standing) {
+    const b = ui.bowl; if (!b || b.done) return;
+    let i = b.me.length - 1;
+    if (i < 0 || frameDone(b.me[i], i)) { b.me.push([]); i++; }
+    const fr = b.me[i]; fr.push(n);
+    const k = fr.length, lst = lastF(i);
+    const mk = marks(fr).split(' ').pop(), msg = mk === 'X' ? 'Strike!' : mk === '/' ? 'Spare!' : n ? n + ' lobut' : 'Iska';
+    toast(msg);
+    if (frameDone(fr, i)) b.standing = 'all';
+    else if (lst && k === 1) b.standing = n === 10 ? 'all' : standing;
+    else if (lst && k === 2) b.standing = fr[0] === 10 ? (n === 10 ? 'all' : standing) : 'all';
+    else b.standing = standing;
+    if (b.me.length === BOWL_N && frameDone(b.me[BOWL_N - 1], BOWL_N - 1)) bowlEnd();
+  }
+  function bowlEnd() {
+    const b = ui.bowl, c = club(), me = bowlTotal(b.me); b.done = true;
+    c.best = Math.max(c.best || 0, me);
+    if (!b.rv) { b.res = 'p'; return; }
+    const them = bowlTotal(b.them); c.played++;
+    if (me > them) { b.res = 'w'; c.won++; c.streak = (c.streak || 0) + 1; finInc('Kulüp ödülü', b.stake * 2); news('Kulüpte galibiyet', `Bowling maçında ${esc(b.rv.n)} karşısında ${me}-${them} kazandın. Ortadaki ${fmt(b.stake * 2)} senin.`); }
+    else if (me === them) { b.res = 'd'; finInc('Kulüp ödülü', b.stake); }
+    else { b.res = 'l'; c.streak = 0; }
+  }
+  function bowlTable(b) {
+    const reveal = b.done ? BOWL_N : b.me.filter((f, i) => frameDone(f, i)).length;
+    const row = (name, fr, n) => { const sc = bowlScore(fr.slice(0, n)); return `<tr><th>${esc(name)}</th>${Array.from({ length: BOWL_N }, (_, i) => `<td><span class="mk">${fr[i] && i < n ? marks(fr[i]) : '&nbsp;'}</span><b class="num">${sc[i] != null && i < n ? sc[i] : '&nbsp;'}</b></td>`).join('')}<td class="tot num">${n ? (sc.filter(x => x != null).pop() || 0) : 0}</td></tr>`; };
+    return `<div class="scroll"><table class="t bowltab"><tr><th></th>${Array.from({ length: BOWL_N }, (_, i) => `<th>${i + 1}</th>`).join('')}<th>Toplam</th></tr>${row('Sen', b.me, b.me.length)}${b.rv ? row(b.rv.n, b.them, reveal) : ''}</table></div>`;
+  }
+  function viewClub() {
+    const c = club(), out = [], r = RANKS[CLUB_RANK];
+    if (!c.member) {
+      const ok = rankNow() >= CLUB_RANK, nw = netWorth();
+      out.push(['cl0', `<div class="card"><h3>Tüccarlar Kulübü</h3><p>Kasabanın varlıklı tüccarları akşamları kulüpte buluşur. Cilalı ahşap pistte bowling oynar, rakiplerine meydan okurlar.</p><ul class="small"><li>Kolay, orta ve zor rakiplere karşı ${BOWL_N} frame'lik bowling maçları</li><li>Bahisli maçta kazanan ortadaki parayı alır (günde ${CLUB_DAILY} maç)</li><li>Ücretsiz antrenman ve kulüp rekoru</li><li>Üyelik yeni sezona taşınır</li></ul>${ok ? `<div class="row"><span>Üyelik ücreti <b class="num">${fmt(CLUB_FEE)}</b></span>${btn('Üye ol', 'clubJoin')}</div>` : `<p class="small"><b>Kilitli:</b> ${r.n} unvanı gerekiyor (net değer ${fmt(r.at)}).</p><div class="bar" role="progressbar" aria-label="Kulübe ilerleme" aria-valuenow="${Math.round(Math.min(1, nw / r.at) * 100)}" aria-valuemin="0" aria-valuemax="100"><i style="width:${(Math.min(1, nw / r.at) * 100).toFixed(1)}%"></i></div><p class="small muted num">${fmt(nw)} / ${fmt(r.at)}</p>`}</div>`]);
+      return out;
+    }
+    const b = ui.bowl;
+    if (b) {
+      const head = b.rv ? `${esc(b.rv.n)} ile maç · bahis ${fmt(b.stake)}` : 'Antrenman';
+      out.push(['bs', `<div class="card"><div class="row head"><h3>${head}</h3>${b.done ? '' : btn('Bırak', 'bowlQuit', {}, 'ghost')}</div>${bowlTable(b)}${b.done ? bowlResult(b) : ''}</div>`]);
+      if (!b.done) out.push(['lane', `<div class="lanebox"><canvas id="bowlCv" aria-label="Bowling pisti. Topu parmağınla yukarı kaydırarak at; kaydırırken yolu kıvırırsan top falso alır."></canvas></div>`]);
+      return out;
+    }
+    const left = CLUB_DAILY - c.n, st = ui.stake || STAKES[0];
+    out.push(['cl1', `<div class="card"><div class="row head"><h3>Bowling maçı</h3><span class="small muted">bugün ${left} / ${CLUB_DAILY} maç hakkı</span></div><p class="small muted">${BOWL_N} frame oynanır. Kazanırsan bahsin iki katını alırsın, berabere kalırsan bahsin geri döner.</p><div class="row small"><span>Bahis</span><div class="seg" role="group" aria-label="Bahis">${STAKES.map(v => `<button type="button" data-a="stake" data-v="${v}" class="${st === v ? 'on' : ''}" aria-pressed="${st === v}">${fmt(v)}</button>`).join('')}</div></div>${BOWL_RIVALS.map((x, i) => `<div class="row"><span><b>${esc(s.comp.npc[i % s.comp.npc.length].n)}</b><br><span class="small muted">${x.lvl} rakip</span></span>${left > 0 && s.money >= st ? btn('Meydan oku', 'bowlGo', { v: i }) : `<span class="small muted">${left > 0 ? 'Kasa yetmiyor' : 'Yarın'}</span>`}</div>`).join('')}</div>`]);
+    out.push(['cl2', `<div class="card"><div class="row head"><h3>Antrenman</h3>${btn('Pisti aç', 'bowlGo', { v: 'p' }, 'ghost')}</div><p class="small muted">Para yok, sınır yok. Topu yukarı kaydırarak at; hızlı kaydırırsan top hızlı gider, kaydırırken yolu kıvırırsan top sona doğru kıvrılır.</p></div>`]);
+    out.push(['cl3', `<div class="card"><h3>Kulüp karnesi</h3><table class="t"><tr><td>Bahisli maç</td><td class="num">${c.played}</td></tr><tr><td>Galibiyet</td><td class="num">${c.won}${c.streak > 1 ? ` <span class="small up">(${c.streak} üst üste)</span>` : ''}</td></tr><tr><td>En yüksek skorun</td><td class="num">${c.best || '—'} / ${BOWL_N * 30}</td></tr></table></div>`]);
+    return out;
+  }
+  function bowlResult(b) {
+    const me = bowlTotal(b.me);
+    const t = b.res === 'p' ? `Skorun <b class="num">${me}</b>.` : b.res === 'w' ? `<span class="up">Kazandın!</span> ${fmt(b.stake * 2)} kasaya girdi.` : b.res === 'd' ? 'Berabere. Bahsin geri döndü.' : `<span class="down">Kaybettin.</span> ${fmt(b.stake)} bahis gitti.`;
+    return `<p>${t}</p><div class="row">${btn('Kulübe dön', 'bowlBack', {}, 'ghost')}${b.rv ? '' : btn('Bir daha', 'bowlGo', { v: 'p' })}</div>`;
+  }
+  function mountBowl() {
+    const cv = main.querySelector('#bowlCv'); if (!cv || cv._bw || !window.TezgahBowling) return;
+    const bw = cv._bw = window.TezgahBowling.mount(cv, {
+      onRoll(n, standing) {
+        bw.setEnabled(false); bowlRoll(n, standing); render();
+        setTimeout(() => { if (bw.dead || !ui.bowl || ui.bowl.done) return; bw.setPins(ui.bowl.standing); bw.setEnabled(true); }, 900);
+      },
+    });
+    bw.setPins(ui.bowl.standing);
+    if (!ui.bowl.me.length) requestAnimationFrame(() => cv.scrollIntoView({ block: 'end', behavior: 'smooth' }));
+  }
+
+  const VIEWS = { club: viewClub, sell: viewSell, bank: () => viewCompany().filter(x => x[0] === 'loan' || x[0] === 'tax'), company: () => viewCompany().filter(x => x[0] !== 'loan' && x[0] !== 'tax'), compete: viewCompete, invest: viewInvest, crew: viewCrew, plots: viewPlots, market: viewMarket, auction: viewAuction, news: viewNews, report: viewReport };
   const TABS = [['plots', 'Arsalar'], ['market', 'Pazar'], ['company', 'Şirket'], ['crew', 'İşçiler'], ['invest', 'Yatırım'], ['auction', 'Artırma'], ['compete', 'Rekabet'], ['news', 'Gazete'], ['report', 'Rapor']];
   let root, main, hud, nav, sheet;
 
@@ -1756,6 +1897,7 @@
       if (sx != null && !ui.wcenter) w1.scrollLeft = sx;
       else { const el = w1.querySelector('.wplot.on') || w1.querySelector('.wplot'); if (el) w1.scrollLeft = el.offsetLeft - w1.clientWidth / 2; ui.wcenter = false; }
     }
+    if (ui.tab === 'club') mountBowl();
     paint(nav, [['n', navBar()]]);
     const qpl = !ui.confirm && ui.tab === 'plots' && worldOk() && !wide() && plot(ui.sheetPlot);
     paint(sheet, ui.confirm ? [['c', confirmSheet()]] : qpl ? [['q', `<div class="qsheet">${quickPanel(qpl)}</div>`]] : []);
@@ -1792,7 +1934,7 @@
     render();
   }
 
-  window.__tezgah = { get state() { return s; }, away(ms) { catchUp(ms); render(); }, advance(min) { for (let i = 0; i < min; i += 5) step(5); render(); }, reset() { newGame(); render(); },
+  window.__tezgah = { get state() { return s; }, get ui() { return ui; }, away(ms) { catchUp(ms); render(); }, advance(min) { for (let i = 0; i < min; i += 5) step(5); render(); }, reset() { newGame(); render(); },
     // Denge testleri için: oyun içi eylemler ve tablolar (bot simülasyonu)
     dbg: { A, C, B, P, R, RANKS, netWorth, price, step, compDay, endSeason, loanLimit, loanDebt, depth, curSeason, taxBase, wSell, openR } };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();

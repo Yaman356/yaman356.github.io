@@ -44,7 +44,7 @@ html = (
     '<div id="app"></div>\n'
     + script('icons.js')
     + '<script>window.TezgahAssets = ' + json.dumps(inlined) + ';</script>\n'
-    + script('art.js') + script('vendor/pixi.min.js') + script('map-pixi.js') + script('game.js')
+    + script('art.js') + script('vendor/pixi.min.js') + script('map-pixi.js') + script('bowling.js') + script('game.js')
 )
 OUT.write_text(html, encoding='utf-8')
 print(OUT, round(OUT.stat().st_size / 1024), 'KB,', len(inlined), 'görsel gömüldü')
