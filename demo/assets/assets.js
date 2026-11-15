@@ -1,6 +1,7 @@
 // Üretilen görsellerin listesi (art-src/process.py yazar; elle düzenleme).
 // Oyun bir anahtar için burada görsel varsa kodla çizilmiş ikon yerine onu kullanır.
 window.TezgahAssets = {
+  "harita": "assets/harita.webp",
   "alet": "assets/alet.webp",
   "bugday": "assets/bugday.webp",
   "celik": "assets/celik.webp",

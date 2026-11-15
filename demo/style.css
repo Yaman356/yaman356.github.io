@@ -191,3 +191,78 @@ input[type="checkbox"] { min-height: 0; width: 22px; height: 22px; padding: 0; a
 .seg .btn { min-height: 40px; border-radius: 0; border: 0; }
 .sell .step .seg { align-self: flex-start; }
 .autobox { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--line); display: flex; flex-direction: column; gap: 6px; }
+
+/* ---------- Harita görünümü demosu: parşömen paneller, lacivert üst çubuk, boyalı dünya haritası ---------- */
+:root {
+  --bg: #ece3cf; --surface: #fbf6ea; --fg: #1f2a33; --muted: #6b6457; --line: #dccfb2; --soft: #f1e8d4;
+  --accent: #2e7d3a; --on-accent: #ffffff; --amber: #b0640f; --good: #2e7d3a; --bad: #b3372c;
+  --navy: #1f2d3d; --navy2: #2b3d52; --on-navy: #f6eedb; --gold: #e2b23c;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg: #141b22; --surface: #1d2731; --fg: #ece4d2; --muted: #a59d8c; --line: #33404d; --soft: #24303b; --accent: #5cbf6a; --on-accent: #0c1f10; --navy: #0d141b; --navy2: #1a2632; --on-navy: #ece4d2; }
+}
+:root[data-theme="dark"] { --bg: #141b22; --surface: #1d2731; --fg: #ece4d2; --muted: #a59d8c; --line: #33404d; --soft: #24303b; --accent: #5cbf6a; --on-accent: #0c1f10; --navy: #0d141b; --navy2: #1a2632; --on-navy: #ece4d2; }
+body::before { background: var(--navy); }
+#hud { background: var(--navy); color: var(--on-navy); border-bottom: 3px solid var(--gold); margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); padding-inline: max(16px, env(safe-area-inset-left, 0px)); padding-bottom: 10px; }
+#hud .muted { color: #c9bfa8; }
+#hud .speed button { color: var(--on-navy); border-color: #46596d; background: var(--navy2); }
+#hud .speed button.on { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+#hud .bar { background: #3a4c60; }
+#hud .bar i { background: var(--gold); }
+.card { background: var(--surface); border: 1px solid var(--line); box-shadow: 0 2px 0 #00000012, 0 6px 16px -10px #00000040; }
+.btn:not(.ghost) { box-shadow: inset 0 -3px 0 #00000026; }
+.choice .bimg { width: 100%; max-width: 120px; aspect-ratio: 1; object-fit: contain; margin: 0 auto; display: block; }
+.choices .choice { background: var(--soft); border: 2px solid var(--line); }
+.choices .choice:hover, .choices .choice:focus-visible { border-color: var(--accent); }
+
+/* Dünya haritası: telefonda yatay kaydırılan, geniş ekranda tam görünen boyalı harita */
+.world { position: relative; margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: thin; border-bottom: 3px solid var(--gold); background: #5d8a3c; }
+.world-in { position: relative; height: min(62vh, 520px); aspect-ratio: 3 / 2; }
+.world-bg { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; object-fit: cover; user-select: none; -webkit-user-drag: none; }
+.wreg { position: absolute; transform: translate(-50%, -50%); background: var(--navy); color: var(--on-navy); font: 600 12px/1.2 var(--display); padding: 4px 10px; border-radius: 999px; border: 1.5px solid var(--gold); white-space: nowrap; pointer-events: none; box-shadow: 0 2px 6px #0006; display: flex; flex-direction: column; align-items: center; }
+.wreg small { font: 500 10px var(--body); opacity: .85; }
+.wreg.locked { background: #1f2d3dcc; border-color: #8a8a8a; }
+.wplot { position: absolute; transform: translate(-50%, -72%); width: 11%; min-width: 48px; aspect-ratio: 1; padding: 0; border: 0; background: none; cursor: pointer; display: grid; place-items: end center; }
+.wplot img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 4px 4px #0005); transition: transform .15s; }
+.wplot .lot { width: 88%; aspect-ratio: 2 / 1; margin-bottom: 8%; transform: rotate(0); border: 3px dashed #ffffffd9; border-radius: 8px; background: #7ccf6a59; clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); box-shadow: none; }
+.wplot.empty .lot { background: #9be38a80; }
+.wplot.sale .lot { background: #e2b23c66; }
+.wplot.empty, .wplot.sale { transform: translate(-50%, -50%); place-items: center; }
+.wplot.empty .lot, .wplot.sale .lot { margin: 0; width: 100%; }
+.wplot.empty .wpin { top: 50%; transform: translate(-50%, -50%); }
+.wplot.empty .wname { bottom: 10%; }
+.wplot.on img, .wplot:hover img { transform: translateY(-3px) scale(1.04); }
+.wplot.on .lot { background: #2e7d3acc; }
+.wplot:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; border-radius: 12px; }
+.wpin { position: absolute; top: 0; left: 50%; transform: translate(-50%, -40%); width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font: 700 15px var(--display); color: #fff; background: var(--navy); border: 2px solid #fff; box-shadow: 0 2px 6px #0007; }
+.wpin:empty { display: none; }
+.wpin.build { background: var(--accent); }
+.wpin.warn { background: #d9822b; }
+.wpin.ok { background: var(--accent); }
+.wpin.busy { background: #3b7fc4; }
+.wname { position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); font: 600 11px var(--body); color: #fff; background: #1f2d3dcc; padding: 1px 7px; border-radius: 6px; white-space: nowrap; }
+.wtag { position: absolute; bottom: 30%; left: 50%; transform: translateX(-50%); background: var(--gold); color: #1f2d3d; font: 700 11px var(--display); padding: 2px 8px; border-radius: 6px; white-space: nowrap; }
+.maphint { display: none; }
+
+/* Geniş ekran (tablet yatay, bilgisayar): üstte lacivert çubuk ve sekmeler, solda harita, sağda seçili arsa paneli */
+@media (min-width: 900px) {
+  #app { max-width: 1440px; display: grid; grid-template-columns: 1fr; padding-bottom: 24px; }
+  #hud { grid-row: 1; margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px 24px; padding-block: 10px; }
+  #hud section { flex: 1 1 auto; }
+  #hud section[data-k="rank"] { flex-basis: 100%; }
+  #nav { grid-row: 2; position: sticky; top: 0; z-index: 6; background: var(--navy2); border: 0; margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); padding: 0 max(16px, env(safe-area-inset-left, 0px)); }
+  #nav section { max-width: none; justify-content: flex-start; gap: 4px; }
+  #nav button { flex: 0 0 auto; flex-direction: row; gap: 8px; min-height: 48px; padding: 0 18px; color: #d8cfb9; font-size: 14px; }
+  #nav button.on { color: #fff; background: #ffffff14; }
+  #nav .badge { top: 6px; left: 30px; }
+  #nav button.on::before { top: auto; bottom: 0; left: 12px; right: 12px; height: 3px; border-radius: 3px 3px 0 0; background: var(--gold); }
+  #main { grid-row: 3; }
+  #main.worldmode { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 16px; align-items: start; padding-top: 16px; }
+  #main.worldmode > section { grid-column: 2; min-width: 0; }
+  #main.worldmode > section[data-k="world"] { grid-column: 1; grid-row: 1 / span 40; position: sticky; top: 64px; }
+  #main.worldmode .world { margin: 0; border: 3px solid var(--gold); border-radius: 16px; overflow: hidden; }
+  #main.worldmode .world-in { height: auto; width: 100%; max-height: calc(100vh - 170px); margin: 0 auto; }
+  #main.worldmode > section[data-k^="p"] .card.sum { display: none; }
+  #main.worldmode > section[data-k^="p"]:has(.card.sum) { display: none; }
+}
+@media (min-width: 900px) { #main:not(.worldmode) { width: 100%; max-width: 960px; margin-inline: auto; } }

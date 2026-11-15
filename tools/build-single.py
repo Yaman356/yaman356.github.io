@@ -1,12 +1,12 @@
 """Demo'yu tek bir HTML dosyasına derler: CSS, betikler ve görseller (data: URI) sayfanın içine gömülür.
 Ayrı görsel dosyası olmadığından claude.ai'de herkese açık paylaşım için kullanılır.
-Kullanım: python tools/build-single.py  ->  .claude/pub/tezgah.html
+Kullanım: python tools/build-single.py [çıktı.html]  (varsayılan: .claude/pub/tezgah.html)
 """
-import base64, json, pathlib, re
+import base64, json, pathlib, re, sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 DEMO = ROOT / 'demo'
-OUT = ROOT / '.claude' / 'pub' / 'tezgah.html'
+OUT = pathlib.Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else ROOT / '.claude' / 'pub' / 'tezgah.html'
 
 assets_js = (DEMO / 'assets' / 'assets.js').read_text(encoding='utf-8')
 m = re.search(r'window\.TezgahAssets\s*=\s*(\{.*?\});', assets_js, re.S)

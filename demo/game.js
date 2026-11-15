@@ -644,6 +644,7 @@
     focus(d) { ui.tab = 'plots'; ui.open = +d.plot; ui.focusPlot = +d.plot; },
     tab(d) { ui.tab = d.v; ui.last[navOf(d.v)[0]] = d.v; if (d.v === 'news') { s.unread = 0; ui.away = null; } window.scrollTo(0, 0); },
     nav(d) { const g = NAV.find(n => n[0] === d.v); if (g) A.tab({ v: ui.last[g[0]] || g[2][0] }); },
+    wopen(d) { ui.open = +d.plot; if (!matchMedia('(min-width: 900px)').matches) ui.focusPlot = ui.open; },
     openPlot(d) { ui.open = ui.open === +d.plot ? null : +d.plot || null; if (ui.open) ui.focusPlot = ui.open; },
     frac(d) { ui.frac = +d.v; },
     mode(d) { s.mode = d.v === 'adv' ? 'adv' : 'basit'; toast(adv() ? 'Gelişmiş görünüm: otomasyon ve fiyat kuralları açık' : 'Basit görünüm: yalnızca temel kontroller'); },
@@ -847,6 +848,42 @@
   }
   const otherPlots = pl => s.plots.filter(x => x !== pl && x.b);
   const pixiMap = () => window.TezgahMap && window.TezgahMap.ok;
+  // ---------- Boyalı dünya haritası (harita görünümü demosu) ----------
+  // Tek bir boyalı harita görseli (assets/harita) üstüne arsalar HTML düğmeleri olarak yerleşir.
+  // Koordinatlar görselin yüzdesidir; her bölgede üç boyalı boş parsel vardır, fazlası yanlarına dizilir.
+  const worldOk = () => !!(window.TezgahAssets && window.TezgahAssets.harita);
+  // Boş parsellerin merkezleri (harita görselinin yüzdesi) ve bölge etiketlerinin yeri
+  const WSLOT = {
+    merkez: [[26, 24], [11, 38], [26, 38]], merkez_lab: [7, 7],
+    kirsal: [[48, 25], [44, 33], [56, 33]], kirsal_lab: [37, 13],
+    dag: [[75, 28], [90, 28], [83, 36]], dag_lab: [70, 6],
+    liman: [[26, 62], [17, 67], [26, 73]], liman_lab: [9, 56],
+    ova: [[49, 61], [40, 71], [56, 71]], ova_lab: [46, 52],
+    metropol: [[75, 66], [86, 69], [79, 75]], metropol_lab: [71, 55],
+  };
+  const wPos = (r, i) => { const sl = WSLOT[r] || [[50, 50]]; if (i < sl.length) return sl[i]; const b = sl[sl.length - 1], k = i - sl.length + 1; return [b[0] + 5 * k, b[1] + 3 * k]; };
+  function worldMap() {
+    const A2 = window.TezgahAssets, open = new Set(openR()), m = mapModel();
+    let h = '<div class="world" role="group" aria-label="Harita"><div class="world-in"><img class="world-bg" src="' + A2.harita + '" alt="" draggable="false">';
+    for (const r in R) {
+      const lab = (WSLOT[r + '_lab'] || wPos(r, 0));
+      if (!open.has(r)) { h += `<span class="wreg locked" style="left:${lab[0]}%;top:${lab[1]}%">🔒 ${R[r].n}<small>${RANKS[R[r].rank] ? RANKS[R[r].rank].n + ' olunca' : ''}</small></span>`; continue; }
+      h += `<span class="wreg" style="left:${lab[0]}%;top:${lab[1]}%">${R[r].n}</span>`;
+      const reg = m.regions[r] || { plots: [], auctions: [] };
+      const mine = s.plots.filter(p => p.region === r && !p.part);
+      mine.forEach((pl, i) => {
+        const [x, y] = wPos(r, i), b = pl.b, mm = reg.plots.find(q => q.id === pl.id) || {};
+        const st = plotStatus(pl), on = ui.open === pl.id;
+        const img = b && A2[b.type + '_' + Math.min(3, b.level)];
+        const flag = !b ? 'build' : mm.warn || /yok|dolu|yetersiz/i.test(st[0]) ? 'warn' : (mm.ready ? 'ok' : (mm.busy ? 'busy' : ''));
+        h += `<button type="button" class="wplot ${b ? 'built' : 'empty'} ${on ? 'on' : ''}" style="left:${x}%;top:${y}%" data-a="wopen" data-plot="${pl.id}" aria-label="Arsa ${pl.id}${b ? ' · ' + B[b.type].n : ' · boş'} · ${esc(st[0])}" aria-pressed="${on}">`
+          + (img ? `<img src="${img}" alt="">` : '<span class="lot"></span>')
+          + `<span class="wpin ${flag}">${flag === 'build' ? '+' : flag === 'warn' ? '!' : flag === 'ok' ? '✓' : flag === 'busy' ? '⋯' : ''}</span><span class="wname">Arsa ${pl.id}</span></button>`;
+      });
+      reg.auctions.forEach((a, j) => { const [x, y] = wPos(r, mine.length + j); h += `<button type="button" class="wplot sale" style="left:${x}%;top:${y}%" data-a="tab" data-v="auction" aria-label="${R[r].n} arsası satışta"><span class="lot"></span><span class="wtag">Satışta</span></button>`; });
+    }
+    return h + '</div></div>';
+  }
   const focusFromMap = id => { A.focus({ plot: id }); render(); focusCard(); };
 
   // ---------- Görünüm ----------
@@ -867,7 +904,7 @@
     }
     if (!pl.b) {
       h += '<p>Bu arsaya ne kuracaksın?</p><div class="choices">';
-      for (const k in B) h += `<button type="button" class="choice" data-a="build" data-plot="${pl.id}" data-v="${k}">${ic(k, 34)}<b>${B[k].n}</b><span>${fmt(B[k].cost)}</span><small>${B[k].hint}${reg.bonus === k ? ' · bölge bonusu' : ''}</small></button>`;
+      for (const k in B) h += `<button type="button" class="choice" data-a="build" data-plot="${pl.id}" data-v="${k}">${window.TezgahAssets && window.TezgahAssets[k + '_1'] ? `<img class="bimg" src="${window.TezgahAssets[k + '_1']}" alt="">` : ic(k, 34)}<b>${B[k].n}</b><span>${fmt(B[k].cost)}</span><small>${B[k].hint}${reg.bonus === k ? ' · bölge bonusu' : ''}</small></button>`;
       return h + '</div></div>';
     }
     const b = pl.b, bt = B[b.type];
@@ -946,12 +983,15 @@
   function viewPlots() {
     const out = [];
     const next = GOALS.findIndex((g, i) => !s.goals[i]);
+    if (worldOk() && !plot(ui.open) && matchMedia('(min-width: 900px)').matches) ui.open = (s.plots.find(p => !p.part) || {}).id;
+    if (worldOk()) out.push(['world', worldMap()]);
     if (ui.away) out.push(['away', awayCard(ui.away)]);
     if (tutOn()) out.push(['tut', tutCard()]);
     else out.push(['goal', next < 0 ? `<div class="goal"><span class="small">Sıradaki unvan</span><b>${RANKS[rankNow() + 1] ? RANKS[rankNow() + 1].n + ' ol: net değer ' + fmt(RANKS[rankNow() + 1].at) : 'En üst unvandasın. Büyümeye devam et'}</b></div>` : `<div class="goal"><span class="small">Sıradaki hedef ${next + 1}/${GOALS.length} · ödül ${fmt(GOALS[next][2])}</span><b>${goalText(next)}</b></div>`]);
     const hint = '<p class="muted small maphint">Haritada bir binaya dokununca kartına gidersin. Ünlem işareti, binanın ilgilenilmesi gereken bir durumu olduğunu gösterir.</p>';
     // PixiJS haritası kendi tuvallerini yönetir; buradaki kutu sabit kalır ve render() içinde doldurulur
-    if (pixiMap()) out.push(['map', '<div class="map" data-pixi></div>' + hint]);
+    if (worldOk()) { /* yukarıda eklendi */ }
+    else if (pixiMap()) out.push(['map', '<div class="map" data-pixi></div>' + hint]);
     else if (window.TezgahArt) out.push(['svgmap', window.TezgahArt.map(mapModel()) + hint]);
     for (const pl of s.plots) out.push(['p' + pl.id, ui.open === pl.id ? plotCard(pl) : plotSummary(pl)]);
     return out;
@@ -1623,11 +1663,18 @@
       ['rank', rankBar()],
     ]);
     const sub = subTabs();
+    const w0 = main.querySelector('.world'), sx = w0 ? w0.scrollLeft : null;
+    main.dataset.tab = ui.tab; main.classList.toggle('worldmode', ui.tab === 'plots' && worldOk());
     paint(main, sub ? [['sub', sub], ...VIEWS[ui.tab]()] : VIEWS[ui.tab]());
+    const w1 = main.querySelector('.world');
+    if (w1) {
+      if (sx != null && !ui.wcenter) w1.scrollLeft = sx;
+      else { const el = w1.querySelector('.wplot.on') || w1.querySelector('.wplot'); if (el) w1.scrollLeft = el.offsetLeft - w1.clientWidth / 2; ui.wcenter = false; }
+    }
     paint(nav, [['n', navBar()]]);
     paint(sheet, ui.confirm ? [['c', confirmSheet()]] : []);
     if (ui.confirm && !sheet.contains(document.activeElement)) { const b = sheet.querySelector('.btn'); if (b) b.focus(); }
-    if (ui.tab === 'plots' && pixiMap()) window.TezgahMap.update(main.querySelector('[data-pixi]'), mapModel(), focusFromMap);
+    if (ui.tab === 'plots' && pixiMap() && !worldOk()) window.TezgahMap.update(main.querySelector('[data-pixi]'), mapModel(), focusFromMap);
     main.querySelectorAll('[data-prog]').forEach(el => { const [id, i] = el.dataset.prog.split(':'); const pl = plot(+id), ln = pl && pl.b && pl.b.lines[+i]; el.style.width = ln && ln.busy ? Math.min(100, ln.prog / P[ln.r].t * 100) + '%' : '0%'; });
   }
 
