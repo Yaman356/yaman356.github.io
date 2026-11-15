@@ -628,6 +628,19 @@
     nav(d) { const g = NAV.find(n => n[0] === d.v); if (g) A.tab({ v: ui.last[g[0]] || g[2][0] }); },
     openPlot(d) { ui.open = ui.open === +d.plot ? null : +d.plot || null; if (ui.open) ui.focusPlot = ui.open; },
     frac(d) { ui.frac = +d.v; },
+    mode(d) { s.mode = d.v === 'adv' ? 'adv' : 'basit'; toast(adv() ? 'Gelişmiş görünüm: otomasyon ve fiyat kuralları açık' : 'Basit görünüm: yalnızca temel kontroller'); },
+    goSell(d) { const pl = plot(+d.plot); ui.sp = +d.plot; ui.sk = d.p; ui.sq = pl ? part(pl.inv[d.p]) : null; A.tab({ v: 'sell' }); },
+    goBuy(d) { ui.mp = d.v; if (d.plot) ui.dest = +d.plot; A.tab({ v: 'market' }); },
+    sk(d) { ui.sk = d.v; ui.sq = null; },
+    sqf(d) { const pl = plot(ui.sp), have = pl ? pl.inv[ui.sk] || 0 : 0; ui.sq = Math.max(1, Math.ceil(have * +d.v)); },
+    sm(d) { ui.sm = +d.v; },
+    sellList() {
+      const pl = plot(ui.sp), p = ui.sk, have = pl ? pl.inv[p] || 0 : 0, q = Math.min(Math.floor(ui.sq) || 0, have); if (!(q > 0)) return toast('Satılacak miktar yok');
+      const unit = sellUnit(p); if (!(unit > 0)) return toast('Önce bir fiyat seç');
+      s.mine.push({ id: s.nextId++, p, qty: q, price: unit, acc: 0, plot: pl.id }); add(pl, p, -q); pl.last = s.t; ui.sq = null;
+      toast(qtyTxt(p, q) + ' ' + P[p].n.toLocaleLowerCase('tr-TR') + ' pazara kondu: birimi ' + fmt1(unit));
+    },
+    cheapen(d) { const l = s.mine.find(x => x.id === +d.id); if (l && !l.auto) l.price = Math.round(l.price * 0.95 * 10) / 10; },
     mprod(d) { ui.mp = d.v || null; window.scrollTo(0, 0); },
     confirmNo() { ui.confirm = null; },
     confirmOk() { const c = ui.confirm; ui.confirm = null; if (c && A[c.a]) A[c.a]({ ...c.d, ok: '1' }); },
@@ -719,9 +732,9 @@
       fireCrew(pl, 'bina yıkıldığı için');
       s.money += pl.b.spent * (s.freeSwap ? 1 : 0.5); s.freeSwap = false; pl.b = null;
     },
-    sellw(d) { const pl = plot(+d.plot), q = part(pl.inv[d.p]); sold(d.p, q); inc('Toptancı', q * wSell(pl, d.p)); rentOn(pl, q * wSell(pl, d.p)); s.mult[d.p] = clamp(s.mult[d.p] - 0.00002 * impact(d.p) * q, 0.6, 1.5); add(pl, d.p, -q); pl.last = s.t; },
+    sellw(d) { const pl = plot(+d.plot), q = d.q ? Math.min(Math.floor(+d.q), pl.inv[d.p] || 0) : part(pl.inv[d.p]); if (!(q > 0)) return; sold(d.p, q); inc('Toptancı', q * wSell(pl, d.p)); rentOn(pl, q * wSell(pl, d.p)); s.mult[d.p] = clamp(s.mult[d.p] - 0.00002 * impact(d.p) * q, 0.6, 1.5); add(pl, d.p, -q); pl.last = s.t; },
     list(d) { const pl = plot(+d.plot), q = part(pl.inv[d.p]); s.mine.push({ id: s.nextId++, p: d.p, qty: q, price: Math.round(price(d.p) * qPrem(d.p) * ui.listMul * 10) / 10, acc: 0 }); add(pl, d.p, -q); pl.last = s.t; },
-    unlist(d) { const l = s.mine.find(x => x.id === +d.id), pl = plot(ui.dest) || s.plots.find(p => p.b); if (!pl || !pl.b) return toast('Malı koyacak depon yok'); if (invTotal(pl) + l.qty > cap(pl)) return toast('Hedef depoda yer yok'); addCost(pl, l.p, l.qty, l.price); add(pl, l.p, l.qty); s.mine = s.mine.filter(x => x !== l); },
+    unlist(d) { const l = s.mine.find(x => x.id === +d.id); if (!l) return; const home = plot(l.plot), pl = home && home.b && invTotal(home) + l.qty <= cap(home) ? home : s.plots.find(x => x.b && !x.part && invTotal(x) + l.qty <= cap(x)) || home; if (!pl || !pl.b) return toast('Malı koyacak depon yok'); if (invTotal(pl) + l.qty > cap(pl)) return toast('Hedef depoda yer yok'); addCost(pl, l.p, l.qty, l.price); add(pl, l.p, l.qty); s.mine = s.mine.filter(x => x !== l); },
     move(d) {
       const pl = plot(+d.plot), to = plot(+(ui.sel['mv' + pl.id] || otherPlots(pl)[0]?.id)), q = part(pl.inv[d.p]);
       if (!to || !to.b) return toast('Hedef arsada bina yok');
@@ -778,6 +791,9 @@
     listMul(el) { ui.listMul = +el.value; },
     sel(el) { ui.sel[el.dataset.k] = el.value; },
     mf(el) { ui.mf = el.value; },
+    sp(el) { ui.sp = +el.value; ui.sk = null; ui.sq = null; },
+    sq(el) { ui.sq = Math.max(1, parseInt(el.value, 10) || 1); },
+    spc(el) { const v = parseFloat(el.value.replace(',', '.')) * rate(s.cur); if (v > 0) { ui.spc = v; ui.sm = 'c'; } else { ui.spc = 0; ui.sm = 1; } },
     cur(el) { if (CUR[el.value]) s.cur = el.value; },
     loanAmt(el) { ui.loanTL = clamp(parseFloat(el.value.replace(',', '.')) || 0, 0, 1e12) * rate(s.cur); },
     dealAuto(el) { const x = s.deals.active.find(y => y.id === +el.dataset.id); if (x) x.auto = el.checked; },
@@ -849,7 +865,7 @@
     } else if (prod && b.level < 3) h += '<p class="muted small">3. seviyeden sonra bina, aynı bölgedeki boş bir arsaya genişleyerek yeni hat açabilir.</p>';
     b.lines.forEach((ln, i) => {
       const opts = PK.filter(k => P[k].b === b.type).map(k => `<option value="${k}" ${ln.r === k ? 'selected' : ''}>${P[k].n}${Object.keys(P[k].in).length ? ' ← ' + Object.entries(P[k].in).map(([x, q]) => qtyTxt(x, q * batch(pl)) + ' ' + P[x].n.toLocaleLowerCase('tr-TR')).join(', ') : ''}${MACH[k] ? ' · makineler ' + fmt(machCost(pl, k)) : ''}</option>`).join('');
-      h += `<div class="line"><label class="small muted" for="rc${pl.id}_${i}">Hat ${i + 1}</label><select id="rc${pl.id}_${i}" data-c="recipe" data-plot="${pl.id}" data-i="${i}"><option value="">Tarif seç</option>${opts}</select><div class="bar"><i data-prog="${pl.id}:${i}"></i></div>${ln.r ? `<span class="small muted">${lineInfo(pl, ln.r)}</span>` : ''}<span class="small ${ln.busy ? 'muted' : 'warn'}">${ln.busy ? 'Üretiyor · parti gideri ' + fmt(P[ln.r].op * batch(pl)) : esc(ln.st || '') + (ln.auto && ln.st && ln.st.startsWith('Girdi') ? ' · bu fiyata uygun satıcı yok' : '')}</span>${ln.r && Object.keys(P[ln.r].in).length ? `<label class="small muted" for="la${pl.id}_${i}">Girdi bitince</label><select id="la${pl.id}_${i}" data-c="lineAuto" data-plot="${pl.id}" data-i="${i}">${[[0, 'Elle alırım'], [1, 'Olağan fiyata kadar al'], [1.1, 'Olağanın %10 fazlasına kadar al'], [1.35, 'Toptancı dahil al (%35 fazlası)']].map(([v, l]) => `<option value="${v}" ${(ln.auto || 0) === v ? 'selected' : ''}>${l}</option>`).join('')}</select>` : ''}</div>`;
+      h += `<div class="line"><label class="small muted" for="rc${pl.id}_${i}">Hat ${i + 1}</label><select id="rc${pl.id}_${i}" data-c="recipe" data-plot="${pl.id}" data-i="${i}"><option value="">Tarif seç</option>${opts}</select><div class="bar"><i data-prog="${pl.id}:${i}"></i></div>${ln.r ? `<span class="small muted">${lineInfo(pl, ln.r)}</span>` : ''}<span class="small ${ln.busy ? 'muted' : 'warn'}">${ln.busy ? 'Üretiyor · parti gideri ' + fmt(P[ln.r].op * batch(pl)) : esc(ln.st || '') + (ln.auto && ln.st && ln.st.startsWith('Girdi') ? ' · bu fiyata uygun satıcı yok' : '')}</span>${!ln.busy && ln.r && ln.st && ln.st.startsWith('Girdi') ? btn('Girdiyi pazardan al', 'goBuy', { v: Object.entries(P[ln.r].in).find(([x, q]) => (pl.inv[x] || 0) < q * batch(pl))?.[0] || Object.keys(P[ln.r].in)[0], plot: pl.id }) : ''}${!adv() && ln.auto ? '<span class="small muted">Girdi kendiliğinden alınıyor.</span>' : ''}${adv() && ln.r && Object.keys(P[ln.r].in).length ? `<label class="small muted" for="la${pl.id}_${i}">Girdi bitince</label><select id="la${pl.id}_${i}" data-c="lineAuto" data-plot="${pl.id}" data-i="${i}">${[[0, 'Elle alırım'], [1, 'Olağan fiyata kadar al'], [1.1, 'Olağanın %10 fazlasına kadar al'], [1.35, 'Toptancı dahil al (%35 fazlası)']].map(([v, l]) => `<option value="${v}" ${(ln.auto || 0) === v ? 'selected' : ''}>${l}</option>`).join('')}</select>` : ''}</div>`;
     });
     const items = b.type === 'dukkan' ? shelf(pl) : [...new Set([...b.lines.filter(l => l.r).map(l => l.r), ...Object.keys(pl.inv), ...Object.keys(b.out || {}).filter(p => b.out[p])])];
     if (items.some(p => pl.inv[p] > 0)) h += fracSeg();
@@ -859,12 +875,13 @@
     for (const p of items) {
       const q = pl.inv[p] || 0;
       h += `<div class="item"><div class="row"><b class="named">${ic(p, 26)}${P[p].n}</b><span class="num">${q.toLocaleString('tr-TR')} × ${P[p].u} <span class="muted small">(${qtyTxt(p, q)})</span></span></div>`;
-      if (b.type === 'dukkan' && P[p].d) h += shopControls(pl, p);
+      if (b.type === 'dukkan' && P[p].d) h += adv() ? shopControls(pl, p) : shopSimple(pl, p);
       else if (b.type === 'dukkan') h += '<p class="warn small">Şehir halkı bu ürünü almaz; pazarda sat ya da fabrikaya taşı.</p>';
-      else h += outControls(pl, p);
-      if (q > 0) h += `<p class="small muted">İşlem miktarı: ${qtyTxt(p, part(q))}</p><div class="row wrap">${btn('Toptancıya sat ' + fmt(part(q) * wSell(pl, p)), 'sellw', { plot: pl.id, p })}${btn('Pazara ilan ver', 'list', { plot: pl.id, p }, 'ghost')}${others.length ? btn('Taşı', 'move', { plot: pl.id, p }, 'ghost') : ''}</div>`;
+      else h += adv() ? outControls(pl, p) : outSimple(pl, p);
+      if (q > 0) h += `<p class="small muted">İşlem miktarı: ${qtyTxt(p, part(q))}</p><div class="row wrap">${btn('Toptancıya sat ' + fmt(part(q) * wSell(pl, p)), 'sellw', { plot: pl.id, p })}${btn('Pazarda sat', 'goSell', { plot: pl.id, p }, 'ghost')}${others.length ? btn('Taşı', 'move', { plot: pl.id, p }, 'ghost') : ''}</div>`;
       h += '</div>';
     }
+    if (!adv()) h += advHint(b.type === 'dukkan' ? 'Fiyat kuralları ve otomatik stok ayarları' : 'Otomatik satış ve otomatik girdi alımı');
     if (b.type === 'dukkan') {
       const rest = PK.filter(p => P[p].d && !items.includes(p));
       h += `<p class="muted small">Raf: ${items.filter(p => P[p].d).length}/${shelfMax(pl)} ürün çeşidi</p>`;
@@ -909,7 +926,6 @@
     // PixiJS haritası kendi tuvallerini yönetir; buradaki kutu sabit kalır ve render() içinde doldurulur
     if (pixiMap()) out.push(['map', '<div class="map" data-pixi></div>' + hint]);
     else if (window.TezgahArt) out.push(['svgmap', window.TezgahArt.map(mapModel()) + hint]);
-    out.push(['lm', `<div class="row small"><label for="listMul">Pazara ilan fiyatı</label><select id="listMul" data-c="listMul"><option value="0.9" ${ui.listMul === 0.9 ? 'selected' : ''}>olağanın %10 altı (%20 daha hızlı satar)</option><option value="1" ${ui.listMul === 1 ? 'selected' : ''}>olağan fiyat</option><option value="1.1" ${ui.listMul === 1.1 ? 'selected' : ''}>olağanın %10 üstü (%20 daha yavaş satar)</option></select></div>`]);
     for (const pl of s.plots) out.push(['p' + pl.id, ui.open === pl.id ? plotCard(pl) : plotSummary(pl)]);
     return out;
   }
@@ -928,13 +944,12 @@
   function viewMarket() {
     const out = [], dst = plot(ui.dest) || s.plots[0];
     out.push(['dest', `<div class="card"><div class="row wrap"><label for="dest">Teslim arsası</label><select id="dest" data-c="dest">${s.plots.filter(p => !p.part).map(p => `<option value="${p.id}" ${p.id === dst.id ? 'selected' : ''}>Arsa ${p.id} · ${R[p.region].n}${p.b ? ' · ' + B[p.b.type].n : ' · boş'}</option>`).join('')}</select><label for="qty">Miktar (birim)</label><input id="qty" class="price" inputmode="numeric" data-c="qty" value="${ui.qty}"></div><p class="muted small">Fiyatlar teslim fiyatıdır: mal bedeli ve ${R[dst.region].n} bölgesine taşıma dahil.${transMult() > 1 ? ' Taşıma ücretleri şu an zamlı.' : ''}</p></div>`]);
-    if (s.mine.length) out.push(['mine', '<div class="card"><h3>İlanlarım</h3>' + s.mine.map(l => `<div class="row"><span>${P[l.p].n} · ${l.qty} × ${P[l.p].u} · ${fmt1(l.price)}${l.auto ? ' · otomatik' : ''}<br><span class="small">${speedNote(l.price / price(l.p))}</span></span>${btn('Geri çek', 'unlist', { id: l.id }, 'ghost')}</div>`).join('') + '<p class="muted small">Satışlardan %3 komisyon kesilir.</p></div>']);
     const card = k => {
       const wU = price(k) * wBuy() + trans(1, k, dst.region, dst.region);
       let h = `<div class="card"><div class="row head"><h3 class="named">${ic(k, 28)}${P[k].n}</h3><span class="small">${trend(k)}</span></div><p class="muted small">Olağan fiyat ${fmt1(price(k))} / ${P[k].u} · ${WNAME[P[k].w]} yük · 1. seviye ${B[P[k].b].n.toLocaleLowerCase('tr-TR')}: ${qtyTxt(k, 10 * B[P[k].b].scale)} / ${durTxt(P[k].t)}${Object.keys(P[k].in).length ? ' (' + Object.entries(P[k].in).map(([x, q]) => qtyTxt(x, q * B[P[k].b].scale) + ' ' + P[x].n.toLocaleLowerCase('tr-TR')).join(' + ') + ')' : ''}${MACH[k] ? ' · makineler ' + fmt(MACH[k]) + ' (bina ' + fmt(B.fabrika.cost) + ' ayrı)' : ''}</p><div class="row"><span>Sistem toptancısı</span><span class="num">${fmt1(wU)}</span>${btn('Al', 'buy', { p: k })}</div>`;
       for (const l of s.listings.filter(x => x.p === k)) {
         const u = l.price + trans(1, k, l.region, dst.region);
-        h += `<div class="row"><span>${esc(l.from || R[l.region].n + ' satıcısı')} · ${R[l.region].n} · ${l.qty} × ${P[k].u} (${qtyTxt(k, l.qty)})${l.hg ? ' <span class="small muted">· pazarlık yapıldı</span>' : ''}</span><span class="num ${u < wU ? 'up' : ''}">${fmt1(u)}</span>${btn('Al', 'buy', { p: k, id: l.id })}</div>${l.hg ? '' : `<div class="row wrap small haggle"><span class="muted">Pazarlık:</span>${btn('%5 indirim iste', 'haggle', { id: l.id, v: 0.05 }, 'ghost')}${btn('%10 indirim iste', 'haggle', { id: l.id, v: 0.1 }, 'ghost')}</div>`}`;
+        h += `<div class="row"><span>${esc(l.from || R[l.region].n + ' satıcısı')} · ${R[l.region].n} · ${l.qty} × ${P[k].u} (${qtyTxt(k, l.qty)})${l.hg ? ' <span class="small muted">· pazarlık yapıldı</span>' : ''}</span><span class="num ${u < wU ? 'up' : ''}">${fmt1(u)}</span>${btn('Al', 'buy', { p: k, id: l.id })}</div>${l.hg || !adv() ? '' : `<div class="row wrap small haggle"><span class="muted">Pazarlık:</span>${btn('%5 indirim iste', 'haggle', { id: l.id, v: 0.05 }, 'ghost')}${btn('%10 indirim iste', 'haggle', { id: l.id, v: 0.1 }, 'ghost')}</div>`}`;
       }
       return h + '</div>';
     };
@@ -987,7 +1002,7 @@
     out.push(['rk', '<div class="card"><h3>Servet basamakları</h3><p class="muted small">Net değerin her eşiği geçtiğinde unvanın kalıcı olarak yükselir ve bir ayrıcalık açılır. Oyunun sonu yok; unvanın diğer oyunculara görünür.</p>' + RANKS.map((r, i) => `<div class="row"><span class="${i <= rankNow() ? 'done' : ''}"><b>${r.n}</b><br><span class="small muted">${r.perk}</span></span><span class="num small ${i <= rankNow() ? 'muted' : ''}">${i <= rankNow() ? '✓ ' : ''}${fmt(r.at)}</span></div>`).join('') + '</div>']);
     out.push(['gl', '<div class="card"><h3>Hedefler</h3>' + GOALS.map((g, i) => `<div class="row"><span class="${s.goals[i] ? 'done' : ''}">${goalText(i)}</span><span class="num small ${s.goals[i] ? 'muted' : ''}">${s.goals[i] ? '✓ ' : ''}${fmt(g[2])}</span></div>`).join('') + '</div>']);
     out.push(['credit', '<p class="muted small">Bina, harita ve ürün görselleri bu oyun için üretildi. Bina türü rozetleri: game-icons.net (Lorc, Delapouite ve katkıda bulunanlar), CC BY 3.0. Harita çizimi: PixiJS (MIT).</p>']);
-    out.push(['set', `<div class="card"><h3>Ayarlar</h3><div class="row"><label for="cur">Para birimi</label><select id="cur" data-c="cur">${Object.keys(CUR).map(c => `<option value="${c}" ${s.cur === c ? 'selected' : ''}>${CUR[c].sym} ${CUR[c].n}</option>`).join('')}</select></div><p class="muted small">Oyun içinde her tutar Türk lirası tutulur; seçtiğin birim yalnızca gösterimi değiştirir.</p></div>`]);
+    out.push(['set', `<div class="card"><h3>Ayarlar</h3><div class="row"><label for="cur">Para birimi</label><select id="cur" data-c="cur">${Object.keys(CUR).map(c => `<option value="${c}" ${s.cur === c ? 'selected' : ''}>${CUR[c].sym} ${CUR[c].n}</option>`).join('')}</select></div><p class="muted small">Oyun içinde her tutar Türk lirası tutulur; seçtiğin birim yalnızca gösterimi değiştirir.</p><div class="row"><span>Görünüm</span><div class="seg" role="group" aria-label="Görünüm">${btn('Basit', 'mode', { v: 'basit' }, adv() ? 'ghost' : '')}${btn('Gelişmiş', 'mode', { v: 'adv' }, adv() ? '' : 'ghost')}</div></div><p class="muted small">Basit görünüm yalnızca temel kontrolleri gösterir. Gelişmiş görünüm otomatik satış, otomatik girdi alımı, dükkân fiyat kuralları, pazarlık ve elle fiyat girmeyi açar. Kurduğun otomasyonlar iki görünümde de çalışır.</p></div>`]);
     out.push(['rs', `<div class="row">${btn('Oyunu sıfırla', 'reset', {}, 'ghost')}</div>`]);
     return out;
   }
@@ -1376,8 +1391,8 @@
     ['Arsa 1’e bir tarla kur', 'Aşağıdaki Arsa 1 kartında Tarla’ya dokun. Kırsal bölgede tarlalar %25 fazla ürün verir.', () => s.plots.some(p => p.b)],
     ['Bir ürün seç', 'Kartta Hat 1 için Buğday ya da Süt seç; üretim hemen başlar. Mevsim önemli: buğday yazın bol, kışın az çıkar.', () => s.plots.some(p => p.b && (p.b.type === 'dukkan' || p.b.lines.some(l => l.r)))],
     ['İlk partiyi bekle', 'Bir parti 30 oyun dakikasında biter (1× hızda ~2 saniye). Üstteki 2× ve 4× düğmeleri zamanı hızlandırır.', () => s.totalIncome > 0 || s.mine.length > 0 || s.plots.some(p => invTotal(p) > 0)],
-    ['İlk satışını yap', 'Ürünün altındaki “Toptancıya sat” hemen nakit verir; “Pazara ilan ver” daha pahalıya ama yavaş satar.', () => s.totalIncome > 0],
-    ['Satışı otomatiğe bağla', 'Ürünün “Üretim çıkınca” menüsünden “Pazara koy: piyasa fiyatı”nı seç. Sen yokken de satış sürer.', () => s.plots.some(p => p.b && Object.values(p.b.out || {}).some(Boolean)) || s.plots.some(p => p.b && p.b.type === 'dukkan')],
+    ['İlk satışını yap', 'Ürünün altındaki “Toptancıya sat” hemen nakit verir; “Pazarda sat” daha pahalıya ama yavaş satar.', () => s.totalIncome > 0],
+    ['Pazara mal koy', 'Ürünün altındaki “Pazarda sat”a dokun; miktarı ve fiyatı seçip “Pazara koy” de. Para alıcı geldikçe gelir.', () => s.mine.length > 0 || s.plots.some(p => p.b && (p.b.type === 'dukkan' || Object.values(p.b.out || {}).some(Boolean)))],
     ['Şirket sekmesine bak', 'Orada şirketlerin sabit fiyatlı siparişleri, banka kredisi, marka ve vergi bilgisi var.', () => ui.tab === 'company' || s.deals.active.length > 0],
     ['Büyümeyi planla', 'Kendi arsanı Artırma sekmesinden alırsın. Krediyle erken büyüyebilirsin ama taksitleri kaçırma.', () => s.plots.some(p => !p.rented) || s.loans.length > 0],
   ];
@@ -1431,12 +1446,12 @@
   // Dayanak: reports/Mobil ticaret oyunu arayüz tasarımı.md (alt çubukta 3-5 hedef, 44-48 px dokunma hedefi).
   const NAV = [
     ['plots', 'Arsalar', ['plots']],
-    ['market', 'Pazar', ['market', 'auction']],
+    ['market', 'Pazar', ['market', 'sell', 'auction']],
     ['company', 'Şirket', ['company', 'crew']],
     ['finance', 'Finans', ['invest', 'bank', 'report']],
     ['compete', 'Rekabet', ['compete', 'news']],
   ];
-  const SUB = { plots: 'Arsalar', market: 'Ürün pazarı', auction: 'Arsa artırması', company: 'Sözleşme ve marka', crew: 'İşçiler', invest: 'Yatırım', bank: 'Kredi ve vergi', report: 'Rapor', compete: 'Sezon', news: 'Gazete' };
+  const SUB = { plots: 'Arsalar', market: 'Al', sell: 'Sat', auction: 'Arsa artırması', company: 'Sözleşme ve marka', crew: 'İşçiler', invest: 'Yatırım', bank: 'Kredi ve vergi', report: 'Rapor', compete: 'Sezon', news: 'Gazete' };
   const navOf = tab => NAV.find(n => n[2].includes(tab)) || NAV[0];
   const NAV_IC = {
     plots: '<path d="M3 11l9-7 9 7v9h-6v-6H9v6H3z"/>',
@@ -1479,7 +1494,61 @@
     return `<button type="button" class="card sum" data-a="openPlot" data-plot="${pl.id}" aria-expanded="false"><span class="row head"><b class="named">${b ? ic(b.type, 26) : ''}Arsa ${pl.id} · ${R[pl.region].n}${b ? ' · ' + B[b.type].n + ' ' + b.level : ''}</b><span class="tag ${pl.rented ? '' : 'own'}">${pl.rented ? 'Kiralık' : 'Senin'}</span></span><span class="row small"><span class="${cls}">${esc(st)}</span><span class="muted num">${b ? 'Depo ' + invTotal(pl) + '/' + cap(pl) + ' ' : ''}<span aria-hidden="true">›</span></span></span></button>`;
   }
 
-  const VIEWS = { bank: () => viewCompany().filter(x => x[0] === 'loan' || x[0] === 'tax'), company: () => viewCompany().filter(x => x[0] !== 'loan' && x[0] !== 'tax'), compete: viewCompete, invest: viewInvest, crew: viewCrew, plots: viewPlots, market: viewMarket, auction: viewAuction, news: viewNews, report: viewReport };
+  // ---------- Basit ve gelişmiş görünüm ----------
+  // Basit görünüm otomasyon menülerini, fiyat kurallarını ve pazarlığı gizler; kurulmuş otomasyonlar çalışmaya devam eder.
+  const adv = () => s.mode === 'adv';
+  const advHint = what => `<div class="row small advhint"><span class="muted">${what} gelişmiş görünümde.</span>${btn('Gelişmiş görünümü aç', 'mode', { v: 'adv' }, 'ghost')}</div>`;
+  function shopSimple(pl, p) {
+    const pr = pl.b.prices[p] || retailRef(p), r = pl.b.rule[p], lo = rivalLo(pl.region, p);
+    return `<p class="small">Raf fiyatı <b class="num">${fmt1(pr)}</b> · en ucuz rakip <span class="num">${fmt1(lo)}</span> · saatte ≈${shopRate(pl, p).toFixed(1)} satış</p><p class="muted small">${r && r.mode !== 'elle' ? 'Fiyat rakiplere göre kendiliğinden ayarlanıyor' : 'Raf fiyatını sen belirledin'}${pl.b.auto[p] ? '; stok azalınca kendiliğinden tamamlanıyor.' : '; stok bitince Pazar > Al’dan mal almalısın.'}</p>`;
+  }
+  function outSimple(pl, p) {
+    if (lineInputs(pl).has(p)) return '<p class="muted small">Bu arsadaki üretimin girdisi.</p>';
+    const r = (pl.b.out || {})[p] || '';
+    if (r.startsWith('list:')) return '<p class="muted small">Otomatik: üretim çıktıkça pazara konuyor.</p>';
+    if (r.startsWith('ship:')) return `<p class="muted small">Otomatik: Arsa ${r.slice(5)} deposuna taşınıyor.</p>`;
+    return '';
+  }
+
+  // ---------- Pazar > Sat: malı elle, adım adım pazara koyma ----------
+  const PRICE_OPT = [[0.9, 'Hızlı sat', 'piyasanın %10 altı'], [1, 'Piyasa fiyatı', 'olağan hız'], [1.1, 'Kârlı sat', 'piyasanın %10 üstü']];
+  const listRateAt = (p, unit) => listRate(p) * coopSell() * brandList() * buySpeed(unit / (price(p) * qPrem(p)));
+  const sellMin = (p, q, unit) => { const r = listRateAt(p, unit); return r > 0 ? q / r * 60 : null; };
+  const longDur = min => min == null ? 'alıcı çıkmaz' : min < 1440 ? '~' + durTxt(min) : '~' + (+(min / 1440).toFixed(1)).toLocaleString('tr-TR') + ' gün';
+  const sellUnit = p => ui.sm === 'c' && ui.spc > 0 ? Math.round(ui.spc * 10) / 10 : Math.round(price(p) * qPrem(p) * (+ui.sm || 1) * 10) / 10;
+  const stockPlots = () => s.plots.filter(pl => !pl.part && Object.keys(pl.inv).some(k => pl.inv[k] > 0 && P[k]));
+  function mineCard() {
+    if (!s.mine.length) return null;
+    return '<div class="card"><h3>İlanlarım</h3>' + s.mine.map(l => { const left = sellMin(l.p, l.qty, l.price); return `<div class="item"><div class="row"><span><b>${P[l.p].n}</b> · ${qtyTxt(l.p, l.qty)}<br><span class="small muted">birimi ${fmt1(l.price)} · kalan süre ${longDur(left)}${l.auto ? ' · otomatik' : ''}</span></span><span class="num">${fmt(l.qty * l.price)}</span></div><div class="row wrap">${btn('Geri çek', 'unlist', { id: l.id }, 'ghost')}${adv() && !l.auto ? btn('%5 ucuzlat', 'cheapen', { id: l.id }, 'ghost') : ''}</div></div>`; }).join('') + `<p class="muted small">Satışlardan %${COMM * 100} komisyon kesilir. Geri çekilen mal geldiği depoya döner.</p></div>`;
+  }
+  function viewSell() {
+    const out = [], stock = stockPlots();
+    if (!stock.length) {
+      out.push(['empty', `<div class="card"><h3>Satılacak malın yok</h3><p class="muted small">Depolarında mal biriktiğinde buradan pazara koyarsın. Önce bir binada üretim başlat ya da Al bölümünden mal al.</p><div class="row wrap">${btn('Arsalara git', 'nav', { v: 'plots' })}${btn('Mal al', 'tab', { v: 'market' }, 'ghost')}</div></div>`]);
+      const m = mineCard(); if (m) out.push(['mine', m]);
+      return out;
+    }
+    const pl = stock.find(x => x.id === ui.sp) || stock[0]; ui.sp = pl.id;
+    const prods = Object.keys(pl.inv).filter(k => pl.inv[k] > 0 && P[k]);
+    if (!prods.includes(ui.sk)) { ui.sk = prods[0]; ui.sq = null; }
+    const p = ui.sk, have = pl.inv[p];
+    if (!(ui.sq > 0) || ui.sq > have) ui.sq = have;
+    if (ui.sm === 'c' && !adv()) ui.sm = 1;
+    const q = ui.sq, unit = sellUnit(p), gross = q * unit, comm = gross * COMM, ws = wSell(pl, p);
+    let h = `<div class="card sell"><h3>Malını pazara koy</h3><p class="muted small">Diğer şirketler ilanını gördükçe parça parça alır. Toptancıdan daha iyi fiyat alırsın ama para hemen gelmez.</p>`;
+    h += `<div class="step"><span class="stepn">1</span><label for="sp">Depo</label>${stock.length > 1 ? `<select id="sp" data-c="sp">${stock.map(x => `<option value="${x.id}" ${x.id === pl.id ? 'selected' : ''}>Arsa ${x.id} · ${R[x.region].n}${x.b ? ' · ' + B[x.b.type].n : ''}</option>`).join('')}</select>` : `<span>Arsa ${pl.id} · ${R[pl.region].n}${pl.b ? ' · ' + B[pl.b.type].n : ''}</span>`}</div>`;
+    h += `<div class="step"><span class="stepn">2</span><span class="lbl">Ürün</span><div class="chips">${prods.map(k => `<button type="button" data-a="sk" data-v="${k}" class="${k === p ? 'on' : ''}" aria-pressed="${k === p}">${ic(k, 22)}<span>${P[k].n}<br><small>${qtyTxt(k, pl.inv[k])}</small></span></button>`).join('')}</div></div>`;
+    h += `<div class="step"><span class="stepn">3</span><label for="sq">Miktar</label><div class="row wrap"><input id="sq" class="price" inputmode="numeric" data-c="sq" value="${q}" aria-describedby="sqh"><span id="sqh" class="small muted">× ${P[p].u} = ${qtyTxt(p, q)} (depoda ${qtyTxt(p, have)})</span></div><div class="seg" role="group" aria-label="Hazır miktar">${[[0.25, '¼'], [0.5, '½'], [1, 'Tümü']].map(([v, l]) => `<button type="button" data-a="sqf" data-v="${v}" class="${q === Math.max(1, Math.ceil(have * v)) ? 'on' : ''}">${l}</button>`).join('')}</div></div>`;
+    h += `<div class="step"><span class="stepn">4</span><span class="lbl">Fiyat <span class="muted small">· piyasa ${fmt1(price(p) * qPrem(p))} / ${P[p].u}</span></span><div class="opts">${PRICE_OPT.map(([v, n, sub]) => { const u = Math.round(price(p) * qPrem(p) * v * 10) / 10, on = +ui.sm === v || (!ui.sm && v === 1); return `<button type="button" class="opt ${on ? 'on' : ''}" data-a="sm" data-v="${v}" aria-pressed="${on}"><b>${n}</b><span class="num">${fmt1(u)}</span><small>${sub}<br>${longDur(sellMin(p, q, u))}</small></button>`; }).join('')}</div>`;
+    if (adv()) h += `<div class="row wrap small"><label for="spc">Kendi fiyatım (${sym()})</label><input id="spc" class="price" inputmode="decimal" data-c="spc" value="${ui.sm === 'c' && ui.spc ? +disp(ui.spc).toFixed(2) : ''}" placeholder="${+disp(price(p) * qPrem(p)).toFixed(2)}">${ui.sm === 'c' ? `<span class="small">${speedNote(unit / (price(p) * qPrem(p)))}</span>` : ''}</div>`;
+    h += `</div><table class="t"><tr><td>Satış tutarı (${q.toLocaleString('tr-TR')} × ${fmt1(unit)})</td><td>${fmt(gross)}</td></tr><tr><td>Komisyon (%${COMM * 100})</td><td class="down">${fmt(-comm)}</td></tr><tr><th>Eline geçecek</th><th>${fmt(gross - comm)}</th></tr><tr><td>Tahmini satış süresi</td><td>${longDur(sellMin(p, q, unit))}</td></tr></table>`;
+    h += `<div class="row wrap">${btn('Pazara koy', 'sellList')}${btn('Toptancıya hemen sat ' + fmt(q * ws), 'sellw', { plot: pl.id, p, q }, 'ghost')}</div><p class="muted small">Toptancı hemen öder ama birimi ${fmt1(ws)}; pazarda ${fmt1(unit * (1 - COMM))} kalır. Süreler oyun saatidir.</p></div>`;
+    out.push(['sell', h]);
+    const m = mineCard(); if (m) out.push(['mine', m]);
+    return out;
+  }
+
+  const VIEWS = { sell: viewSell, bank: () => viewCompany().filter(x => x[0] === 'loan' || x[0] === 'tax'), company: () => viewCompany().filter(x => x[0] !== 'loan' && x[0] !== 'tax'), compete: viewCompete, invest: viewInvest, crew: viewCrew, plots: viewPlots, market: viewMarket, auction: viewAuction, news: viewNews, report: viewReport };
   const TABS = [['plots', 'Arsalar'], ['market', 'Pazar'], ['company', 'Şirket'], ['crew', 'İşçiler'], ['invest', 'Yatırım'], ['auction', 'Artırma'], ['compete', 'Rekabet'], ['news', 'Gazete'], ['report', 'Rapor']];
   let root, main, hud, nav, sheet;
 

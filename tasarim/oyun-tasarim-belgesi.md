@@ -239,6 +239,11 @@ Dayanak: `reports/Mobil ticaret oyunu arayüz tasarımı.md`. Raporun altı yük
 - **Arsa kartları:** kapalıyken tek satır (bina, durum etiketi, depo doluluğu); aynı anda tek kart açıktır. Haritadan dokunmak ilgili kartı açar.
 - **Pazar:** önce 12 ürünün en ucuz teslim fiyatıyla listesi ve süzgeç (girdilerim, ürettiklerim, bina türüne göre); ürüne dokununca satıcılar ve pazarlık açılır.
 - Para birimi seçimi üst çubuktan Finans > Rapor > Ayarlar'a taşındı.
+- **Pazar > Sat (elle satış):** mal dört adımda pazara konur: depo, ürün, miktar (¼, ½, tümü ya da elle), fiyat. Fiyat için üç hazır seçenek var: hızlı sat (%10 altı), piyasa fiyatı, kârlı sat (%10 üstü); her birinin yanında tahmini satış süresi yazar. Altta satış tutarı, %3 komisyon, eline geçecek tutar ve toptancının hemen ödeyeceği tutar karşılaştırılır. Arsa kartındaki "Pazarda sat" bu formu o ürünle açar. "İlanlarım" listesi buradadır; geri çekilen mal geldiği depoya döner. Eski "Pazara ilan ver" (tek dokunuşla, sabit fiyat çarpanıyla ilan) kaldırıldı.
+- **Basit ve gelişmiş görünüm** (Finans > Rapor > Ayarlar; yeni oyunda basit):
+  - Basit görünümde otomatik satış ("Üretim çıkınca"), otomatik girdi alımı ("Girdi bitince"), dükkân fiyat kuralları, pazarlık ve elle fiyat girme gizlenir; yerlerinde tek satırlık özet ve "Gelişmiş görünümü aç" düğmesi durur.
+  - Kurulmuş otomasyonlar iki görünümde de çalışır; basit görünüm yalnızca özetini gösterir.
+  - Girdisi biten üretim hattında her iki görünümde "Girdiyi pazardan al" düğmesi çıkar ve Pazar'da o ürünü açar.
 
 Henüz yapılmayanlar (raporun orta ve düşük öncelikli maddeleri): devre dışı düğmeler ve "ne kadar eksik" mesajları, metindeki sekme adlarının bağlantıya çevrilmesi, kural paragraflarının katlanması, terimlerin tekleştirilmesi, Capacitor geri tuşu ve klavye ayarları. Arayüz gerçek bir telefonda henüz denenmedi.
 
