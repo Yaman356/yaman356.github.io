@@ -28,7 +28,7 @@ Bu belge, sohbette alınan tasarım kararlarını tek yerde toplar. Bütün oran
 ### Arsa, kira, vergi ve harçlar
 | Kalem | Değer |
 |---|---|
-| Kira (kiralık arsa) | Arsadaki satış cirosunun %5'i, satış anında |
+| Kira (kiralık arsa) | Arsadaki satış cirosunun %5'i, satış anında; dükkân, toptancı, pazar ilanı ve sözleşme teslimatının hepsinde (ilan, malın geldiği arsaya yazılır) |
 | Emlak vergisi (yıllık, her gün 1/52'si) | Şehir bölgeleri (Merkez, Liman, Metropol): boş arsa binde 6, binalı binde 4. Kırsal/Dağ/Ova: binde 2 |
 | Atıl arsa | Boş arsa ya da **son 1 oyun gününde** üretim/satış yapmamış bina → vergi 5 kat |
 | Arsa sayısı çarpanı | Sahip olunan her ek arsa tüm emlak vergisini %10 artırır |
@@ -36,6 +36,7 @@ Bu belge, sohbette alınan tasarım kararlarını tek yerde toplar. Bütün oran
 | Satıcı tavanı | Artırmada satıcı en fazla referans değerin %150'sini alır |
 | Sisteme arsa satışı | Arsa: referansın %50'si ile ödenen tutardan düşük olanı. Bina: harcamanın yarısı. Depodaki mal: değerinin yarısı ya da başka arsaya taşıma |
 | Pazar ilanı komisyonu | Satıştan %3 |
+| Pazar ilanı talebi | Bir ürünün müşteri talebi ilan sayısından bağımsızdır; talep en ucuz ilanın fiyatına göre gelir ve alıcılar önce en ucuz ilandan alır. İlanı bölmek satışı hızlandırmaz. |
 | KDV | Yalnızca dükkân perakendesinde, katma değer üzerinden: gıda %1, tekstil %10, diğer %20 |
 | Kurumlar vergisi | Çeyrek kârının %25'i; zarar devreder; inşaat yerine %10/yıl amortisman |
 | Arsa değeri artışı | Yılda %20 (her oyun günü 1/52) |
@@ -511,6 +512,16 @@ Capacitor uygulaması (`app/`) aynı API'yi kullanır. Google Play Games ya da A
 | 6 | Sıralama hacim şişirmeyi ödüllendiriyor | Toptancıya ve sözleşmeye satış sektör unvanına sayılıyor (`sold()` her ikisinde). | Sektör unvanına yalnızca dükkân perakendesi ve başka şirkete (ilan, sözleşme) satış saysın; toptancı saymasın. |
 | 7 | Tek büyüme yolu var | Rehberin ilk adımı "tarla kur" diyor (dükkân da kabul ediliyor ama anlatılmıyor). Haftalık satış görevi kendi ürettiğin ürünü, hiç üretmiyorsan buğdayı istiyor; sadece dükkân işleten tüccara halka satamadığı bir ürün düşüyor. | Başlangıçta yol seçimi: üretici, tüccar (al-sat, dükkân), sanayici, kooperatifçi. Rehber ve görev havuzu seçilen yola göre ayrılsın; yol sonradan değişebilsin. Dört yol aynı koşullarda kıyaslansın (test planı 1). |
 | 8 | Hacim ilişkili hesaplar arasında döndürülebilir | Demoda karşı taraf yalnızca sanal şirket olduğu için oluşmuyor; çevrim içinde iki hesap aynı malı birbirine satıp sektör hacmini şişirebilir. | Sektör puanı: nihai talebe (dükkân perakendesi, sanal şirket sözleşmesi) ulaşan satış tam, oyuncuya satış alıcı çeşitliliğiyle ağırlıklı sayılsın (aynı alıcıya giden payın üstü sayılmasın). Kısa sürede geri dönen mal sayılmasın; Rekabet Kurulu (bölüm 5) bu kalıbı işaretlesin. |
+
+### Üçüncü inceleme: kod açıkları (Kasım 2026)
+Statik incelemede bulunan beş madde koda karşı kontrol edildi:
+1. **İlan bölme satışı hızlandırıyordu:** her ilana ayrı talep hesaplanıyordu. Düzeltildi: ürün başına ortak talep, en ucuz ilan önce satar. Test: 200 birim tek ilanda 78, on ilanda 77–78 birim sattı.
+2. **Kira pazar ilanı ve sözleşmede alınmıyordu:** düzeltildi; ilan satışı ve sözleşme teslimatı da kiralık arsadan kira öder.
+3. **Depo sınırı aşılabiliyordu:** kontrol sabit 13 × parti tahmini kullanıyordu ve süren partilere yer ayırmıyordu. Düzeltildi: partinin gerçek çıktısı (verim dahil) ve süren partilerin çıktısı hesaba katılır; çıktı parti başlarken sabitlenir.
+4. **Arka plandaki süre kayboluyordu:** sayfa gizliyken 8 saniyelik kayıt, kayıt zamanını ileri taşıyordu; uygulama kapatılınca bu süre telafi edilmiyordu. Düzeltildi: gizliyken kayıt zamanı gizlenme anına sabitlenir.
+5. **Sezon başı eşit değil:** kooperatif ve holding üyeliği (ayrıcalıklarıyla) yeni sezona taşınıyor. Şimdilik bilinçli tercih olarak bırakıldı ve oyundaki metinler bunu açıkça söylüyor; kalıcı karar bölüm 13'teki açık kararlarda.
+
+**Henüz test edilmeyen:** demo tek oyunculu; rakipler, ilanlar ve toptancı stoğu formülle üretiliyor ve toptancı stoğu sınırsız. Gerçek oyuncular arasında kıtlık, ara mal piyasasını yönlendirme ve karşı tedarik zinciri kurma ancak ortak pazar prototipinde ve sunucu doğrulamalı para/stok işlemleriyle test edilebilir. Önerilen yön: sistem desteği kalsın ama toptancı stoğu ve yenilenmesi sınırlı olsun.
 
 ### Test planı
 1. **Çekirdek ekonomi:** görev, hedef, holding, yatırım ve kooperatif kapalı. Yalnızca üretim–ticaret. Dört yol aynı koşullarda ayrı bot olarak oynar: üretici (tarla, maden), tüccar (yalnızca al-sat ve dükkân), sanayici (fabrika), kooperatifçi (zinciri paylaşan 3 bot).

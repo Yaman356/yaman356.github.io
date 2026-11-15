@@ -149,7 +149,9 @@
     initComp();
     migrate();
   }
-  function save() { s.savedAt = Date.now(); try { localStorage.setItem(SAVE_KEY, JSON.stringify(s)); } catch (e) { /* depolama yoksa oyun yine çalışır */ } }
+  // Sayfa gizliyken oyun ilerlemez; kayıt zamanı gizlendiği ana sabitlenir ki uygulama kapatılırsa bu süre çevrim dışı ilerleme olarak telafi edilsin.
+  let hiddenAt = 0;
+  function save() { s.savedAt = hiddenAt || Date.now(); try { localStorage.setItem(SAVE_KEY, JSON.stringify(s)); } catch (e) { /* depolama yoksa oyun yine çalışır */ } }
   // Uygulama kapalıyken ya da arka plandayken geçen gerçek süreyi 1× hızda oynatır ve özetini hazırlar.
   // Oyun duraklatılmışsa zaman işlemez.
   function catchUp(ms) {
@@ -214,6 +216,7 @@
   // inPlace: tutar kasaya değil başka yere (ör. mevduat bakiyesine) eklendi, yalnızca kayda geçer.
   function finInc(kind, amt, inPlace) { if (!inPlace) s.money += amt; s.today.inc[kind] = (s.today.inc[kind] || 0) + amt; if (awayLog) awayLog.inc[kind] = (awayLog.inc[kind] || 0) + amt; }
   const reward = amt => finInc('Hedef ödülü', amt);
+  const mineQueue = p => s.mine.filter(l => l.p === p && l.qty > 0).sort((a, b) => a.price - b.price || a.id - b.id);
   function rentOn(pl, amt) { if (pl.rented && s.t >= FREE_UNTIL) exp('Kira', amt * RENT); }
   function news(title, body, alert) { s.news.unshift({ t: s.t, title, body }); if (s.news.length > 40) s.news.pop(); if (ui.tab !== 'news') s.unread = (s.unread || 0) + 1; if (alert && !awayLog) toast(title); }
   function shopRate(pl, p) {
@@ -466,24 +469,36 @@
           ln.prog += dt * (1 + wEff(pl, 'usta'));
           if (ln.prog < rc.t) continue;
           // parti bitti: artan süre bir sonraki partiye devreder, yeni parti aynı adımda başlar
-          add(pl, ln.r, Math.round(10 * k * yieldMult(pl.region, pl.b.type, ln.r))); ln.busy = false; ln.carry = ln.prog - rc.t; ln.prog = 0; pl.last = s.t;
+          add(pl, ln.r, ln.out != null ? ln.out : Math.round(10 * k * yieldMult(pl.region, pl.b.type, ln.r))); ln.busy = false; ln.out = null; ln.carry = ln.prog - rc.t; ln.prog = 0; pl.last = s.t;
         }
         const need = Object.entries(rc.in).find(([x, q]) => (pl.inv[x] || 0) < q * k);
         if (need) { ln.st = 'Girdi yok: ' + qtyTxt(need[0], need[1] * k) + ' ' + P[need[0]].n.toLocaleLowerCase('tr-TR'); continue; }
-        if (invTotal(pl) + 13 * k > cap(pl) + Object.values(rc.in).reduce((a, b) => a + b, 0) * k) { ln.st = 'Depo dolu'; continue; }
+        // Depo kontrolü: bu partinin gerçek çıktısı + sürmekte olan partilerin çıktısı için yer ayrılır, tüketilecek girdi düşülür
+        const outN = Math.round(10 * k * yieldMult(pl.region, pl.b.type, ln.r));
+        const pending = pl.b.lines.reduce((a, o) => a + (o.busy && o.r ? (o.out != null ? o.out : Math.round(10 * k * yieldMult(pl.region, pl.b.type, o.r))) : 0), 0);
+        if (invTotal(pl) - Object.values(rc.in).reduce((a, b) => a + b, 0) * k + outN + pending > cap(pl)) { ln.st = 'Depo dolu'; continue; }
         const opc = rc.op * k * (1 - wEff(pl, 'mudur'));
         if (s.money < opc) { ln.st = 'Para yetersiz'; continue; }
         for (const x in rc.in) add(pl, x, -rc.in[x] * k);
-        exp('Üretim', opc); ln.busy = true; ln.prog = Math.min(ln.carry || 0, rc.t * 0.99); ln.carry = 0; ln.st = '';
+        exp('Üretim', opc); ln.busy = true; ln.out = outN; ln.prog = Math.min(ln.carry || 0, rc.t * 0.99); ln.carry = 0; ln.st = '';
       }
     }
-    // Pazardaki ilanlarım
-    for (const l of s.mine) {
-      l.acc += listRate(l.p) * coopSell() * brandList() * buySpeed(l.price / (price(l.p) * qPrem(l.p))) * dt / 60;
-      const n = Math.min(Math.floor(l.acc), l.qty);
-      if (n > 0) { l.acc -= n; l.qty -= n; const v = n * l.price; sold(l.p, n); inc('Pazar', v); exp('Komisyon', v * COMM); s.mult[l.p] = clamp(s.mult[l.p] - 0.00002 * impact(l.p) * n, 0.6, 1.5); }
+    // Pazardaki ilanlarım: bir ürünün müşteri talebi ilan sayısından bağımsızdır (ilanı bölmek satışı hızlandırmaz).
+    // Talep en ucuz ilanın fiyatına göre gelir; alıcılar önce en ucuz ilandan alır.
+    if (!s.macc) s.macc = {};
+    for (const p of new Set(s.mine.map(l => l.p))) {
+      const q = mineQueue(p); if (!q.length) continue;
+      s.macc[p] = (s.macc[p] || 0) + listRateAt(p, q[0].price) * dt / 60;
+      let n = Math.floor(s.macc[p]); if (n <= 0) continue; s.macc[p] -= n;
+      for (const l of q) {
+        if (n <= 0) break;
+        const m = Math.min(n, l.qty); n -= m; l.qty -= m;
+        const v = m * l.price; sold(p, m); inc('Pazar', v); exp('Komisyon', v * COMM); const home = plot(l.plot); if (home) rentOn(home, v);
+        s.mult[p] = clamp(s.mult[p] - 0.00002 * impact(p) * m, 0.6, 1.5);
+      }
     }
     s.mine = s.mine.filter(l => l.qty > 0);
+    for (const p in s.macc) if (!s.mine.some(l => l.p === p)) delete s.macc[p];
     // Artırmalar
     for (const a of s.auctions.filter(a => s.t >= a.end)) endAuction(a);
     s.auctions = s.auctions.filter(a => s.t < a.end);
@@ -738,7 +753,7 @@
       s.money += pl.b.spent * (s.freeSwap ? 1 : 0.5); s.freeSwap = false; pl.b = null;
     },
     sellw(d) { const pl = plot(+d.plot), q = d.q ? Math.min(Math.floor(+d.q), pl.inv[d.p] || 0) : part(pl.inv[d.p]); if (!(q > 0)) return; sold(d.p, q); inc('Toptancı', q * wSell(pl, d.p)); rentOn(pl, q * wSell(pl, d.p)); s.mult[d.p] = clamp(s.mult[d.p] - 0.00002 * impact(d.p) * q, 0.6, 1.5); add(pl, d.p, -q); pl.last = s.t; },
-    list(d) { const pl = plot(+d.plot), q = part(pl.inv[d.p]); s.mine.push({ id: s.nextId++, p: d.p, qty: q, price: Math.round(price(d.p) * qPrem(d.p) * ui.listMul * 10) / 10, acc: 0 }); add(pl, d.p, -q); pl.last = s.t; },
+    list(d) { const pl = plot(+d.plot), q = part(pl.inv[d.p]); s.mine.push({ id: s.nextId++, p: d.p, qty: q, price: Math.round(price(d.p) * qPrem(d.p) * ui.listMul * 10) / 10, acc: 0, plot: pl.id }); add(pl, d.p, -q); pl.last = s.t; },
     unlist(d) { const l = s.mine.find(x => x.id === +d.id); if (!l) return; const home = plot(l.plot), pl = home && home.b && invTotal(home) + l.qty <= cap(home) ? home : s.plots.find(x => x.b && !x.part && invTotal(x) + l.qty <= cap(x)) || home; if (!pl || !pl.b) return toast('Malı koyacak depon yok'); if (invTotal(pl) + l.qty > cap(pl)) return toast('Hedef depoda yer yok'); addCost(pl, l.p, l.qty, l.price); add(pl, l.p, l.qty); s.mine = s.mine.filter(x => x !== l); },
     move(d) {
       const pl = plot(+d.plot), to = plot(+(ui.sel['mv' + pl.id] || otherPlots(pl)[0]?.id)), q = part(pl.inv[d.p]);
@@ -1177,13 +1192,13 @@
     const badges = [...c.badges, badge], best = !c.best || place < c.best.place || (place === c.best.place && nw > c.best.nw) ? badge : c.best;
     const keep = { season: c.season + 1, badges, best, holding: c.holding, coop: c.coop }, cur = s.cur;
     newGame(); s.cur = cur; s.news = []; initComp(keep);
-    news('Sezon ' + badge.season + ' bitti: ' + place + '. oldun', (place <= 3 ? MEDAL[place - 1] + ' rozet kazandın. ' : '') + 'Net değerin ' + fmt(nw) + ', unvanın ' + badge.rank + ' idi. Yeni sezonda herkes ' + fmt(START_MONEY) + ' ile sıfırdan başlıyor; rozetlerin profilinde kalıyor.', true);
+    news('Sezon ' + badge.season + ' bitti: ' + place + '. oldun', (place <= 3 ? MEDAL[place - 1] + ' rozet kazandın. ' : '') + 'Net değerin ' + fmt(nw) + ', unvanın ' + badge.rank + ' idi. Yeni sezonda paran, arsaların ve binaların sıfırlanır; herkes ' + fmt(START_MONEY) + ' ile başlar. Rozetlerin, holding üyeliğin ve kooperatifin (ayrıcalıklarıyla birlikte) yeni sezona taşınır.', true);
   }
 
   function viewCompete() {
     ensureComp();
     const c = s.comp, out = [], b = board(), myPlace = b.findIndex(x => x.me) + 1, left = SEASON_DAYS - seasonDay() + 1;
-    out.push(['ss', `<div class="card"><div class="row head"><h3>Sezon ${c.season}</h3><span class="tag own">${myPlace}. / ${b.length}</span></div><p class="muted small">${left} oyun günü kaldı. Sezon sonunda net değere göre sıralanır; ilk üçe altın, gümüş ve bronz rozet verilir. Sonra herkes ${fmt(START_MONEY)} ile sıfırdan başlar, rozetler kalır.</p><div class="bar"><i style="width:${(Math.min(1, seasonDay() / SEASON_DAYS) * 100).toFixed(1)}%"></i></div>
+    out.push(['ss', `<div class="card"><div class="row head"><h3>Sezon ${c.season}</h3><span class="tag own">${myPlace}. / ${b.length}</span></div><p class="muted small">${left} oyun günü kaldı. Sezon sonunda net değere göre sıralanır; ilk üçe altın, gümüş ve bronz rozet verilir. Sonra para, arsa ve binalar sıfırlanır, herkes ${fmt(START_MONEY)} ile başlar. Rozetler, holding üyeliği ve kooperatif (ayrıcalıklarıyla) yeni sezona taşınır.</p><div class="bar"><i style="width:${(Math.min(1, seasonDay() / SEASON_DAYS) * 100).toFixed(1)}%"></i></div>
       <table class="t board">${b.map((x, i) => `<tr class="${x.me ? 'me' : ''}"><td class="num">${i + 1}</td><td>${esc(x.n)}${x.h ? ` <span class="small muted">${HOLDINGS.find(h => h.id === x.h).n}</span>` : ''}</td><td class="num">${fmt(x.nw)}</td></tr>`).join('')}</table></div>`]);
     // Haftalık görevler
     const w = c.week, dl = Math.max(0, Math.ceil((w.end - s.t) / 1440));
@@ -1343,7 +1358,7 @@
       if (need <= 0) break;
       const q = Math.min(pl.inv[x.p] || 0, need); if (q <= 0) continue;
       const tr = trans(q, x.p, pl.region, x.region) * (1 - wEff(pl, 'sofor'));
-      add(pl, x.p, -q); exp('Taşıma', tr); inc('Sözleşme', q * x.unit); sold(x.p, q); pl.last = s.t; need -= q; n0 += q;
+      add(pl, x.p, -q); exp('Taşıma', tr); inc('Sözleşme', q * x.unit); rentOn(pl, q * x.unit); sold(x.p, q); pl.last = s.t; need -= q; n0 += q;
     }
     x.got += n0;
     if (n0 && x.got >= x.qty) { const D = s.deals; D.rep = Math.min(100, D.rep + 5); D.done++; news('Sözleşme tamamlandı', x.from + ' siparişi (' + qtyTxt(x.p, x.qty) + ' ' + P[x.p].n.toLocaleLowerCase('tr-TR') + ') teslim edildi. Toplam ' + fmt(x.qty * x.unit) + '. Güvenilirliğin ' + Math.round(D.rep) + ' oldu.', true); }
@@ -1526,12 +1541,16 @@
   const PRICE_OPT = [[0.9, 'Hızlı sat', 'piyasanın %10 altı'], [1, 'Piyasa fiyatı', 'olağan hız'], [1.1, 'Kârlı sat', 'piyasanın %10 üstü']];
   const listRateAt = (p, unit) => listRate(p) * coopSell() * brandList() * buySpeed(unit / (price(p) * qPrem(p)));
   const sellMin = (p, q, unit) => { const r = listRateAt(p, unit); return r > 0 ? q / r * 60 : null; };
+  // Yeni ilan için: aynı ya da daha ucuz fiyattaki ilanlarım önce satılır
+  const sellMinNew = (p, q, unit) => { const ahead = s.mine.filter(l => l.p === p && l.price <= unit), lo = Math.min(unit, ...ahead.map(l => l.price)); return sellMin(p, q + ahead.reduce((a, l) => a + l.qty, 0), lo); };
+  // Mevcut ilan için: kuyrukta önündekiler + kendisi
+  const listLeft = l => { const q = mineQueue(l.p), i = q.indexOf(l); return sellMin(l.p, q.slice(0, i + 1).reduce((a, x) => a + x.qty, 0), q[0].price); };
   const longDur = min => min == null ? 'alıcı çıkmaz' : min < 1440 ? '~' + durTxt(min) : '~' + (+(min / 1440).toFixed(1)).toLocaleString('tr-TR') + ' gün';
   const sellUnit = p => ui.sm === 'c' && ui.spc > 0 ? Math.round(ui.spc * 10) / 10 : Math.round(price(p) * qPrem(p) * (+ui.sm || 1) * 10) / 10;
   const stockPlots = () => s.plots.filter(pl => !pl.part && Object.keys(pl.inv).some(k => pl.inv[k] > 0 && P[k]));
   function mineCard() {
     if (!s.mine.length) return null;
-    return '<div class="card"><h3>İlanlarım</h3>' + s.mine.map(l => { const left = sellMin(l.p, l.qty, l.price); return `<div class="item"><div class="row"><span><b>${P[l.p].n}</b> · ${qtyTxt(l.p, l.qty)}<br><span class="small muted">birimi ${fmt1(l.price)} · kalan süre ${longDur(left)}${l.auto ? ' · otomatik' : ''}</span></span><span class="num">${fmt(l.qty * l.price)}</span></div><div class="row wrap">${btn('Geri çek', 'unlist', { id: l.id }, 'ghost')}${adv() && !l.auto ? btn('%5 ucuzlat', 'cheapen', { id: l.id }, 'ghost') : ''}</div></div>`; }).join('') + `<p class="muted small">Satışlardan %${COMM * 100} komisyon kesilir. Geri çekilen mal geldiği depoya döner.</p></div>`;
+    return '<div class="card"><h3>İlanlarım</h3>' + s.mine.map(l => { const left = listLeft(l); return `<div class="item"><div class="row"><span><b>${P[l.p].n}</b> · ${qtyTxt(l.p, l.qty)}<br><span class="small muted">birimi ${fmt1(l.price)} · kalan süre ${longDur(left)}${l.auto ? ' · otomatik' : ''}</span></span><span class="num">${fmt(l.qty * l.price)}</span></div><div class="row wrap">${btn('Geri çek', 'unlist', { id: l.id }, 'ghost')}${adv() && !l.auto ? btn('%5 ucuzlat', 'cheapen', { id: l.id }, 'ghost') : ''}</div></div>`; }).join('') + `<p class="muted small">Satışlardan %${COMM * 100} komisyon kesilir. Geri çekilen mal geldiği depoya döner.</p></div>`;
   }
   function viewSell() {
     const out = [], stock = stockPlots();
@@ -1551,9 +1570,9 @@
     h += `<div class="step"><span class="stepn">1</span><label for="sp">Depo</label>${stock.length > 1 ? `<select id="sp" data-c="sp">${stock.map(x => `<option value="${x.id}" ${x.id === pl.id ? 'selected' : ''}>Arsa ${x.id} · ${R[x.region].n}${x.b ? ' · ' + B[x.b.type].n : ''}</option>`).join('')}</select>` : `<span>Arsa ${pl.id} · ${R[pl.region].n}${pl.b ? ' · ' + B[pl.b.type].n : ''}</span>`}</div>`;
     h += `<div class="step"><span class="stepn">2</span><span class="lbl">Ürün</span><div class="chips">${prods.map(k => `<button type="button" data-a="sk" data-v="${k}" class="${k === p ? 'on' : ''}" aria-pressed="${k === p}">${ic(k, 22)}<span>${P[k].n}<br><small>${qtyTxt(k, pl.inv[k])}</small></span></button>`).join('')}</div></div>`;
     h += `<div class="step"><span class="stepn">3</span><label for="sq">Miktar</label><div class="row wrap"><input id="sq" class="price" inputmode="numeric" data-c="sq" value="${q}" aria-describedby="sqh"><span id="sqh" class="small muted">× ${P[p].u} = ${qtyTxt(p, q)} (depoda ${qtyTxt(p, have)})</span></div><div class="seg" role="group" aria-label="Hazır miktar">${[[0.25, '¼'], [0.5, '½'], [1, 'Tümü']].map(([v, l]) => `<button type="button" data-a="sqf" data-v="${v}" class="${q === Math.max(1, Math.ceil(have * v)) ? 'on' : ''}">${l}</button>`).join('')}</div></div>`;
-    h += `<div class="step"><span class="stepn">4</span><span class="lbl">Fiyat <span class="muted small">· piyasa ${fmt1(price(p) * qPrem(p))} / ${P[p].u}</span></span><div class="opts">${PRICE_OPT.map(([v, n, sub]) => { const u = Math.round(price(p) * qPrem(p) * v * 10) / 10, on = +ui.sm === v || (!ui.sm && v === 1); return `<button type="button" class="opt ${on ? 'on' : ''}" data-a="sm" data-v="${v}" aria-pressed="${on}"><b>${n}</b><span class="num">${fmt1(u)}</span><small>${sub}<br>${longDur(sellMin(p, q, u))}</small></button>`; }).join('')}</div>`;
+    h += `<div class="step"><span class="stepn">4</span><span class="lbl">Fiyat <span class="muted small">· piyasa ${fmt1(price(p) * qPrem(p))} / ${P[p].u}</span></span><div class="opts">${PRICE_OPT.map(([v, n, sub]) => { const u = Math.round(price(p) * qPrem(p) * v * 10) / 10, on = +ui.sm === v || (!ui.sm && v === 1); return `<button type="button" class="opt ${on ? 'on' : ''}" data-a="sm" data-v="${v}" aria-pressed="${on}"><b>${n}</b><span class="num">${fmt1(u)}</span><small>${sub}<br>${longDur(sellMinNew(p, q, u))}</small></button>`; }).join('')}</div>`;
     if (adv()) h += `<div class="row wrap small"><label for="spc">Kendi fiyatım (${sym()})</label><input id="spc" class="price" inputmode="decimal" data-c="spc" value="${ui.sm === 'c' && ui.spc ? +disp(ui.spc).toFixed(2) : ''}" placeholder="${+disp(price(p) * qPrem(p)).toFixed(2)}">${ui.sm === 'c' ? `<span class="small">${speedNote(unit / (price(p) * qPrem(p)))}</span>` : ''}</div>`;
-    h += `</div><table class="t"><tr><td>Satış tutarı (${q.toLocaleString('tr-TR')} × ${fmt1(unit)})</td><td>${fmt(gross)}</td></tr><tr><td>Komisyon (%${COMM * 100})</td><td class="down">${fmt(-comm)}</td></tr><tr><th>Eline geçecek</th><th>${fmt(gross - comm)}</th></tr><tr><td>Tahmini satış süresi</td><td>${longDur(sellMin(p, q, unit))}</td></tr></table>`;
+    h += `</div><table class="t"><tr><td>Satış tutarı (${q.toLocaleString('tr-TR')} × ${fmt1(unit)})</td><td>${fmt(gross)}</td></tr><tr><td>Komisyon (%${COMM * 100})</td><td class="down">${fmt(-comm)}</td></tr><tr><th>Eline geçecek</th><th>${fmt(gross - comm)}</th></tr><tr><td>Tahmini satış süresi</td><td>${longDur(sellMinNew(p, q, unit))}</td></tr></table>`;
     h += `<div class="row wrap">${btn('Pazara koy', 'sellList')}${btn('Toptancıya hemen sat ' + fmt(q * ws), 'sellw', { plot: pl.id, p, q }, 'ghost')}</div><p class="muted small">Toptancı hemen öder ama birimi ${fmt1(ws)}; pazarda ${fmt1(unit * (1 - COMM))} kalır. Süreler oyun saatidir.</p>`;
     if (pl.b && pl.b.type !== 'dukkan' && !lineInputs(pl).has(p)) {
       const r = (pl.b.out || {})[p] || '', fixd = ui.sm === 'c' && ui.spc > 0;
@@ -1627,7 +1646,6 @@
     if (!plot(ui.dest)) ui.dest = s.plots[0].id;
     // Arka plandayken tarayıcı zamanlayıcıları yavaşlatır ya da durdurur; bu yüzden gizlenince
     // adımlamayı bırakıp kaydeder, geri gelince geçen süreyi telafi eder.
-    let hiddenAt = 0;
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) { hiddenAt = Date.now(); save(); }
       else if (hiddenAt) { const ms = Date.now() - hiddenAt; hiddenAt = 0; catchUp(ms); render(); }
