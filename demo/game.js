@@ -670,6 +670,7 @@
       if (!d.ok) return confirmAsk('clubJoin', d, 'Kulübe üye olunsun mu?', 'Üyelik ücreti ' + fmt(CLUB_FEE) + ' kasadan bir kez düşer ve geri alınmaz. Üyelik yeni sezona da taşınır.', 'Üye ol');
       exp('Kulüp', CLUB_FEE); club().member = true; news('Tüccarlar Kulübü', 'Kulübe üye oldun. Akşamları pistte rakiplerine meydan okuyabilirsin.'); toast('Kulübe hoş geldin');
     },
+    clubDemo() { club().member = true; toast('Kulüp demo için açıldı'); },
     stake(d) { ui.stake = +d.v; },
     bowlGo(d) {
       const c = club(); if (!c.member) return;
@@ -1821,7 +1822,7 @@
     const c = club(), out = [], r = RANKS[CLUB_RANK];
     if (!c.member) {
       const ok = rankNow() >= CLUB_RANK, nw = netWorth();
-      out.push(['cl0', `<div class="card"><h3>Tüccarlar Kulübü</h3><p>Kasabanın varlıklı tüccarları akşamları kulüpte buluşur. Cilalı ahşap pistte bowling oynar, rakiplerine meydan okurlar.</p><ul class="small"><li>Kolay, orta ve zor rakiplere karşı ${BOWL_N} frame'lik bowling maçları</li><li>Bahisli maçta kazanan ortadaki parayı alır (günde ${CLUB_DAILY} maç)</li><li>Ücretsiz antrenman ve kulüp rekoru</li><li>Üyelik yeni sezona taşınır</li></ul>${ok ? `<div class="row"><span>Üyelik ücreti <b class="num">${fmt(CLUB_FEE)}</b></span>${btn('Üye ol', 'clubJoin')}</div>` : `<p class="small"><b>Kilitli:</b> ${r.n} unvanı gerekiyor (net değer ${fmt(r.at)}).</p><div class="bar" role="progressbar" aria-label="Kulübe ilerleme" aria-valuenow="${Math.round(Math.min(1, nw / r.at) * 100)}" aria-valuemin="0" aria-valuemax="100"><i style="width:${(Math.min(1, nw / r.at) * 100).toFixed(1)}%"></i></div><p class="small muted num">${fmt(nw)} / ${fmt(r.at)}</p>`}</div>`]);
+      out.push(['cl0', `<div class="card"><h3>Tüccarlar Kulübü</h3><p>Kasabanın varlıklı tüccarları akşamları kulüpte buluşur. Cilalı ahşap pistte bowling oynar, rakiplerine meydan okurlar.</p><ul class="small"><li>Kolay, orta ve zor rakiplere karşı ${BOWL_N} frame'lik bowling maçları</li><li>Bahisli maçta kazanan ortadaki parayı alır (günde ${CLUB_DAILY} maç)</li><li>Ücretsiz antrenman ve kulüp rekoru</li><li>Üyelik yeni sezona taşınır</li></ul>${ok ? `<div class="row"><span>Üyelik ücreti <b class="num">${fmt(CLUB_FEE)}</b></span>${btn('Üye ol', 'clubJoin')}</div>` : `<p class="small"><b>Kilitli:</b> ${r.n} unvanı gerekiyor (net değer ${fmt(r.at)}).</p><div class="bar" role="progressbar" aria-label="Kulübe ilerleme" aria-valuenow="${Math.round(Math.min(1, nw / r.at) * 100)}" aria-valuemin="0" aria-valuemax="100"><i style="width:${(Math.min(1, nw / r.at) * 100).toFixed(1)}%"></i></div><p class="small muted num">${fmt(nw)} / ${fmt(r.at)}</p>`}<div class="demo-open"><p class="small muted">Demo sürümü: unvan beklemeden ücretsiz açıp deneyebilirsin.</p>${btn('Demo için kulübü aç', 'clubDemo', {}, 'ghost')}</div></div>`]);
       return out;
     }
     const b = ui.bowl;

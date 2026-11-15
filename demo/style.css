@@ -447,3 +447,5 @@ h2, h3 { font-weight: 700; }
 .bowltab td .mk { display: block; font-size: 11px; color: var(--muted, #6b5a44); letter-spacing: .5px; }
 .bowltab td b { display: block; }
 .bowltab .tot { font-weight: 700; font-size: 15px; }
+.demo-open { margin-top: 12px; padding-top: 10px; border-top: 1px dashed rgba(143, 67, 25, .35); }
+.demo-open .btn { width: 100%; }
