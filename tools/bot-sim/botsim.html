@@ -1,0 +1,175 @@
+<!doctype html><body>
+<iframe id="f" src="../../demo/index.html" width="390" height="700" style="border:0"></iframe>
+<pre id="out"></pre>
+<script>
+// Gerçek oyun kodu üzerinde bot simülasyonu. ?s=strateji&seeds=1,2,3&days=60
+const Q = new URLSearchParams(location.search);
+const STRATS = (Q.get('s') || 'bos').split(',');
+const SEEDS = (Q.get('seeds') || '1').split(',').map(Number);
+const DAYS = +(Q.get('days') || 60);
+const out = [];
+function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+f.onload = () => setTimeout(() => {
+  const w = f.contentWindow, g = w.__tezgah, D = g.dbg, A = D.A, C = D.C, B = D.B, P = D.P, R = D.R;
+  const errs = []; w.addEventListener('error', e => errs.push(e.message));
+  w.setInterval = () => 0;  // oyunun kendi saatini durdur
+  for (const strat of STRATS) for (const seed of SEEDS) {
+    w.Math.random = mulberry(seed * 7919 + 13);
+    try { w.localStorage.clear(); } catch (e) {}
+    g.reset(); const s = () => g.state, ui = g.ui; s().speed = 1; s().tutOff = true;
+    ui.frac = 1; ui.listMul = 1;
+    const rec = { strat, seed, nw: [], money: [], rankDay: {}, inc: {}, exp: {}, stall: {}, mkt: { idx: [], XAU: [], USD: [], EUR: [] }, stk: {}, loans: 0, foreclose: 0, minMoney: 1e18, events: [] };
+    const sum = (o, t) => { for (const k in o) t[k] = (t[k] || 0) + o[k]; };
+    const plotsB = () => s().plots.filter(p => p.b && !p.part);
+    const batch = pl => pl.b.type === 'dukkan' ? 1 : B[pl.b.type].scale * (1 + 0.5 * (pl.b.level - 1));
+    const yb = (pl, p) => R[pl.region].bonus === P[p].b ? (R[pl.region].bm || 1.25) : 1;
+    const MACH = { un: 6e6, giysi: 20e6, alet: 30e6, kumas: 40e6, ekmek: 60e6, peynir: 120e6, celik: 250e6 };
+    // Bir tarifin günlük kârı (toptancıya satış, girdiler toptancıdan)
+    function perDay(pl, p, level) {
+      const lv = level || (pl.b ? pl.b.level : 1), k = B[P[p].b].scale * (1 + 0.5 * (lv - 1)), o = 10 * k * yb(pl, p);
+      const rf = pl.rented ? 0.95 : 1, sell = D.price(p) * (R[pl.region].wsell || 0.85);
+      let c = P[p].op * k; for (const x in P[p].in) c += P[p].in[x] * k * D.price(x) * 1.12;
+      return (o * sell * rf - c) * 1440 / P[p].t;
+    }
+    const recipesFor = t => Object.keys(P).filter(p => P[p].b === t);
+    const upg = pl => B[pl.b.type].cost * pl.b.level + pl.b.lines.reduce((a, ln) => a + (ln.r ? (MACH[ln.r] || 0) * 0.5 : 0), 0);
+    const cfg = {
+      list: strat !== 'tarla_toptan',
+      grow: ['buyume', 'kredi', 'az', 'akilli', 'akilli_kredi'].includes(strat),
+      smart: strat.startsWith('akilli'),
+      loan: strat === 'kredi' || strat === 'akilli_kredi',
+      every: strat === 'az' ? 24 : 1,
+      reserve: 1.5e6,
+    };
+    function sellOutputs() {
+      for (const pl of plotsB()) {
+        if (pl.b.type === 'dukkan') continue;
+        const ins = new Set(pl.b.lines.flatMap(ln => ln.r ? Object.keys(P[ln.r].in) : []));
+        for (const p of Object.keys(pl.inv)) {
+          if (ins.has(p)) continue;
+          const q = pl.inv[p]; if (!(q > 0)) continue;
+          const queued = s().mine.filter(l => l.p === p).reduce((a, l) => a + l.qty, 0), dem = 15 * B[P[p].b].scale * D.depth() * 24 * cfg.every;
+          if (cfg.list && queued < dem) A.list({ plot: pl.id, p }); else A.sellw({ plot: pl.id, p, q });
+        }
+      }
+    }
+    function setRecipes() {
+      for (const pl of plotsB()) {
+        if (pl.b.type === 'dukkan') continue;
+        pl.b.lines.forEach((ln, i) => {
+          if (ln.r) { if (Object.keys(P[ln.r].in).length) ln.auto = 1.2; return; }
+          const opts = recipesFor(pl.b.type).filter(p => (MACH[p] || 0) * (1 + 0.5 * (pl.b.level - 1)) <= s().money - 2e5)
+            .map(p => [p, perDay(pl, p) * 30 - (MACH[p] || 0)]).sort((a, b) => b[1] - a[1]);
+          if (opts.length) { C.recipe({ dataset: { plot: pl.id, i, ok: '1' }, value: opts[0][0] }); if (Object.keys(P[opts[0][0]].in).length) ln.auto = 1.2; }
+        });
+      }
+    }
+    function bestBuild(pl) {
+      const m = s().money;
+      if (cfg.smart) {
+        const c = ['tarla', 'maden', 'fabrika'].flatMap(t => recipesFor(t).map(p => [t, perDay(pl, p, 1), B[t].cost + (MACH[p] || 0)]))
+          .filter(x => x[1] > 0 && x[2] + reserve() <= m && x[2] / x[1] <= 25).sort((a, b) => b[1] - a[1]);
+        return c[0] ? c[0][0] : null;
+      }
+      const c = ['tarla', 'maden', 'fabrika'].map(t => {
+        const ps = recipesFor(t).map(p => [p, perDay(pl, p, 1), MACH[p] || 0]).filter(x => B[t].cost + x[2] + cfg.reserve <= m);
+        if (!ps.length) return null; ps.sort((a, b) => (b[1] * 30 - b[2]) - (a[1] * 30 - a[2]));
+        return [t, ps[0][1] / (B[t].cost + ps[0][2])];
+      }).filter(Boolean).sort((a, b) => b[1] - a[1]);
+      return c[0] && c[0][1] > 0 ? c[0][0] : null;
+    }
+    const reserve = () => cfg.smart ? Math.max(cfg.reserve, 0.3 * Math.max(0, D.taxBase())) : cfg.reserve;
+    function needMoney(n) {
+      if (!cfg.loan || s().money >= n) return;
+      const lim = D.loanLimit(); if (lim < 1e5) return;
+      ui.loanTL = Math.min(lim, n - s().money + 5e5); A.loanTake({ v: 13 }); rec.loans++;
+    }
+    function grow() {
+      // boş arsalara bina
+      for (const pl of s().plots.filter(p => !p.b && !p.part)) { const t = bestBuild(pl) || (cfg.loan && (needMoney(B.tarla.cost + cfg.reserve), bestBuild(pl))); if (t) A.build({ plot: pl.id, v: t }); }
+      if (cfg.smart && s().money < 0) { const own = s().plots.filter(p => !p.rented && !p.part && p.id !== 1).sort((a, b) => a.ref - b.ref)[0]; if (own) { A.sysSell({ plot: own.id, ok: '1' }); rec.sold = (rec.sold || 0) + 1; } }
+      // yükseltme
+      for (const pl of plotsB()) if (pl.b.type !== 'dukkan' && pl.b.level < 3 && s().money > upg(pl) * 1.3 + reserve()) A.upgrade({ plot: pl.id });
+      // artırma
+      let mine = s().auctions.filter(a => a.bidder === 'me').length;
+      for (const a of s().auctions) {
+        if (a.plot || a.bidder === 'me' || mine >= 2) continue;
+        const next = Math.ceil(Math.max(a.start, a.bid * 1.05));
+        if (next > a.ref * 1.05) continue;
+        const rs = cfg.smart ? reserve() : cfg.reserve;
+        if (s().money < next + B.tarla.cost + rs) needMoney(next + B.tarla.cost + rs);
+        if (s().money >= next + B.tarla.cost + rs) { A.bid({ id: a.id }); mine++; }
+      }
+      if (strat === 'buyume_mevduat') { const ex = s().money - 2.5e7; if (ex > 0) { ui.invTL = ex; A.trade({ asset: 'DEP', side: 'buy' }); } else if (s().pf.DEP > 0 && s().money < 1e7) { ui.invTL = Math.min(s().pf.DEP, 1e7 - s().money); A.trade({ asset: 'DEP', side: 'sell' }); } }
+    }
+    const STK = ['AUN', 'YSU', 'ETK', 'DMC', 'KMD', 'PZM'];
+    const EVS = { festival: ['AUN', 'YSU', 'PZM'], kis: ['KMD', 'ETK', 'PZM'], moda: ['ETK', 'PZM'], insaat: ['DMC'] };
+    let evHold = null;
+    function start() {
+      const m = s().money;
+      if (strat === 'mevduat') { ui.invTL = m; A.trade({ asset: 'DEP', side: 'buy' }); }
+      if (strat === 'altin') { ui.invTL = m; A.trade({ asset: 'XAU', side: 'buy' }); }
+      if (strat === 'dolar') { ui.invTL = m; A.trade({ asset: 'USD', side: 'buy' }); }
+      if (strat === 'borsa') { for (const k of STK) { ui.invTL = m / 6; A.trade({ asset: k, side: 'buy' }); } }
+      if (['tarla', 'tarla_toptan', 'tarla_mevduat', 'buyume', 'kredi', 'az', 'akilli', 'akilli_kredi', 'ilan'].includes(strat)) { A.build({ plot: 1, v: 'tarla' }); setRecipes(); }
+      if (strat === 'dukkan') {
+        A.build({ plot: 1, v: 'dukkan' }); const pl = s().plots[0];
+        for (const p of ['ekmek', 'sut', 'peynir']) C.addShelf({ value: p, dataset: { plot: 1 } });
+      }
+    }
+    function hour(h) {
+      const st = strat;
+      if (cfg.every > 1 && h % cfg.every) return;
+      if (['tarla', 'tarla_toptan', 'tarla_mevduat', 'ilan'].includes(st) || cfg.grow) { setRecipes(); sellOutputs(); }
+      if (cfg.grow) grow();
+      if (st === 'tarla_mevduat' && h % 24 === 0) { const ex = s().money - 1e6; if (ex > 0) { ui.invTL = ex; A.trade({ asset: 'DEP', side: 'buy' }); } }
+      if (st === 'dukkan' && h % 24 === 0) {
+        // dükkân zinciri: merkez arsası al, dükkân kur, rafları doldur
+        for (const pl of plotsB()) if (pl.b.type === 'dukkan' && pl.b.level < 3 && s().money > B.dukkan.cost * pl.b.level * 1.5 + 1e6) A.upgrade({ plot: pl.id });
+        for (const pl of s().plots.filter(p => !p.b)) if (s().money > B.dukkan.cost + 5e5) { A.build({ plot: pl.id, v: 'dukkan' }); for (const p of ['ekmek', 'peynir', 'giysi', 'sut', 'un', 'alet', 'komur']) C.addShelf({ value: p, dataset: { plot: pl.id } }); }
+        for (const pl of plotsB()) if (pl.b.type === 'dukkan') for (const p of ['ekmek', 'peynir', 'giysi', 'sut', 'un', 'alet', 'komur']) C.addShelf({ value: p, dataset: { plot: pl.id } });
+        for (const a of s().auctions) { if (a.plot || a.bidder === 'me' || a.region !== 'merkez') continue; const next = Math.ceil(Math.max(a.start, a.bid * 1.05)); if (next <= a.ref * 1.05 && s().money >= next + B.dukkan.cost + 5e5) A.bid({ id: a.id }); }
+      }
+      if (st === 'ilan') {
+        const pl = s().plots[0];
+        for (const l of [...s().listings]) {
+          if (P[l.p].b === 'tarla' && l.p === pl.b.lines[0].r) continue;
+          const tr = l.qty ? (P[l.p].kg / 1000 * (150 + ({ merkez: 1, kirsal: 0, dag: 1 }[l.region] ?? 2) * 600)) : 0;
+          if (l.price + tr < 0.92 * D.price(l.p)) { ui.dest = pl.id; ui.qty = l.qty; const m0 = s().money; A.buy({ p: l.p, id: l.id }); rec.arb = (rec.arb || 0) + (m0 - s().money); }
+        }
+      }
+      if (st === 'olay') {
+        const now = s().t, ev = s().events.find(e => EVS[e.key] && e.end > now);
+        if (!evHold && ev) { const ks = EVS[ev.key]; const m = s().money; for (const k of ks) { ui.invTL = m / ks.length; A.trade({ asset: k, side: 'buy' }); } evHold = ev; rec.events.push(ev.key); }
+        if (evHold && now >= evHold.end) { for (const k of STK) if (s().pf[k] > 0) A.trade({ asset: k, side: 'sellall' }); evHold = null; }
+      }
+    }
+    start();
+    let h0 = s().lastHour;
+    const tStart = performance.now();
+    for (let d = 0; d < DAYS; d++) {
+      for (let i = 0; i < 24; i++) {
+        for (let j = 0; j < 12; j++) D.step(5);
+        const h = s().lastHour; try { hour(h); } catch (e) { errs.push(strat + ':' + e.message); }
+        rec.minMoney = Math.min(rec.minMoney, s().money);
+        for (const pl of plotsB()) for (const ln of pl.b.lines || []) if (ln.st) rec.stall[ln.st.split(':')[0]] = (rec.stall[ln.st.split(':')[0]] || 0) + 1;
+        if (s().comp && s().comp.season > 1 && !rec.seasonEnd) rec.seasonEnd = d;
+      }
+      sum(s().prev.inc, rec.inc); sum(s().prev.exp, rec.exp);
+      rec.nw.push(Math.round(D.netWorth())); if (s().money < 0) rec.negDays = (rec.negDays || 0) + 1; if (s().plots.length < (rec.lastPlots || 0) && !rec.sold) rec.plotDrop = (rec.plotDrop || 0) + 1; rec.lastPlots = s().plots.length; rec.money.push(Math.round(s().money));
+      const m = s().mkt; rec.mkt.idx.push(+m.idx.toFixed(1)); for (const a of ['XAU', 'USD', 'EUR']) rec.mkt[a].push(+m.px[a].toFixed(3));
+      for (const k of STK) (rec.stk[k] = rec.stk[k] || []).push(+m.px[k].toFixed(3));
+      const r = s().rank || 0; if (!(r in rec.rankDay)) rec.rankDay[r] = d + 1;
+    }
+    rec.plots = s().plots.length; rec.build = plotsB().map(p => p.b.type + p.b.level + (p.b.lines || []).map(l => ':' + l.r).join('')).join(' ');
+    rec.mult = Object.fromEntries(Object.keys(P).map(p => [p, +s().mult[p].toFixed(2)]));
+    rec.pf = Object.fromEntries(Object.entries(s().pf).filter(([k, v]) => typeof v === 'number' && v > 0).map(([k, v]) => [k, Math.round(v)]));
+    rec.debt = Math.round((s().loans || []).reduce((a, l) => a + l.left, 0));
+    rec.ms = Math.round(performance.now() - tStart);
+    if (s().comp) { const npc = s().comp.npc.map(n => n.nw).sort((a, b) => b - a); rec.npcTop = Math.round(npc[0]); rec.place = 1 + npc.filter(x => x > D.netWorth()).length; rec.firms = npc.length + 1; }
+    out.push(rec);
+  }
+  document.getElementById('out').textContent = 'JSON:' + JSON.stringify({ out, errs: errs.slice(0, 20) }) + ':END';
+}, 300);
+</script></body>

@@ -1,0 +1,17 @@
+<!doctype html><body><iframe id="f" src="../../demo/index.html" width="390" height="812"></iframe><pre id="out"></pre>
+<script>
+f.onload=()=>setTimeout(()=>{const w=f.contentWindow,g=w.__tezgah,A=g.dbg.A,res={};w.setInterval=()=>0;
+try{w.localStorage.clear()}catch(e){}g.reset();g.state.speed=0;g.state.money=1e12;A.tab({v:'club'});g.advance(0);A.clubDemo();g.advance(0);
+const P={iyi:(st)=>[112+(Math.random()-.5)*8,700,0,0], ustaci:(st)=>[140+(Math.random()-.5)*10,700,0,0.3], acemi:(st)=>[70+Math.random()*70,450+Math.random()*450,(Math.random()-.5)*0.06,(Math.random()-.5)*0.6]};
+const PINX=[100,71,129,42,100,158,13,71,129,187];
+for(const [pn,pol] of Object.entries(P)) for(const rv of [0,1,2]){let W=0,T=0,L=0,sc=0,N=60;
+ for(let i=0;i<N;i++){g.state.comp.club.n=0;A.stake({v:100000});A.bowlBack();A.bowlGo({v:rv});g.advance(0);let k=0;
+  while(g.ui.bowl&&!g.ui.bowl.done&&k++<40){const b=g.ui.bowl,bw=w.document.querySelector('#bowlCv')._bw;bw.setPins(b.standing);
+   let x,sp,a,sn;[x,sp,a,sn]=pol();
+   if(b.standing!=='all'&&b.standing.length&&pn!=='acemi'){const xs=b.standing.map(id=>PINX[id]??100);x=xs.reduce((p,q)=>p+q,0)/xs.length+(Math.random()-.5)*8;sn=0;}
+   bw.simulate(x,sp,a,sn);g.advance(0);}
+  const b=g.ui.bowl;if(b&&b.done){if(b.res==='w')W++;else if(b.res==='d')T++;else L++; sc+=b.me.flat? 0:0;}
+ }
+ res[pn+'-'+['Kolay','Orta','Zor'][rv]]={W,T,L,EV:+((2*W+T)/N-1).toFixed(2)};}
+out.textContent='JSON:'+JSON.stringify(res)+':END';},500);
+</script></body>

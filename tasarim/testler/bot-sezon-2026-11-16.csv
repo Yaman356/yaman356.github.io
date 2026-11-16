@@ -1,0 +1,17 @@
+strateji,ad,medyan_net_deger,en_kotu,en_iyi,esnaf_gun,tuccar_gun,sanayici_gun,eksi_kasa_sezon,haciz,medyan_sira
+bos,Hiçbir şey yapmayan,2500000,2500000,2500000,,,,0,0,12.0
+mevduat,Bütün para mevduatta,3199802,3199802,3199802,,,,0,0,12.0
+dolar,Bütün para dolarda,3281440,2815443,3462719,,,,0,0,12.0
+altin,Bütün para altında,4095586,2719076,4960654,,,,0,0,12.0
+borsa,6 hisseye eşit dağıtıp bekleyen,4298912,2706018,9917482,59,,,0,0,12.0
+olay,Gazete olayı avcısı (hisse),11469624,4839433,15634125,50,,,0,0,12.0
+dukkan,Dükkân zinciri,19740366,18593189,20484949,31.5,,,0,0,12.0
+tarla_toptan,"Tek tarla, toptancıya satış",22851708,19941491,26880208,15.5,,,0,0,12.0
+tarla,"Tek tarla, pazara ilan",29469572,24834492,32434540,11.0,57.5,,0,0,12.0
+tarla_mevduat,Tek tarla + mevduat,30810335,26125026,34530723,12.0,55,,0,0,12.0
+az,Günde bir kez bakan büyüme,22527727,18812811,26881321,32.5,,,0,0,12.0
+ilan,Tek tarla + ucuz ilan avcılığı,52225820,46582119,55293594,6.0,35.0,,0,0,11.5
+buyume,Saf büyüme (hızlı genişleme),51457130,32955135,121982755,10.5,23.0,39,10,0,12.0
+kredi,Saf büyüme + kredi,41868864,9343543,118662241,10.0,23.5,36,6,84,12.0
+akilli,Akıllı büyüme (vergi payı ayırır),235500132,130287302,378562266,10.0,22.5,36.5,0,0,5.0
+akilli_kredi,Akıllı büyüme + kredi,133975282,20707663,250472718,9.5,22.0,35,0,1,6.5
