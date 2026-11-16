@@ -458,3 +458,32 @@ body.bowling #toast { top: 42%; bottom: auto; font-size: 18px; font-weight: 700;
 .bowltab .tot { font-weight: 700; font-size: 15px; }
 .demo-open { margin-top: 12px; padding-top: 10px; border-top: 1px dashed rgba(143, 67, 25, .35); }
 .demo-open .btn { width: 100%; }
+
+/* ---------- Koyu tema varsayılan (Kasım 2026): beyaz/krem yüzeyler en aza indirildi; sistem açık temada olsa da oyun koyu açılır ---------- */
+:root:not(#_) {
+  color-scheme: dark;
+  --bg: #121820; --surface: #1d2630; --fg: #efe6d2; --muted: #b0a690; --line: #34404d; --soft: #26303b; --cream: #26303b;
+  --navy: #0f1a27; --navy2: #1e3048; --on-navy: #f3ead6; --gold: #d9a441; --gold2: #f0c867;
+  --accent: #5cbf6a; --on-accent: #0c1f10; --amber: #e0a84a; --good: #6fd08a; --bad: #f08374;
+  --copper: #c8763f; --copper2: #9c5224; --on-copper: #fff3e0;
+  --tile: #26313d; --tile2: #1b242e; --tile-line: #3c4a59;
+  --ic-grain: #d6a648; --ic-light: #e6e1d3; --ic-dark: #1d2226; --ic-ore: #b9715a; --ic-cloth: #6c9be0; --ic-steel: #8c98a3; --ic-cheese: #e3bb46; --ic-awning: #d9655c; --ic-field: #6f9f4a; --ic-rock: #7d766b;
+  --map-pave: #2b3532; --map-pave2: #27302d; --map-grass: #2c4527; --map-grass2: #4d7a38; --map-dirt: #463b2d; --map-dirt2: #43382a; --map-line: #ffffff17; --map-edgeL: #1b2321; --map-edgeR: #151c1a; --map-wheat: #b8923a; --map-pasture: #4f8a3a; --map-cotton: #cfcabe; --old-pave: #27312e; --map-roof: #4d5955; --map-wall: #66726e; --map-wall2: #48524f;
+  --map-roofRed: #a24a3f; --map-steel: #5d6770; --map-steel2: #46505a; --map-steelTop: #78828b; --map-tree: #3d7533; --map-people: #8fb8e0; --map-smoke: #6f7880; --map-own: #2f9a80; --map-ownGround: #1d3f37;
+}
+body { background: var(--bg); color: var(--fg); }
+/* Krem haplar ve kutucuklar koyu lacivert karolara döndü */
+.pill { background: linear-gradient(var(--tile), var(--tile2)); color: var(--fg); border: 1px solid var(--tile-line); box-shadow: inset 0 1px 0 #ffffff12, 0 2px 4px #0006; }
+.cashpill .cash, .daypill { color: var(--fg); }
+.daypill small, #hud .cash .today.muted { color: var(--muted); }
+#hud .cash .today.up { color: #8fe0a0; } #hud .cash .today.down { color: #ff9f8f; }
+.subtabs button { background: linear-gradient(var(--tile), var(--tile2)); border-color: var(--tile-line); color: var(--fg); box-shadow: inset 0 -2px 0 #0004; }
+.btn.ghost { background: linear-gradient(var(--tile), var(--tile2)); border-color: #5a4a33; color: var(--gold2); }
+.chips button.on, .opt.on { background: #3a3020; color: var(--fg); }
+.bar { background: #33404d; }
+#nav { background: linear-gradient(#0000, var(--bg) 35%); }
+#nav button { background: linear-gradient(var(--tile), var(--tile2)); border-color: var(--tile-line); color: #d8cfb9; box-shadow: inset 0 1px 0 #ffffff10, 0 2px 4px -1px #0006; }
+#nav button svg { color: var(--copper); }
+.bfs-head { color: var(--fg); }
+.demo-open { border-top-color: var(--line); }
+@media (min-width: 900px) { #nav { background: var(--navy); } #nav button { background: none; border-color: transparent; box-shadow: none; } }
