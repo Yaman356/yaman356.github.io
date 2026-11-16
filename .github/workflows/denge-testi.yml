@@ -1,0 +1,38 @@
+# Tezgâh denge testi: oyun kodu her değiştiğinde botlar bir sezonu 16 farklı tarzla oynar.
+# Denge sınırlarından biri aşılırsa iş kırmızı biter; özet tablo işin "Summary" sayfasında görünür,
+# ham sonuçlar "denge-testi" eseri olarak indirilebilir. Elle çalıştırmak için Actions > Denge testi > Run workflow.
+name: Denge testi
+
+on:
+  push:
+    paths: ['demo/game.js', 'demo/bowling.js', 'tools/bot-sim/**', '.github/workflows/denge-testi.yml']
+  workflow_dispatch:
+    inputs:
+      seeds:
+        description: 'Strateji başına tohum (sezon) sayısı'
+        default: '10'
+  schedule:
+    - cron: '0 4 * * 1'  # her pazartesi 07:00 (TSİ): rastgelelik dışı değişiklik olmasa da düzenli kontrol
+
+concurrency:
+  group: denge-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  denge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Botları oynat ve sınırları denetle
+        env:
+          CHROME: /usr/bin/google-chrome
+        run: python tools/bot-sim/run.py --seeds "${{ github.event.inputs.seeds || '10' }}" --jobs 4
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: denge-testi
+          path: tools/bot-sim/out/

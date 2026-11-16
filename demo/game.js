@@ -286,6 +286,26 @@
     return v;
   }
   const fmtFull = n => (n < 0 ? '−' : '') + sym() + Math.round(Math.abs(disp(n))).toLocaleString('tr-TR');
+  function buildEst(pl, t) {
+    if (t === 'dukkan') return null;
+    let best = null;
+    for (const p of PK) {
+      if (P[p].b !== t) continue;
+      const k = B[t].scale, out = 10 * k * yieldMult(pl.region, t, p);
+      const cost = P[p].op * k + Object.entries(P[p].in).reduce((a, [x, q]) => a + q * k * price(x) * wBuy(), 0);
+      const sell = price(p) * (R[pl.region].wsell || W_SELL) * (pl.rented ? 1 - RENT : 1);
+      const day = (out * sell - cost) * 1440 / P[p].t, inv = B[t].cost + (MACH[p] || 0);
+      if (!best || day > best.day) best = { p, day, inv, pay: day > 0 ? inv / day : Infinity };
+    }
+    return best;
+  }
+  function buildTags(pl) {
+    const e = {}; for (const k in B) e[k] = buildEst(pl, k);
+    const ks = Object.keys(e).filter(k => e[k] && e[k].day > 0);
+    const top = ks.sort((a, b) => e[b].day - e[a].day)[0], fast = [...ks].sort((a, b) => e[a].pay - e[b].pay)[0];
+    return { e, top, fast };
+  }
+  const estTxt = x => x ? (x.day > 0 ? `${pname(x.p)} ile günde ≈ ${fmt(x.day)} · ${Math.max(1, Math.ceil(x.pay))} günde kendini öder${MACH[x.p] ? ' (makine ' + fmt(MACH[x.p]) + ' dahil)' : ''}` : 'Bugünkü fiyatlarla kâr etmiyor') : 'Kâr rafa koyduğun mala ve fiyatına bağlı';
   function addCost(pl, p, q, unit) { if (!pl.b || pl.b.type !== 'dukkan') return; const old = pl.inv[p] || 0; pl.b.cost[p] = (old * (pl.b.cost[p] || unit) + q * unit) / (old + q); }
   function purchase(to, p, q, l) {
     const unit = (l ? l.price : price(p) * wBuy() * (1 - wEff(to, 'mudur'))), tu = trans(1, p, l ? l.region : to.region, to.region) * (1 - wEff(to, 'sofor'));
@@ -958,7 +978,7 @@
     }
     const acts = [];
     if (!b) {
-      h += `<div class="qbuild">${Object.keys(B).map(k => `<button type="button" data-a="build" data-plot="${pl.id}" data-v="${k}">${A2[k + '_1'] ? `<img src="${A2[k + '_1']}" alt="">` : ic(k, 34)}<b>${B[k].n}</b><small>${fmt(B[k].cost)}</small></button>`).join('')}</div>`;
+      h += `<div class="qbuild">${Object.keys(B).map(k => `<button type="button" data-a="build" data-plot="${pl.id}" data-v="${k}">${A2[k + '_1'] ? `<img src="${A2[k + '_1']}" alt="">` : ic(k, 34)}<b>${B[k].n}</b><small>${fmt(B[k].cost)}</small>${(() => { const x = buildEst(pl, k); return x && x.day > 0 ? `<small class="up">≈ ${fmt(x.day)}/gün</small>` : ''; })()}</button>`).join('')}</div>`;
     } else {
       const t = plotTodo(pl); if (t) acts.push([t[3] + (t[4] === 'goSell' ? ' · ' + pname(t[5].p) : t[4] === 'goBuy' ? ' · ' + pname(t[5].v) : ''), t[4], t[5], '']);
       if (b.type !== 'dukkan') { const sl = sellable(pl); if (sl.length && !(t && t[4] === 'goSell')) acts.push(['Sat · ' + pname(sl[0]), 'goSell', { plot: pl.id, p: sl[0] }, t ? 'ghost' : '']); }
@@ -1009,8 +1029,9 @@
       return h + `<p class="small">Bu arsa, Arsa ${pl.part}’deki ${m && m.b ? B[m.b.type].n.toLocaleLowerCase('tr-TR') : 'binanın'} genişlemesi; ek üretim hattı burada çalışıyor. Ayrı kullanılamaz; bina yıkılınca boşalır.</p></div>`;
     }
     if (!pl.b) {
-      h += '<p>Bu arsaya ne kuracaksın?</p><div class="choices">';
-      for (const k in B) h += `<button type="button" class="choice" data-a="build" data-plot="${pl.id}" data-v="${k}">${window.TezgahAssets && window.TezgahAssets[k + '_1'] ? `<img class="bimg" src="${window.TezgahAssets[k + '_1']}" alt="">` : ic(k, 34)}<b>${B[k].n}</b><span>${fmt(B[k].cost)}</span><small>${B[k].hint}${reg.bonus === k ? ' · bölge bonusu' : ''}</small></button>`;
+      const bt = buildTags(pl);
+      h += '<p>Bu arsaya ne kuracaksın?</p><p class="small muted">Tahminler bugünkü fiyatlarla, malı toptancıya sattığın varsayımıyla. Tarla ve maden kendini çabuk öder; fabrika daha pahalıdır ama aynı arsada çok daha fazla kazandırır.</p><div class="choices">';
+      for (const k in B) h += `<button type="button" class="choice" data-a="build" data-plot="${pl.id}" data-v="${k}">${window.TezgahAssets && window.TezgahAssets[k + '_1'] ? `<img class="bimg" src="${window.TezgahAssets[k + '_1']}" alt="">` : ic(k, 34)}<b>${B[k].n}</b><span>${fmt(B[k].cost)}</span>${bt.top === k ? '<span class="tag own">Arsa başına en kârlı</span>' : ''}${bt.fast === k && bt.top !== k ? '<span class="tag">En hızlı geri dönüş</span>' : ''}<small class="est">${estTxt(bt.e[k])}</small><small>${B[k].hint}${reg.bonus === k ? ' · bölge bonusu' : ''}</small></button>`;
       return h + '</div></div>';
     }
     const b = pl.b, bt = B[b.type];
@@ -1925,7 +1946,7 @@
     const bids = s.auctions.filter(a => a.bidder === 'me').reduce((a, x) => a + x.bid, 0);
     paint(hud, [
       ['top', `<div class="logo">${WHEAT}<span class="brand">Tezgâh</span>${WHEAT}</div>`],
-      ['cash', `<div class="pills"><div class="pill cashpill"><svg class="pic" viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><g fill="#c9922e" stroke="#7a5418" stroke-width="1"><ellipse cx="9" cy="17" rx="6" ry="2.4"/><ellipse cx="9" cy="14" rx="6" ry="2.4"/><ellipse cx="15" cy="11" rx="6" ry="2.4"/><ellipse cx="15" cy="8" rx="6" ry="2.4"/></g></svg><div class="cash ${s.money < 0 ? 'down' : ''}">${Math.abs(s.money) < 1e9 ? fmtFull(s.money) : fmt(s.money)}${(() => { if (s.nwDay == null) s.nwDay = netWorth(); const d = netWorth() - s.nwDay; return `<span class="today ${d < 0 ? 'down' : 'up'}" title="Bugün net değerdeki değişim">bugün ${d < 0 ? '▼' : '▲'} ${fmtFull(Math.abs(d))}</span>`; })()}${bids ? `<span class="today muted">teminatta ${fmt(bids)}</span>` : ''}${taxEst() > 0 ? `<span class="today muted" title="Çeyrek sonunda ödenecek tahmini kurumlar vergisi">vergi payı ≈ ${fmt(taxEst())}</span>` : ''}</div></div><div class="pill daypill"><svg class="pic" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M7 14h2M11 14h2M15 14h2M7 17h2M11 17h2"/></svg><span><b>${Math.floor(s.t / 1440) + 1}. Gün</b><small>${curSeason().n} · ${String(Math.floor(s.t / 60) % 24).padStart(2, '0')}:00</small></span></div></div>`],
+      ['cash', `<div class="pills"><div class="pill cashpill"><svg class="pic" viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><g fill="#c9922e" stroke="#7a5418" stroke-width="1"><ellipse cx="9" cy="17" rx="6" ry="2.4"/><ellipse cx="9" cy="14" rx="6" ry="2.4"/><ellipse cx="15" cy="11" rx="6" ry="2.4"/><ellipse cx="15" cy="8" rx="6" ry="2.4"/></g></svg><div class="cash ${s.money < 0 ? 'down' : ''}">${Math.abs(s.money) < 1e9 ? fmtFull(s.money) : fmt(s.money)}${(() => { if (s.nwDay == null) s.nwDay = netWorth(); const d = netWorth() - s.nwDay; return `<span class="today ${d < 0 ? 'down' : 'up'}" title="Bugün net değerdeki değişim">bugün ${d < 0 ? '▼' : '▲'} ${fmtFull(Math.abs(d))}</span>`; })()}${bids ? `<span class="today muted">teminatta ${fmt(bids)}</span>` : ''}${s.money < 0 ? `<span class="today down" title="Kasa eksideyken üretim bu sınıra kadar sürer; borca günlük faiz işler">ek hesap sınırı ${fmt(overdraft())}</span>` : ''}${taxEst() > 0 ? `<span class="today muted" title="Çeyrek sonunda ödenecek tahmini kurumlar vergisi">vergi payı ≈ ${fmt(taxEst())}</span>` : ''}</div></div><div class="pill daypill"><svg class="pic" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M7 14h2M11 14h2M15 14h2M7 17h2M11 17h2"/></svg><span><b>${Math.floor(s.t / 1440) + 1}. Gün</b><small>${curSeason().n} · ${String(Math.floor(s.t / 60) % 24).padStart(2, '0')}:00</small></span></div></div>`],
       ['rank', `<div class="rankrow"><div class="speed" role="group" aria-label="Oyun hızı">${[[0, '❚❚'], [1, '1×'], [2, '2×'], [4, '4×']].map(([v, l]) => `<button type="button" data-a="speed" data-v="${v}" class="${s.speed === v ? 'on' : ''}" aria-label="${v ? 'Hız ' + v + '×' : 'Durdur'}" aria-pressed="${s.speed === v}">${l}</button>`).join('')}</div>${rankBar()}</div>`],
     ]);
     const sub = subTabs();
@@ -1978,6 +1999,6 @@
 
   window.__tezgah = { get state() { return s; }, get ui() { return ui; }, away(ms) { catchUp(ms); render(); }, advance(min) { for (let i = 0; i < min; i += 5) step(5); render(); }, reset() { newGame(); render(); },
     // Denge testleri için: oyun içi eylemler ve tablolar (bot simülasyonu)
-    dbg: { A, C, B, P, R, RANKS, netWorth, price, step, compDay, endSeason, loanLimit, loanDebt, depth, curSeason, taxBase, wSell, openR } };
+    dbg: { A, C, B, P, R, MACH, RANKS, netWorth, price, step, compDay, endSeason, loanLimit, loanDebt, depth, curSeason, taxBase, wSell, openR } };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();

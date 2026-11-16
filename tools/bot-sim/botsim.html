@@ -24,7 +24,7 @@ f.onload = () => setTimeout(() => {
     const plotsB = () => s().plots.filter(p => p.b && !p.part);
     const batch = pl => pl.b.type === 'dukkan' ? 1 : B[pl.b.type].scale * (1 + 0.5 * (pl.b.level - 1));
     const yb = (pl, p) => R[pl.region].bonus === P[p].b ? (R[pl.region].bm || 1.25) : 1;
-    const MACH = { un: 6e6, giysi: 20e6, alet: 30e6, kumas: 40e6, ekmek: 60e6, peynir: 120e6, celik: 250e6 };
+    const MACH = D.MACH || { un: 6e6, giysi: 20e6, alet: 30e6, kumas: 40e6, ekmek: 60e6, peynir: 120e6, celik: 250e6 };
     // Bir tarifin günlük kârı (toptancıya satış, girdiler toptancıdan)
     function perDay(pl, p, level) {
       const lv = level || (pl.b ? pl.b.level : 1), k = B[P[p].b].scale * (1 + 0.5 * (lv - 1)), o = 10 * k * yb(pl, p);
@@ -68,6 +68,9 @@ f.onload = () => setTimeout(() => {
     function bestBuild(pl) {
       const m = s().money;
       if (cfg.smart) {
+        // Ham madde binaları fabrikaların iki katını geçince fabrika için para biriktir
+        if (wantFactory()) { const f = recipesFor('fabrika').map(p => [p, perDay(pl, p, 1), B.fabrika.cost + (MACH[p] || 0)]).filter(x => x[1] > 0 && x[2] / x[1] <= 30).sort((a, b) => b[1] - a[1])[0];
+          return f && f[2] + reserve() <= m ? 'fabrika' : null; }
         const c = ['tarla', 'maden', 'fabrika'].flatMap(t => recipesFor(t).map(p => [t, perDay(pl, p, 1), B[t].cost + (MACH[p] || 0)]))
           .filter(x => x[1] > 0 && x[2] + reserve() <= m && x[2] / x[1] <= 25).sort((a, b) => b[1] - a[1]);
         return c[0] ? c[0][0] : null;
@@ -79,6 +82,7 @@ f.onload = () => setTimeout(() => {
       }).filter(Boolean).sort((a, b) => b[1] - a[1]);
       return c[0] && c[0][1] > 0 ? c[0][0] : null;
     }
+    const wantFactory = () => { const b = plotsB().filter(p => p.b.type !== 'dukkan'), f = b.filter(p => p.b.type === 'fabrika').length; return cfg.smart && D.netWorth() > 3e7 && b.length - f >= 2 * (f + 1); };
     const reserve = () => cfg.smart ? Math.max(cfg.reserve, 0.3 * Math.max(0, D.taxBase())) : cfg.reserve;
     function needMoney(n) {
       if (!cfg.loan || s().money >= n) return;
@@ -90,11 +94,12 @@ f.onload = () => setTimeout(() => {
       for (const pl of s().plots.filter(p => !p.b && !p.part)) { const t = bestBuild(pl) || (cfg.loan && (needMoney(B.tarla.cost + cfg.reserve), bestBuild(pl))); if (t) A.build({ plot: pl.id, v: t }); }
       if (cfg.smart && s().money < 0) { const own = s().plots.filter(p => !p.rented && !p.part && p.id !== 1).sort((a, b) => a.ref - b.ref)[0]; if (own) { A.sysSell({ plot: own.id, ok: '1' }); rec.sold = (rec.sold || 0) + 1; } }
       // yükseltme
-      for (const pl of plotsB()) if (pl.b.type !== 'dukkan' && pl.b.level < 3 && s().money > upg(pl) * 1.3 + reserve()) A.upgrade({ plot: pl.id });
+      for (const pl of plotsB()) if (pl.b.type !== 'dukkan' && pl.b.level < 3 && s().money > upg(pl) * 1.3 + reserve() && !(wantFactory() && s().plots.some(p => !p.b && !p.part) && pl.b.type !== 'fabrika')) A.upgrade({ plot: pl.id });
       // artırma
       let mine = s().auctions.filter(a => a.bidder === 'me').length;
       for (const a of s().auctions) {
         if (a.plot || a.bidder === 'me' || mine >= 2) continue;
+        if (wantFactory() && s().plots.some(p => !p.b && !p.part)) continue;
         const next = Math.ceil(Math.max(a.start, a.bid * 1.05));
         if (next > a.ref * 1.05) continue;
         const rs = cfg.smart ? reserve() : cfg.reserve;

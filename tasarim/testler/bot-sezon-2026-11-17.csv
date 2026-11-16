@@ -1,0 +1,17 @@
+strateji,ad,medyan,en_kotu,en_iyi,eksi_kasa_sezon,haciz,medyan_sira,fabrika_kuran_sezon
+bos,Hiçbir şey yapmayan,2500000,2500000,2500000,0,0,12.0,0
+mevduat,Bütün para mevduatta,3530784,3530784,3530784,0,0,12.0,0
+dolar,Bütün para dolarda,3232220,2785306,3447358,0,0,12.0,0
+altin,Bütün para altında,4261779,2504791,4960654,0,0,12.0,0
+borsa,6 hisseye eşit dağıtıp bekleyen,4290689,2300002,9296696,0,0,12.0,0
+olay,Gazete olayı avcısı,2374990,1393427,3357512,0,0,12.0,0
+dukkan,Dükkân zinciri,17237241,16654529,18375149,0,0,11.0,0
+tarla_toptan,"Tek tarla, toptancıya satış",22106622,19612945,26225061,0,0,10.5,0
+tarla,"Tek tarla, pazara ilan",28147113,25203608,31883035,0,0,10.0,0
+tarla_mevduat,Tek tarla + mevduat,31291939,27082788,35183605,2,0,9.0,0
+az,Günde bir kez bakan büyüme,21795792,17664178,25887836,0,0,11.0,0
+ilan,Tek tarla + ucuz ilan avcılığı,27984368,25198036,32516881,0,0,9.5,0
+buyume,Saf büyüme,276045638,150627908,348560085,8,0,1.0,0
+kredi,Saf büyüme + kredi,140085191,68695822,287616322,10,15,4.5,0
+akilli,Akıllı büyüme,217938481,127014435,318141682,0,0,2.0,10
+akilli_kredi,Akıllı büyüme + kredi,246679100,157322640,413271812,0,0,1.5,10

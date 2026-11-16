@@ -1,12 +1,24 @@
-# Bot simülasyonu
+# Denge testi (bot simülasyonu)
 
-Botlar `demo/game.js`'i başsız Chrome'da, `window.__tezgah.dbg` üzerinden oynar.
+Botlar `demo/game.js`'i başsız Chrome'da, oyunun düğmelerinin çağırdığı işlevlerle (`window.__tezgah.dbg`) oynar.
+16 oyun tarzı (hiçbir şey yapmayan, mevduat, borsa, tek tarla, dükkân, büyüme, kredi, fabrika kuran akıllı bot…) her biri 10 sabit tohumla bir sezon (59 oyun günü) oynar; ayrıca kulüpteki bowling bahsinin beklenen getirisi ölçülür.
 
 ```bash
-chrome --headless=new --allow-file-access-from-files --virtual-time-budget=6000000 --dump-dom "file:///.../tools/bot-sim/botsim.html?s=akilli&seeds=1,2,3,4,5,6,7,8,9,10&days=59"
+python tools/bot-sim/run.py
 ```
 
-Çıktı `JSON:{...}:END` arasındadır; `sim/<strateji>.json` olarak kaydedip `python ozet.py` ve `python piyasa.py` ile özetlenir.
-Stratejiler: bos, mevduat, dolar, altin, borsa, olay, dukkan, tarla, tarla_toptan, tarla_mevduat, az, ilan, buyume, kredi, akilli, akilli_kredi.
-`bowling-ev.html` kulüp bahsinin beklenen getirisini ölçer.
-Son sonuçlar: `tasarim/testler/bot-sezon-2026-11-16.csv`.
+- `--seeds 3` daha hızlı ama daha kaba sonuç verir; `--only akilli,buyume` yalnızca seçilen botları koşar (bu durumda sınırlar uyarıdır, hata vermez).
+- Chrome otomatik bulunur; bulunamazsa `CHROME` ortam değişkeniyle yolu verilir.
+- Sonuçlar `tools/bot-sim/out/` altına yazılır: `ozet.md` (tablo ve sınırlar), `sonuc.csv`, her strateji için ham JSON.
+
+## Otomasyon
+
+`.github/workflows/denge-testi.yml` oyun kodu (`demo/game.js`, `demo/bowling.js`) ya da bu klasör her değiştiğinde ve her pazartesi testi GitHub'da koşar.
+Sınırlardan biri aşılırsa iş kırmızı biter; özet tablo işin Summary sayfasında görünür.
+
+## Denge sınırları
+
+`run.py` içindeki `checks` işlevi: vergi/borç kilidi olmaması, kredi hacizlerinin sınırlı kalması, haber avcılığı ve ucuz ilan açıklarının kapalı olması,
+mevduat %28–45 ve endeks %20–80 yıllık getiri, endeksin mevduattan fazla getirmesi, hisselerin endeksten kopmaması,
+sanal rakiplerin ulaşılabilir olması (en güçlüsü ₺120–400 mn), iyi oyuncunun üst, sıradan oyuncunun alt sıralarda bitirmesi,
+fabrika yolunun açık olması ve bowlingin para basmaması. Bir dengeyi bilerek değiştirirsen sınırı da burada güncelle.
